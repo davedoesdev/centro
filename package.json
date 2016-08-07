@@ -1,0 +1,62 @@
+{
+  "name": "centro",
+  "description": "Pub-sub and work queue service on Primus or TCP. Supports wildcards, streams and back-pressure. Just Node and a filesystem required.",
+  "version": "0.0.1",
+  "homepage": "https://github.com/davedoesdev/centro",
+  "author": {
+    "name": "David Halls",
+    "email": "dave@davedoesdev.com",
+    "url": "http://www.davedoesdev.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/davedoesdev/centro.git"
+  },
+  "bugs": {
+    "url": "https://github.com/davedoesdev/centro/issues"
+  },
+  "license": "MIT",
+  "main": "index.js",
+  "scripts": {
+    "test": "grunt lint test",
+    "travis-coverage": "grunt lint coverage coveralls"
+  },
+  "directories": {
+    "test": "test",
+    "lib": "lib"
+  },
+  "keywords": [
+    "pub-sub",
+    "queue",
+    "primus",
+    "stream",
+    "back-pressure",
+    "routing",
+    "mqlobber",
+    "qlobber-fsq"
+  ],
+  "dependencies": {
+    "mqlobber": "~0.0.14",
+    "mqlobber-access-control": "~0.0.2",
+    "qlobber-fsq": "~3.1.0",
+    "authorize-jwt": "~2.0.0",
+    "primus": "~6.0.1",
+    "primus-backpressure": "~1.0.0",
+    "fastest-writable": "~0.0.6",
+    "frame-stream": "~1.1.1"
+  },
+  "devDependencies": {
+    "grunt": "~1.0.1",
+    "grunt-contrib-jshint": "~1.0.0",
+    "grunt-mocha-test": "~0.12.7",
+    "grunt-apidox": "~0.1.9",
+    "grunt-shell": "~1.3.0",
+    "mocha": "~3.0.1",
+    "chai": "~3.5.0",
+    "istanbul": "~0.4.4",
+    "coveralls": "~2.11.12"
+  },
+  "engines": {
+    "node": ">=0.12"
+  }
+}
