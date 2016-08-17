@@ -1,9 +1,11 @@
 "use strict";
 
 var centro = require('..'),
-    CentroServer = centro.CentroServer;
+    CentroServer = centro.CentroServer,
+    ursa = require('ursa'),
+    jsjws = require('jsjws');
 
-module.exports = function (config)
+module.exports = function (config, connect)
 {
     var transport = config.transport;
 
@@ -13,12 +15,32 @@ module.exports = function (config)
 
 describe(transport, function ()
 {
-    var server;
+    var server, client;
 
     beforeEach(function (cb)
     {
         server = new centro.CentroServer(config);
-        server.on('ready', cb);
+        server.on('ready', function ()
+        {
+            var token_exp = new Date(),
+                header = { alg: 'PS256' },
+                priv_key = ursa.generatePrivateKey(2048, 65537);
+
+            token_exp.setMinutes(token_exp.getMinutes() + 1);
+
+            var token = new jsjws.JWT().generateJWTByKey(header,
+            {
+            }, token_exp, priv_key);
+
+            connect(
+            {
+                token: token
+            }, function (err, c)
+            {
+                client = c;
+                cb(err);
+            });
+        });
     });
     
     afterEach(function (cb)

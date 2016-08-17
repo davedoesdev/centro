@@ -56,7 +56,9 @@
     "mocha": "~3.0.1",
     "chai": "~3.5.0",
     "istanbul": "~0.4.4",
-    "coveralls": "~2.11.12"
+    "coveralls": "~2.11.12",
+    "ursa": "~0.9.4",
+    "jsjws": "~2.1.1"
   },
   "engines": {
     "node": ">=0.12"
