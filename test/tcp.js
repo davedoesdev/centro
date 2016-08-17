@@ -10,5 +10,8 @@ runner(
     port: 8700
 }, function (config, cb)
 {
-    cb(null, centro.stream_auth(net.createConnection(8700), config));
+    net.createConnection(8700, function ()
+    {
+        centro.stream_auth(this, config);
+    });
 });
