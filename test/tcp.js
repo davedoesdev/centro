@@ -12,6 +12,6 @@ runner(
 {
     net.createConnection(8700, function ()
     {
-        centro.stream_auth(this, config);
+        cb(null, centro.stream_auth(this, config));
     });
 });
