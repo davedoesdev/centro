@@ -3,7 +3,8 @@
 var centro = require('..'),
     CentroServer = centro.CentroServer,
     ursa = require('ursa'),
-    jsjws = require('jsjws');
+    jsjws = require('jsjws'),
+    uri = 'mailto:dave@davedoesdev.com';
 
 module.exports = function (config, connect)
 {
@@ -15,39 +16,71 @@ module.exports = function (config, connect)
 
 describe(transport, function ()
 {
-    var server, client;
+    var server, client, priv_key, issuer_id, rev;
 
-    beforeEach(function (cb)
+    before(function (cb)
     {
         server = new centro.CentroServer(config);
         server.on('ready', function ()
         {
-            var token_exp = new Date(),
-                header = { alg: 'PS256' },
-                priv_key = ursa.generatePrivateKey(2048, 65537);
-
-            token_exp.setMinutes(token_exp.getMinutes() + 1);
-
-            var token = new jsjws.JWT().generateJWTByKey(header,
+            priv_key = ursa.generatePrivateKey(2048, 65537);
+            server.authz.keystore.add_pub_key(uri, priv_key.toPublicPem('utf8'),
+            function (err, the_issuer_id, the_rev)
             {
-            }, token_exp, priv_key);
+                if (err)
+                {
+                    return cb(err);
+                }
+                
+                issuer_id = the_issuer_id;
+                rev = the_rev;
 
-            connect(
-            {
-                token: token
-            }, function (err, c)
-            {
-                client = c;
-                cb(err);
+                cb();
             });
         });
     });
-    
-    afterEach(function (cb)
+
+    after(function (cb)
     {
-        server.close(cb);
+        server.authz.keystore.remove_pub_key(uri, function (err)
+        {
+            if (err)
+            {
+                return cb(err);
+            }
+
+            server.close(cb);
+        });
     });
 
+    beforeEach(function (cb)
+    {
+        var token_exp = new Date();
+
+        token_exp.setMinutes(token_exp.getMinutes() + 1);
+
+        connect(
+        {
+            token: new jsjws.JWT().generateJWTByKey(
+            {
+                alg: 'PS256'
+            },
+            {
+                iss: issuer_id
+            }, token_exp, priv_key)
+        }, function (err, c)
+        {
+            client = c;
+            cb(err);
+        });
+    });
+
+    afterEach(function (cb)
+    {
+        client.mux.carrier.on('end', cb);
+        client.mux.carrier.end();
+    });
+    
     it('should publish and subscribe', function (done)
     {
         done();
