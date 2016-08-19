@@ -1,3 +1,4 @@
+/*jshint mocha: true */
 "use strict";
 
 var centro = require('..'),
@@ -40,109 +41,144 @@ module.exports = function (config, connect)
     config.db_type = 'pouchdb';
     config.db_for_update = true;
 
-describe(transport, function ()
-{
-    var server, client, priv_key, issuer_id, rev;
-
-    before(function (cb)
+    describe(transport, function ()
     {
-        server = new centro.CentroServer(config);
-        server.on('ready', function ()
+        var server, client, priv_key, issuer_id, rev;
+
+        before(function (cb)
         {
-            priv_key = ursa.generatePrivateKey(2048, 65537);
-            server.authz.keystore.add_pub_key(uri, priv_key.toPublicPem('utf8'),
-            function (err, the_issuer_id, the_rev)
+            server = new centro.CentroServer(config);
+            server.on('ready', function ()
+            {
+                priv_key = ursa.generatePrivateKey(2048, 65537);
+                server.authz.keystore.add_pub_key(uri, priv_key.toPublicPem('utf8'),
+                function (err, the_issuer_id, the_rev)
+                {
+                    if (err)
+                    {
+                        return cb(err);
+                    }
+                    
+                    issuer_id = the_issuer_id;
+                    rev = the_rev;
+
+                    cb();
+                });
+            });
+        });
+
+        after(function (cb)
+        {
+            server.authz.keystore.remove_pub_key(uri, function (err)
             {
                 if (err)
                 {
                     return cb(err);
                 }
-                
-                issuer_id = the_issuer_id;
-                rev = the_rev;
 
-                cb();
+                server.close(cb);
             });
         });
-    });
 
-    after(function (cb)
-    {
-        server.authz.keystore.remove_pub_key(uri, function (err)
+        function setup(access_control)
         {
-            if (err)
+            beforeEach(function (cb)
             {
-                return cb(err);
-            }
+                var token_exp = new Date();
 
-            server.close(cb);
-        });
-    });
+                token_exp.setMinutes(token_exp.getMinutes() + 1);
 
-    beforeEach(function (cb)
-    {
-        var token_exp = new Date();
-
-        token_exp.setMinutes(token_exp.getMinutes() + 1);
-
-        connect(
-        {
-            token: new jsjws.JWT().generateJWTByKey(
-            {
-                alg: 'PS256'
-            },
-            {
-                iss: issuer_id,
-                subscriptions: [],
-                access_control: {
-                    publish: {
-                        allow: ['foo'],
-                        disallow: []
+                connect(
+                {
+                    token: new jsjws.JWT().generateJWTByKey(
+                    {
+                        alg: 'PS256'
                     },
-                    subscribe: {
-                        allow: ['foo'],
-                        disallow: []
+                    {
+                        iss: issuer_id,
+                        access_control: access_control
+                    }, token_exp, priv_key)
+                }, function (err, c)
+                {
+                    if (err)
+                    {
+                        return cb(err);
                     }
+
+                    client = c;
+                    client.on('ready', cb);
+                });
+            });
+
+            afterEach(function (cb)
+            {
+                client.mux.carrier.on('end', cb);
+                client.mux.carrier.end();
+            });
+        }
+
+        describe('simple access control', function ()
+        {
+            setup({
+                publish: {
+                    allow: ['foo'],
+                    disallow: []
+                },
+                subscribe: {
+                    allow: ['foo'],
+                    disallow: []
                 }
-            }, token_exp, priv_key)
-        }, function (err, c)
-        {
-            if (err)
+            });
+
+            it('should publish and subscribe', function (done)
             {
-                return cb(err);
-            }
+                client.subscribe('foo', function (s, info)
+                {
+                    expect(info.topic).to.equal('foo');
+                    expect(info.single).to.equal(false);
 
-            client = c;
-            client.on('ready', cb);
-        });
-    });
+                    read_all(s, function (v)
+                    {
+                        expect(v.toString()).to.equal('bar');
+                        done();
+                    });
+                });
 
-    afterEach(function (cb)
-    {
-        client.mux.carrier.on('end', cb);
-        client.mux.carrier.end();
-    });
-    
-    it('should publish and subscribe', function (done)
-    {
-        client.subscribe('foo', function (s, info)
-        {
-            expect(info.topic).to.equal('foo');
-            expect(info.single).to.equal(false);
-
-            read_all(s, function (v)
-            {
-                expect(v.toString()).to.equal('bar');
-                done();
+                client.publish('foo').end('bar');
             });
         });
 
-        // what's the point of subscriptions in token?
-        // we don't have the handler
-        // but it would allow to subscribe but not unsubscribe
-        // - need to remember in client in that case
+        describe('access control with self', function ()
+        {
+            setup({
+                publish: {
+                    allow: ['direct.${self}.*.#',
+                            'all.${self}.#'],
+                    disallow: []
+                },
+                subscribe: {
+                    allow: ['direct.*.${self}.#',
+                            'all.*.#'],
+                    disallow: []
+                }
+            });
 
-        client.publish('foo').end('bar');
+            it('should publish and subscribe', function (done)
+            {
+                client.subscribe('all.*.foo', function (s, info)
+                {
+                    expect(info.topic).to.equal('all.${self}.foo');
+                    expect(info.single).to.equal(false);
+
+                    read_all(s, function (v)
+                    {
+                        expect(v.toString()).to.equal('bar');
+                        done();
+                    });
+                });
+
+                client.publish('all.${self}.foo').end('bar');
+            });
+        });
     });
-});
 };
