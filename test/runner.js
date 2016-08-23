@@ -80,7 +80,7 @@ module.exports = function (config, connect)
             });
         });
 
-        function setup(access_control)
+        function setup(access_control, ack)
         {
             beforeEach(function (cb)
             {
@@ -96,7 +96,8 @@ module.exports = function (config, connect)
                     },
                     {
                         iss: issuer_id,
-                        access_control: access_control
+                        access_control: access_control,
+                        ack: ack
                     }, token_exp, priv_key)
                 }, function (err, c)
                 {
@@ -119,7 +120,8 @@ module.exports = function (config, connect)
 
         describe('simple access control', function ()
         {
-            setup({
+            setup(
+            {
                 publish: {
                     allow: ['foo'],
                     disallow: []
@@ -150,7 +152,8 @@ module.exports = function (config, connect)
 
         describe('access control with self', function ()
         {
-            setup({
+            setup(
+            {
                 publish: {
                     allow: ['direct.${self}.*.#',
                             'all.${self}.#'],
@@ -178,6 +181,53 @@ module.exports = function (config, connect)
                 });
 
                 client.publish('all.${self}.foo').end('bar');
+            });
+        });
+
+        describe('access control with self and ack', function ()
+        {
+            setup(
+            {
+                publish: {
+                    allow: ['direct.${self}.*.#',
+                            'all.${self}.#'],
+                    disallow: []
+                },
+                subscribe: {
+                    allow: ['direct.*.${self}.#',
+                            'all.*.#',
+                            'ack.*.all.${self}.#',
+                            'ack.*.direct.${self}.*.#'],
+                    disallow: []
+                }
+            },
+            {
+                prefix: 'ack.${self}'
+            });
+            
+            it('should publish and subscribe', function (done)
+            {
+                client.subscribe('all.*.foo', function (s, info, ack)
+                {
+                    expect(info.topic).to.equal('all.${self}.foo');
+                    expect(info.single).to.equal(true);
+
+                    read_all(s, function (v)
+                    {
+                        expect(v.toString()).to.equal('bar');
+                        ack();
+                    });
+                });
+
+                client.subscribe('ack.*.all.${self}.foo', function (s, info)
+                {
+                    expect(info.topic).to.equal('ack.${self}.all.${self}.foo');
+                    expect(info.single).to.equal(false);
+
+                    done();
+                });
+
+                client.publish('all.${self}.foo', { single: true }).end('bar');
             });
         });
     });
