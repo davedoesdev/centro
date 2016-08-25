@@ -8,7 +8,7 @@ runner(
 {
     transport: 'tcp',
     port: 8700
-}, function (config, cb)
+}, function (config, server, cb)
 {
     net.createConnection(8700, function ()
     {

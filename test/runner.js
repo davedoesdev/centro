@@ -99,7 +99,7 @@ module.exports = function (config, connect)
                         access_control: access_control,
                         ack: ack
                     }, token_exp, priv_key)
-                }, function (err, c)
+                }, server, function (err, c)
                 {
                     if (err)
                     {

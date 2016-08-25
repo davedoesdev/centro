@@ -10,7 +10,7 @@ runner(
 {
     transport: 'primus',
     port: 8700
-}, function (config, cb)
+}, function (config, server, cb)
 {
     centro.separate_auth(config, function (err, userpass, make_client)
     {
