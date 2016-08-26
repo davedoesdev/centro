@@ -32,16 +32,25 @@ function read_all(s, cb)
     });
 }
 
-module.exports = function (config, connect)
+module.exports = function (config, connect, anon)
 {
-    var transport = config.transport;
+    var name = config.transport_name ||
+               config.transport.server ||
+               config.transport;
 
-    config.transport = require('../lib/transports/' + transport);
+    if (config.transport.server)
+    {
+        config.transport.server = require('../lib/transports/' + config.transport.server);
+    }
+    else
+    {
+        config.transport = require('../lib/transports/' + config.transport);
+    }
     config.authorize = require('authorize-jwt');
     config.db_type = 'pouchdb';
     config.db_for_update = true;
 
-    describe(transport, function ()
+    describe(name, function ()
     {
         var server, client, priv_key, issuer_id, rev;
 
@@ -50,6 +59,11 @@ module.exports = function (config, connect)
             server = new centro.CentroServer(config);
             server.on('ready', function ()
             {
+                if (anon)
+                {
+                    return cb();
+                }
+
                 priv_key = ursa.generatePrivateKey(2048, 65537);
                 server.authz.keystore.add_pub_key(uri, priv_key.toPublicPem('utf8'),
                 function (err, the_issuer_id, the_rev)
@@ -69,6 +83,11 @@ module.exports = function (config, connect)
 
         after(function (cb)
         {
+            if (anon)
+            {
+                return cb();
+            }
+
             server.authz.keystore.remove_pub_key(uri, function (err)
             {
                 if (err)
@@ -106,8 +125,11 @@ module.exports = function (config, connect)
                         return cb(err);
                     }
 
-                    client = c;
-                    client.on('ready', cb);
+                    c.on('ready', function ()
+                    {
+                        client = c;
+                        cb();
+                    });
                 });
             });
 

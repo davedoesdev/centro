@@ -16,6 +16,7 @@ module.exports = function (grunt)
             src: [ 'test/in-mem.js',
                    'test/tcp.js',
                    'test/primus.js',
+                   'test/embedded.js',
                    'test/example/example.js' ],
             options: {
                 bail: true
