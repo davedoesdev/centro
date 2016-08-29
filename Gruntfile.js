@@ -17,6 +17,7 @@ module.exports = function (grunt)
                    'test/tcp.js',
                    'test/primus.js',
                    'test/embedded.js',
+                   'test/http.js',
                    'test/example/example.js' ],
             options: {
                 bail: true

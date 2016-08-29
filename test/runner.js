@@ -5,8 +5,7 @@ var centro = require('..'),
     CentroServer = centro.CentroServer,
     ursa = require('ursa'),
     jsjws = require('jsjws'),
-	chai = require('chai'),
-    expect = chai.expect,
+	expect = require('chai').expect,
     uri = 'mailto:dave@davedoesdev.com';
 
 function read_all(s, cb)
@@ -32,20 +31,51 @@ function read_all(s, cb)
     });
 }
 
-module.exports = function (config, connect, anon)
+module.exports = function (config, connect, options)
 {
-    var name = config.transport_name ||
+    options = options || {};
+
+    var name;
+
+    if (typeof config.transport === 'string' ||
+        typeof config.transport[Symbol.iterator] !== 'function')
+    {
+        name = config.transport_name ||
                config.transport.server ||
                config.transport;
 
-    if (config.transport.server)
-    {
-        config.transport.server = require('../lib/transports/' + config.transport.server);
+        if (config.transport.server)
+        {
+            config.transport.server = require('../lib/transports/' +
+                                              config.transport.server);
+        }
+        else
+        {
+            config.transport = require('../lib/transports/' +
+                                       config.transport);
+        }
     }
     else
     {
-        config.transport = require('../lib/transports/' + config.transport);
+        name = config.transport_name ||
+               config.transport[0].server ||
+               config.transport[0];
+
+        for (var i = 0; i < config.transport.length; i += 1)
+        {
+            if (config.transport[i].server)
+            {
+                config.transport[i].server = require('../lib/transports/' +
+                                                     config.transport[i].server);
+            }
+            else
+            {
+                config.transport[i] = require('../lib/transports/' +
+                                              config.transport[i]);
+            }
+        }
     }
+
     config.authorize = require('authorize-jwt');
     config.db_type = 'pouchdb';
     config.db_for_update = true;
@@ -59,7 +89,7 @@ module.exports = function (config, connect, anon)
             server = new centro.CentroServer(config);
             server.on('ready', function ()
             {
-                if (anon)
+                if (options.anon)
                 {
                     return cb();
                 }
@@ -83,7 +113,7 @@ module.exports = function (config, connect, anon)
 
         after(function (cb)
         {
-            if (anon)
+            if (options.anon)
             {
                 return cb();
             }
@@ -192,7 +222,11 @@ module.exports = function (config, connect, anon)
             {
                 client.subscribe('all.*.foo', function (s, info)
                 {
-                    expect(info.topic).to.equal('all.${self}.foo');
+                    if (!options.relay)
+                    {
+                        expect(info.topic).to.equal('all.${self}.foo');
+                    }
+
                     expect(info.single).to.equal(false);
 
                     read_all(s, function (v)
@@ -218,7 +252,8 @@ module.exports = function (config, connect, anon)
                 subscribe: {
                     allow: ['direct.*.${self}.#',
                             'all.*.#',
-                            'ack.*.all.${self}.#',
+                            options.relay ? 'ack.*.all.*.#' :
+                                            'ack.*.all.${self}.#',
                             'ack.*.direct.${self}.*.#'],
                     disallow: []
                 }
@@ -231,7 +266,11 @@ module.exports = function (config, connect, anon)
             {
                 client.subscribe('all.*.foo', function (s, info, ack)
                 {
-                    expect(info.topic).to.equal('all.${self}.foo');
+                    if (!options.relay)
+                    {
+                        expect(info.topic).to.equal('all.${self}.foo');
+                    }
+
                     expect(info.single).to.equal(true);
 
                     read_all(s, function (v)
@@ -241,9 +280,15 @@ module.exports = function (config, connect, anon)
                     });
                 });
 
-                client.subscribe('ack.*.all.${self}.foo', function (s, info)
+                client.subscribe(options.relay ? 'ack.*.all.*.foo' :
+                                                 'ack.*.all.${self}.foo',
+                function (s, info)
                 {
-                    expect(info.topic).to.equal('ack.${self}.all.${self}.foo');
+                    if (!options.relay)
+                    {
+                        expect(info.topic).to.equal('ack.${self}.all.${self}.foo');
+                    }
+
                     expect(info.single).to.equal(false);
 
                     done();
