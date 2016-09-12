@@ -5,7 +5,7 @@ var centro = require('..'),
     CentroServer = centro.CentroServer,
     ursa = require('ursa'),
     jsjws = require('jsjws'),
-	expect = require('chai').expect,
+    expect = require('chai').expect,
     uri = 'mailto:dave@davedoesdev.com';
 
 function read_all(s, cb)
@@ -82,11 +82,23 @@ module.exports = function (config, connect, options)
 
     describe(name, function ()
     {
-        var server, client, priv_key, issuer_id, rev;
+        var server, client, priv_key, issuer_id, rev,
+            connections = new Map();
 
         before(function (cb)
         {
             server = new centro.CentroServer(config);
+
+            server.on('connect', function (info)
+            {
+                connections.set(info.mqserver, info);
+            });
+
+            server.on('disconnect', function (mqserver)
+            {
+                connections.delete(mqserver);
+            });
+
             server.on('ready', function ()
             {
                 if (options.anon)
@@ -133,6 +145,20 @@ module.exports = function (config, connect, options)
         {
             beforeEach(function (cb)
             {
+                expect(connections.size).to.equal(0);
+
+                client = null;
+                var connected = false;
+
+                server.once('connect', function ()
+                {
+                    connected = true;
+                    if (client)
+                    {
+                        cb();
+                    }
+                });
+
                 var token_exp = new Date();
 
                 token_exp.setMinutes(token_exp.getMinutes() + 1);
@@ -158,7 +184,10 @@ module.exports = function (config, connect, options)
                     c.on('ready', function ()
                     {
                         client = c;
-                        cb();
+                        if (connected)
+                        {
+                            cb();
+                        }
                     });
                 });
             });
@@ -195,6 +224,65 @@ module.exports = function (config, connect, options)
                     {
                         expect(v.toString()).to.equal('bar');
                         done();
+                    });
+                });
+
+                client.publish('foo').end('bar');
+            });
+        });
+
+        describe('access control with block', function ()
+        {
+            setup(
+            {
+                publish: {
+                    allow: ['foo.#'],
+                    disallow: []
+                },
+                subscribe: {
+                    allow: ['foo.#'],
+                    disallow: []
+                },
+                block: ['foo.bar']
+            });
+
+            it('should block message', function (done)
+            {
+                var blocked = 0;
+
+                for (var info of connections.values())
+                {
+                    info.access_control.on('message_blocked',
+                    function (topic, mqserver)
+                    {
+                        expect(topic).to.equal(info.prefixes[0] + 'foo.bar');
+                        expect(mqserver).to.equal(info.mqserver);
+                        blocked += 1;
+                        if (blocked === connections.size)
+                        {
+                            setTimeout(done, 1000);
+                        }
+                        else if (blocked > connections.size)
+                        {
+                            done(new Error('called too many times'));
+                        }
+                    });
+                }
+                
+                client.subscribe('foo.bar', function (s, info)
+                {
+                    done(new Error('should not be called'));
+                });
+
+                client.subscribe('foo', function (s, info)
+                {
+                    expect(info.topic).to.equal('foo');
+                    expect(info.single).to.equal(false);
+
+                    read_all(s, function (v)
+                    {
+                        expect(v.toString()).to.equal('bar');
+                        client.publish('foo.bar').end('foobar');
                     });
                 });
 
