@@ -6,6 +6,7 @@ var centro = require('..'),
     ursa = require('ursa'),
     jsjws = require('jsjws'),
     expect = require('chai').expect,
+    async = require('async'),
     uri = 'mailto:dave@davedoesdev.com';
 
 function read_all(s, cb)
@@ -82,7 +83,7 @@ module.exports = function (config, connect, options)
 
     describe(name, function ()
     {
-        var server, client, priv_key, issuer_id, rev,
+        var server, clients, priv_key, issuer_id, rev,
             connections = new Map();
 
         before(function (cb)
@@ -141,67 +142,89 @@ module.exports = function (config, connect, options)
             });
         });
 
-        function setup(access_control, ack)
+        function setup(n, access_control, ack, presence)
         {
             beforeEach(function (cb)
             {
                 expect(connections.size).to.equal(0);
 
-                client = null;
-                var connected = false;
+                clients = [];
+                var connected = 0;
 
-                server.once('connect', function ()
+                server.on('connect', function onconnect()
                 {
-                    connected = true;
-                    if (client)
+                    connected += 1;
+                    if (connected === n)
                     {
-                        cb();
+                        server.removeListener('connect', onconnect);
+                        if (clients.length === n)
+                        {
+                            cb();
+                        }
                     }
                 });
 
                 var token_exp = new Date();
-
                 token_exp.setMinutes(token_exp.getMinutes() + 1);
 
-                connect(
+                async.times(n, function (i, next)
                 {
-                    token: new jsjws.JWT().generateJWTByKey(
+                    connect(
                     {
-                        alg: 'PS256'
-                    },
+                        token: new jsjws.JWT().generateJWTByKey(
+                        {
+                            alg: 'PS256'
+                        },
+                        {
+                            iss: issuer_id,
+                            access_control: access_control,
+                            ack: ack,
+                            presence: presence
+                        }, token_exp, priv_key)
+                    }, server, function (err, c)
                     {
-                        iss: issuer_id,
-                        access_control: access_control,
-                        ack: ack
-                    }, token_exp, priv_key)
-                }, server, function (err, c)
+                        if (err)
+                        {
+                            return next(err);
+                        }
+
+                        c.on('ready', function ()
+                        {
+                            next(null, this);
+                        });
+                    });
+                }, function (err, cs)
                 {
                     if (err)
                     {
                         return cb(err);
                     }
 
-                    c.on('ready', function ()
+                    clients = cs;
+                    if (connected === n)
                     {
-                        client = c;
-                        if (connected)
-                        {
-                            cb();
-                        }
-                    });
+                        cb();
+                    }
                 });
             });
 
             afterEach(function (cb)
             {
-                client.mux.carrier.on('end', cb);
-                client.mux.carrier.end();
+                async.each(clients, function (c, cb)
+                {
+                    if (c.mux.carrier._readableState.ended)
+                    {
+                        return cb();
+                    }
+                    c.mux.carrier.on('end', cb);
+                    c.mux.carrier.end();
+                }, cb);
             });
         }
 
         describe('simple access control', function ()
         {
-            setup(
+            setup(1,
             {
                 publish: {
                     allow: ['foo'],
@@ -215,7 +238,7 @@ module.exports = function (config, connect, options)
 
             it('should publish and subscribe', function (done)
             {
-                client.subscribe('foo', function (s, info)
+                clients[0].subscribe('foo', function (s, info)
                 {
                     expect(info.topic).to.equal('foo');
                     expect(info.single).to.equal(false);
@@ -227,13 +250,13 @@ module.exports = function (config, connect, options)
                     });
                 });
 
-                client.publish('foo').end('bar');
+                clients[0].publish('foo').end('bar');
             });
         });
 
         describe('access control with block', function ()
         {
-            setup(
+            setup(1,
             {
                 publish: {
                     allow: ['foo.#'],
@@ -269,12 +292,12 @@ module.exports = function (config, connect, options)
                     });
                 }
                 
-                client.subscribe('foo.bar', function (s, info)
+                clients[0].subscribe('foo.bar', function (s, info)
                 {
                     done(new Error('should not be called'));
                 });
 
-                client.subscribe('foo', function (s, info)
+                clients[0].subscribe('foo', function (s, info)
                 {
                     expect(info.topic).to.equal('foo');
                     expect(info.single).to.equal(false);
@@ -282,17 +305,17 @@ module.exports = function (config, connect, options)
                     read_all(s, function (v)
                     {
                         expect(v.toString()).to.equal('bar');
-                        client.publish('foo.bar').end('foobar');
+                        clients[0].publish('foo.bar').end('foobar');
                     });
                 });
 
-                client.publish('foo').end('bar');
+                clients[0].publish('foo').end('bar');
             });
         });
 
         describe('access control with self', function ()
         {
-            setup(
+            setup(1,
             {
                 publish: {
                     allow: ['direct.${self}.*.#',
@@ -308,7 +331,7 @@ module.exports = function (config, connect, options)
 
             it('should publish and subscribe', function (done)
             {
-                client.subscribe('all.*.foo', function (s, info)
+                clients[0].subscribe('all.*.foo', function (s, info)
                 {
                     if (!options.relay)
                     {
@@ -324,13 +347,13 @@ module.exports = function (config, connect, options)
                     });
                 });
 
-                client.publish('all.${self}.foo').end('bar');
+                clients[0].publish('all.${self}.foo').end('bar');
             });
         });
 
         describe('access control with self and ack', function ()
         {
-            setup(
+            setup(1,
             {
                 publish: {
                     allow: ['direct.${self}.*.#',
@@ -347,12 +370,12 @@ module.exports = function (config, connect, options)
                 }
             },
             {
-                prefix: 'ack.${self}'
+                prefix: 'ack.${self}.'
             });
             
             it('should publish and subscribe', function (done)
             {
-                client.subscribe('all.*.foo', function (s, info, ack)
+                clients[0].subscribe('all.*.foo', function (s, info, ack)
                 {
                     if (!options.relay)
                     {
@@ -368,8 +391,8 @@ module.exports = function (config, connect, options)
                     });
                 });
 
-                client.subscribe(options.relay ? 'ack.*.all.*.foo' :
-                                                 'ack.*.all.${self}.foo',
+                clients[0].subscribe(options.relay ? 'ack.*.all.*.foo' :
+                                                     'ack.*.all.${self}.foo',
                 function (s, info)
                 {
                     if (!options.relay)
@@ -382,7 +405,93 @@ module.exports = function (config, connect, options)
                     done();
                 });
 
-                client.publish('all.${self}.foo', { single: true }).end('bar');
+                clients[0].publish('all.${self}.foo', { single: true }).end('bar');
+            });
+        });
+
+        describe('access control with self and presence', function ()
+        {
+            setup(2,
+            {
+                publish: {
+                    allow: ['direct.${self}.*.#',
+                            'all.${self}.#',
+                            'join.direct.${self}.*',
+                            'join.all.${self}'],
+                    disallow: []
+                },
+                subscribe: {
+                    allow: ['direct.*.${self}.#',
+                            'all.*.#',
+                            'join.direct.*.${self}',
+                            'join.all.*',
+                            'leave.all.*'],
+                    disallow: []
+                }
+            },
+            undefined,
+            {
+                connect: {
+                    prefix: 'join.',
+                    data: 'someone joined'
+                },
+                disconnect: {
+                    topic: 'leave.all.${self}',
+                    data: 'someone left'
+                }
+            });
+            
+            it('should support presence', function (done)
+            {
+                clients[0].subscribe('join.all.*', function (s, info)
+                {
+                    if (!options.relay)
+                    {
+                        expect(info.topic).to.equal('join.all.${self}');
+                    }
+
+                    expect(info.single).to.equal(false);
+
+                    read_all(s, function (v)
+                    {
+                        expect(v.toString()).to.equal('"someone joined"');
+                    });
+                });
+
+                clients[1].subscribe('leave.all.*', function (s, info)
+                {
+                    if (!options.relay)
+                    {
+                        expect(info.topic).to.equal('leave.all.' + clients[0].self);
+                    }
+
+                    expect(info.single).to.equal(false);
+
+                    read_all(s, function (v)
+                    {
+                        expect(v.toString()).to.equal('"someone left"');
+                        clients[1].unsubscribe('leave.all.*');
+                        done();
+                    });
+                });
+
+                clients[1].subscribe('join.all.*', function (s, info)
+                {
+                    if (!options.relay)
+                    {
+                        expect(info.topic).to.equal('join.all.' + clients[0].self);
+                    }
+
+                    expect(info.single).to.equal(false);
+
+                    read_all(s, function (v)
+                    {
+                        expect(v.toString()).to.equal('"someone joined"');
+                        clients[0].mux.carrier.end();
+                    });
+                });
+
+                clients[0].publish('join.all.${self}').end('bar');
             });
         });
     });
