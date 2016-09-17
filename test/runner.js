@@ -248,9 +248,59 @@ module.exports = function (config, connect, options)
                         expect(v.toString()).to.equal('bar');
                         done();
                     });
+                }, function (err)
+                {
+                    if (err) { return done(err); }
+                    clients[0].publish('foo').end('bar');
                 });
+            });
 
-                clients[0].publish('foo').end('bar');
+            it('emit publish_requested and subscribe_requested events', function (done)
+            {
+                var pubreq = false,
+                    subreq = false;
+
+                function regreq(mqserver)
+                {
+                    mqserver.on('publish_requested', function (topic, stream, options, cb)
+                    {
+                        pubreq = true;
+                        stream.pipe(this.fsq.publish(topic, options, cb));
+                    });
+
+                    mqserver.on('subscribe_requested', function (topic, cb)
+                    {
+                        subreq = true;
+                        this.subscribe(topic, cb);
+                    });
+                }
+
+                for (var mqserver of connections.keys())
+                {
+                    regreq(mqserver);
+                }
+
+                clients[0].subscribe('foo', function (s, info)
+                {
+                    if (!options.relay)
+                    {
+                        expect(pubreq).to.equal(true);
+                        expect(subreq).to.equal(true);
+                    }
+
+                    expect(info.topic).to.equal('foo');
+                    expect(info.single).to.equal(false);
+
+                    read_all(s, function (v)
+                    {
+                        expect(v.toString()).to.equal('bar');
+                        done();
+                    });
+                }, function (err)
+                {
+                    if (err) { return done(err); }
+                    clients[0].publish('foo').end('bar');
+                });
             });
         });
 
@@ -273,7 +323,7 @@ module.exports = function (config, connect, options)
             {
                 var blocked = 0;
 
-                for (var info of connections.values())
+                function regblock(info)
                 {
                     info.access_control.on('message_blocked',
                     function (topic, mqserver)
@@ -291,25 +341,34 @@ module.exports = function (config, connect, options)
                         }
                     });
                 }
+
+                for (var info of connections.values())
+                {
+                    regblock(info);
+                }
                 
                 clients[0].subscribe('foo.bar', function (s, info)
                 {
                     done(new Error('should not be called'));
-                });
-
-                clients[0].subscribe('foo', function (s, info)
+                }, function (err)
                 {
-                    expect(info.topic).to.equal('foo');
-                    expect(info.single).to.equal(false);
-
-                    read_all(s, function (v)
+                    if (err) { return done(err); }
+                    clients[0].subscribe('foo', function (s, info)
                     {
-                        expect(v.toString()).to.equal('bar');
-                        clients[0].publish('foo.bar').end('foobar');
+                        expect(info.topic).to.equal('foo');
+                        expect(info.single).to.equal(false);
+
+                        read_all(s, function (v)
+                        {
+                            expect(v.toString()).to.equal('bar');
+                            clients[0].publish('foo.bar').end('foobar');
+                        });
+                    }, function (err)
+                    {
+                        if (err) { return done(err); }
+                        clients[0].publish('foo').end('bar');
                     });
                 });
-
-                clients[0].publish('foo').end('bar');
             });
         });
 
@@ -345,9 +404,11 @@ module.exports = function (config, connect, options)
                         expect(v.toString()).to.equal('bar');
                         done();
                     });
+                }, function (err)
+                {
+                    if (err) { return done(err); }
+                    clients[0].publish('all.${self}.foo').end('bar');
                 });
-
-                clients[0].publish('all.${self}.foo').end('bar');
             });
         });
 
@@ -389,23 +450,27 @@ module.exports = function (config, connect, options)
                         expect(v.toString()).to.equal('bar');
                         ack();
                     });
-                });
-
-                clients[0].subscribe(options.relay ? 'ack.*.all.*.foo' :
-                                                     'ack.*.all.${self}.foo',
-                function (s, info)
+                }, function (err)
                 {
-                    if (!options.relay)
+                    if (err) { return done(err); }
+                    clients[0].subscribe(options.relay ? 'ack.*.all.*.foo' :
+                                                         'ack.*.all.${self}.foo',
+                    function (s, info)
                     {
-                        expect(info.topic).to.equal('ack.${self}.all.${self}.foo');
-                    }
+                        if (!options.relay)
+                        {
+                            expect(info.topic).to.equal('ack.${self}.all.${self}.foo');
+                        }
 
-                    expect(info.single).to.equal(false);
+                        expect(info.single).to.equal(false);
 
-                    done();
+                        done();
+                    }, function (err)
+                    {
+                        if (err) return done(err);
+                        clients[0].publish('all.${self}.foo', { single: true }).end('bar');
+                    });
                 });
-
-                clients[0].publish('all.${self}.foo', { single: true }).end('bar');
             });
         });
 
@@ -417,7 +482,8 @@ module.exports = function (config, connect, options)
                     allow: ['direct.${self}.*.#',
                             'all.${self}.#',
                             'join.direct.${self}.*',
-                            'join.all.${self}'],
+                            'join.all.${self}',
+                            'foo'],
                     disallow: []
                 },
                 subscribe: {
@@ -425,7 +491,8 @@ module.exports = function (config, connect, options)
                             'all.*.#',
                             'join.direct.*.${self}',
                             'join.all.*',
-                            'leave.all.*'],
+                            'leave.all.*',
+                            'foo'],
                     disallow: []
                 }
             },
@@ -443,6 +510,22 @@ module.exports = function (config, connect, options)
             
             it('should support presence', function (done)
             {
+                var pubreq = false;
+
+                function regreq(mqserver)
+                {
+                    mqserver.on('publish_requested', function (topic, stream, options, cb)
+                    {
+                        pubreq = true;
+                        stream.pipe(this.fsq.publish(topic, options, cb));
+                    });
+                }
+
+                for (var mqserver of connections.keys())
+                {
+                    regreq(mqserver);
+                }
+
                 clients[0].subscribe('join.all.*', function (s, info)
                 {
                     if (!options.relay)
@@ -456,42 +539,97 @@ module.exports = function (config, connect, options)
                     {
                         expect(v.toString()).to.equal('"someone joined"');
                     });
-                });
+                }, function (err)
+                {
+                    if (err) { return done(err); }
+                    clients[1].subscribe('leave.all.*', function (s, info)
+                    {
+                        if (!options.relay)
+                        {
+                            expect(info.topic).to.equal('leave.all.' + clients[0].self);
+                        }
 
-                clients[1].subscribe('leave.all.*', function (s, info)
+                        expect(info.single).to.equal(false);
+
+                        read_all(s, function (v)
+                        {
+                            expect(v.toString()).to.equal('"someone left"');
+                            clients[1].unsubscribe('leave.all.*');
+                            expect(pubreq).to.equal(false);
+                            done();
+                        });
+                    }, function (err)
+                    {
+                        if (err) { return done(err); }
+                        clients[1].subscribe('join.all.*', function (s, info)
+                        {
+                            if (!options.relay)
+                            {
+                                expect(info.topic).to.equal('join.all.' + clients[0].self);
+                            }
+
+                            expect(info.single).to.equal(false);
+
+                            read_all(s, function (v)
+                            {
+                                expect(v.toString()).to.equal('"someone joined"');
+                                clients[0].mux.carrier.end();
+                            });
+                        }, function (err)
+                        {
+                            if (err) { return done(err); }
+                            clients[0].publish('join.all.${self}').end('bar');
+                        });
+                    });
+                });
+            });
+
+            it('with presence in place should emit publish_requested and subscribe_requested for non-presence messages', function (done)
+            {
+                var pubreq = false,
+                    subreq = false;
+
+                function regreq(mqserver)
+                {
+                    mqserver.on('publish_requested', function (topic, stream, options, cb)
+                    {
+                        pubreq = true;
+                        stream.pipe(this.fsq.publish(topic, options, cb));
+                    });
+
+                    mqserver.on('subscribe_requested', function (topic, cb)
+                    {
+                        subreq = true;
+                        this.subscribe(topic, cb);
+                    });
+                }
+
+                for (var mqserver of connections.keys())
+                {
+                    regreq(mqserver);
+                }
+
+                clients[0].subscribe('foo', function (s, info)
                 {
                     if (!options.relay)
                     {
-                        expect(info.topic).to.equal('leave.all.' + clients[0].self);
+                        expect(pubreq).to.equal(true);
+                        expect(subreq).to.equal(true);
                     }
 
+                    expect(info.topic).to.equal('foo');
                     expect(info.single).to.equal(false);
 
                     read_all(s, function (v)
                     {
-                        expect(v.toString()).to.equal('"someone left"');
-                        clients[1].unsubscribe('leave.all.*');
+                        expect(v.toString()).to.equal('bar');
                         done();
                     });
-                });
-
-                clients[1].subscribe('join.all.*', function (s, info)
+                }, function (err)
                 {
-                    if (!options.relay)
-                    {
-                        expect(info.topic).to.equal('join.all.' + clients[0].self);
-                    }
-
-                    expect(info.single).to.equal(false);
-
-                    read_all(s, function (v)
-                    {
-                        expect(v.toString()).to.equal('"someone joined"');
-                        clients[0].mux.carrier.end();
-                    });
+                    if (err) { return done(err); }
+                    clients[0].publish('foo').end('bar');
                 });
-
-                clients[0].publish('join.all.${self}').end('bar');
             });
         });
     });
