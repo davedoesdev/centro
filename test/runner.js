@@ -632,5 +632,70 @@ module.exports = function (config, connect, options)
                 });
             });
         });
+
+        describe.only('error handling', function (done)
+        {
+            setup(1,
+            {
+                publish: {
+                    allow: ['foo'],
+                    disallow: []
+                },
+                subscribe: {
+                    allow: ['foo'],
+                    disallow: []
+                }
+            });
+
+            it('should emit carrier stream error as warning', function (done)
+            {
+                server.once('warning', function (err)
+                {
+                    expect(err.message).to.equal('dummy');
+                    done();
+                });
+
+                for (var mqserver of connections.keys())
+                {
+                    mqserver.mux.carrier.emit('error', new Error('dummy'));
+                }
+            });
+
+            it('should emit publish stream error as warning', function (done)
+            {
+                var warned = false;
+
+                server.once('warning', function (err)
+                {
+                    expect(err.message).to.equal('dummy2');
+                    warned = true;
+                });
+
+                function pubreq(topic, stream, options, done)
+                {
+                    expect(topic).to.equal(info[1].prefixes[0] + 'foo');
+                    stream.emit('error', new Error('dummy2'));
+                    done();
+                }
+
+                server.once('connect', function (info)
+                {
+                    info.mqserver.on('publish_requested', pubreq);
+                });
+
+                for (var info of connections)
+                {
+                    info[0].on('publish_requested', pubreq);
+                }
+        
+                clients[0].publish('foo', function (err)
+                {
+                    expect(warned).to.equal(true);
+                    done(err);
+                }).end('bar');
+            });
+        });
+
+        // check all cleared up
     });
 };
