@@ -138,7 +138,11 @@ module.exports = function (config, connect, options)
                     return cb(err);
                 }
 
-                server.close(cb);
+                server.close(function ()
+                {
+                    expect(server.fsq._stopped).to.equal(true);
+                    cb();
+                });
             });
         });
 
@@ -210,6 +214,14 @@ module.exports = function (config, connect, options)
 
             afterEach(function (cb)
             {
+                server.once('empty', function ()
+                {
+                    expect(server._connections.size).to.equal(0);
+                    expect(server._connids.size).to.equal(0);
+                    expect(connections.size).to.equal(0);
+                    cb();
+                });
+
                 async.each(clients, function (c, cb)
                 {
                     if (c.mux.carrier._readableState.ended)
@@ -218,7 +230,7 @@ module.exports = function (config, connect, options)
                     }
                     c.mux.carrier.on('end', cb);
                     c.mux.carrier.end();
-                }, cb);
+                });
             });
         }
 
@@ -678,10 +690,12 @@ module.exports = function (config, connect, options)
                     done();
                 }
 
-                server.once('connect', function (info)
+                function connect(info)
                 {
                     info.mqserver.on('publish_requested', pubreq);
-                });
+                }
+
+                server.once('connect', connect);
 
                 for (var info of connections)
                 {
@@ -691,11 +705,50 @@ module.exports = function (config, connect, options)
                 clients[0].publish('foo', function (err)
                 {
                     expect(warned).to.equal(true);
+                    server.removeListener('connect', connect);
                     done(err);
                 }).end('bar');
             });
-        });
 
-        // check all cleared up
+            it('should emit message error as warning', function (done)
+            {
+                var count = 0;
+
+                server.on('warning', function warning(err)
+                {
+                    expect(err.message).to.equal('dummy');
+                    count += 1;
+                    // One for fsq 'warning' event
+                    // One for mqlobber 'warning' event
+                    if (count === 2)
+                    {
+                        done();
+                    } else if (count > 2)
+                    {
+                        done(new Error('called too many times'));
+                    }
+                });
+
+                for (var mqserver of connections.keys())
+                {
+                    mqserver.on('message', function (stream, info, multiplex, done)
+                    {
+                        done(new Error('dummy'));
+                    });
+                }
+
+                clients[0].subscribe('foo', function ()
+                {
+                    done(new Error('should not be called'));
+                }, function (err)
+                {
+                    if (err) { return done(err); }
+                    clients[0].publish('foo', function (err)
+                    {
+                        if (err) { return done(err); }
+                    }).end('bar');
+                });
+            });
+        });
     });
 };
