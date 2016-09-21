@@ -146,7 +146,7 @@ module.exports = function (config, connect, options)
             });
         });
 
-        function setup(n, access_control, ack, presence)
+        function setup(n, options)
         {
             beforeEach(function (cb)
             {
@@ -155,7 +155,7 @@ module.exports = function (config, connect, options)
                 clients = [];
                 var connected = 0;
 
-                server.on('connect', function onconnect()
+                function onconnect()
                 {
                     connected += 1;
                     if (connected === n)
@@ -166,30 +166,44 @@ module.exports = function (config, connect, options)
                             cb();
                         }
                     }
-                });
+                };
+
+                server.on('connect', onconnect);
 
                 var token_exp = new Date();
                 token_exp.setMinutes(token_exp.getMinutes() + 1);
 
                 async.times(n, function (i, next)
                 {
+                    var token = new jsjws.JWT().generateJWTByKey(
+                    {
+                        alg: 'PS256'
+                    },
+                    {
+                        iss: issuer_id,
+                        access_control: options.access_control,
+                        ack: options.ack,
+                        presence: options.presence
+                    }, token_exp, priv_key)
+
                     connect(
                     {
-                        token: new jsjws.JWT().generateJWTByKey(
-                        {
-                            alg: 'PS256'
-                        },
-                        {
-                            iss: issuer_id,
-                            access_control: access_control,
-                            ack: ack,
-                            presence: presence
-                        }, token_exp, priv_key)
+                        token: i % 2 === 0 ? token : [token]
                     }, server, function (err, c)
                     {
                         if (err)
                         {
                             return next(err);
+                        }
+
+                        if (options.client_function)
+                        {
+                            options.client_function(c, onconnect);
+                        }
+
+                        if (options.skip_ready)
+                        {
+                            return next(null, c);
                         }
 
                         c.on('ready', function ()
@@ -214,13 +228,22 @@ module.exports = function (config, connect, options)
 
             afterEach(function (cb)
             {
-                server.once('empty', function ()
+                var called = false;
+
+                function empty()
                 {
                     expect(server._connections.size).to.equal(0);
                     expect(server._connids.size).to.equal(0);
                     expect(connections.size).to.equal(0);
-                    cb();
-                });
+
+                    if (!called)
+                    {
+                        called = true;
+                        cb();
+                    }
+                }
+
+                server.once('empty', empty);
 
                 async.each(clients, function (c, cb)
                 {
@@ -230,6 +253,12 @@ module.exports = function (config, connect, options)
                     }
                     c.mux.carrier.on('end', cb);
                     c.mux.carrier.end();
+                }, function ()
+                {
+                    if (server._connids.size === 0)
+                    {
+                        empty();
+                    }
                 });
             });
         }
@@ -238,13 +267,15 @@ module.exports = function (config, connect, options)
         {
             setup(1,
             {
-                publish: {
-                    allow: ['foo'],
-                    disallow: []
-                },
-                subscribe: {
-                    allow: ['foo'],
-                    disallow: []
+                access_control: {
+                    publish: {
+                        allow: ['foo'],
+                        disallow: []
+                    },
+                    subscribe: {
+                        allow: ['foo'],
+                        disallow: []
+                    }
                 }
             });
 
@@ -320,15 +351,17 @@ module.exports = function (config, connect, options)
         {
             setup(1,
             {
-                publish: {
-                    allow: ['foo.#'],
-                    disallow: []
-                },
-                subscribe: {
-                    allow: ['foo.#'],
-                    disallow: []
-                },
-                block: ['foo.bar']
+                access_control: {
+                    publish: {
+                        allow: ['foo.#'],
+                        disallow: []
+                    },
+                    subscribe: {
+                        allow: ['foo.#'],
+                        disallow: []
+                    },
+                    block: ['foo.bar']
+                }
             });
 
             it('should block message', function (done)
@@ -388,15 +421,17 @@ module.exports = function (config, connect, options)
         {
             setup(1,
             {
-                publish: {
-                    allow: ['direct.${self}.*.#',
-                            'all.${self}.#'],
-                    disallow: []
-                },
-                subscribe: {
-                    allow: ['direct.*.${self}.#',
-                            'all.*.#'],
-                    disallow: []
+                access_control: {
+                    publish: {
+                        allow: ['direct.${self}.*.#',
+                                'all.${self}.#'],
+                        disallow: []
+                    },
+                    subscribe: {
+                        allow: ['direct.*.${self}.#',
+                                'all.*.#'],
+                        disallow: []
+                    }
                 }
             });
 
@@ -428,22 +463,24 @@ module.exports = function (config, connect, options)
         {
             setup(1,
             {
-                publish: {
-                    allow: ['direct.${self}.*.#',
-                            'all.${self}.#'],
-                    disallow: []
+                access_control: {
+                    publish: {
+                        allow: ['direct.${self}.*.#',
+                                'all.${self}.#'],
+                        disallow: []
+                    },
+                    subscribe: {
+                        allow: ['direct.*.${self}.#',
+                                'all.*.#',
+                                options.relay ? 'ack.*.all.*.#' :
+                                                'ack.*.all.${self}.#',
+                                'ack.*.direct.${self}.*.#'],
+                        disallow: []
+                    }
                 },
-                subscribe: {
-                    allow: ['direct.*.${self}.#',
-                            'all.*.#',
-                            options.relay ? 'ack.*.all.*.#' :
-                                            'ack.*.all.${self}.#',
-                            'ack.*.direct.${self}.*.#'],
-                    disallow: []
+                ack: {
+                    prefix: 'ack.${self}.'
                 }
-            },
-            {
-                prefix: 'ack.${self}.'
             });
             
             it('should publish and subscribe', function (done)
@@ -490,33 +527,34 @@ module.exports = function (config, connect, options)
         {
             setup(2,
             {
-                publish: {
-                    allow: ['direct.${self}.*.#',
-                            'all.${self}.#',
-                            'join.direct.${self}.*',
-                            'join.all.${self}',
-                            'foo'],
-                    disallow: []
+                access_control: {
+                    publish: {
+                        allow: ['direct.${self}.*.#',
+                                'all.${self}.#',
+                                'join.direct.${self}.*',
+                                'join.all.${self}',
+                                'foo'],
+                        disallow: []
+                    },
+                    subscribe: {
+                        allow: ['direct.*.${self}.#',
+                                'all.*.#',
+                                'join.direct.*.${self}',
+                                'join.all.*',
+                                'leave.all.*',
+                                'foo'],
+                        disallow: []
+                    }
                 },
-                subscribe: {
-                    allow: ['direct.*.${self}.#',
-                            'all.*.#',
-                            'join.direct.*.${self}',
-                            'join.all.*',
-                            'leave.all.*',
-                            'foo'],
-                    disallow: []
-                }
-            },
-            undefined,
-            {
-                connect: {
-                    prefix: 'join.',
-                    data: 'someone joined'
-                },
-                disconnect: {
-                    topic: 'leave.all.${self}',
-                    data: 'someone left'
+                presence: {
+                    connect: {
+                        prefix: 'join.',
+                        data: 'someone joined'
+                    },
+                    disconnect: {
+                        topic: 'leave.all.${self}',
+                        data: 'someone left'
+                    }
                 }
             });
             
@@ -645,17 +683,19 @@ module.exports = function (config, connect, options)
             });
         });
 
-        describe.only('error handling', function (done)
+        describe('error handling', function (done)
         {
             setup(1,
             {
-                publish: {
-                    allow: ['foo'],
-                    disallow: []
-                },
-                subscribe: {
-                    allow: ['foo'],
-                    disallow: []
+                access_control: {
+                    publish: {
+                        allow: ['foo'],
+                        disallow: []
+                    },
+                    subscribe: {
+                        allow: ['foo'],
+                        disallow: []
+                    }
                 }
             });
 
@@ -722,6 +762,7 @@ module.exports = function (config, connect, options)
                     // One for mqlobber 'warning' event
                     if (count === 2)
                     {
+                        this.removeListener('warning', warning);
                         done();
                     } else if (count > 2)
                     {
@@ -748,6 +789,56 @@ module.exports = function (config, connect, options)
                         if (err) { return done(err); }
                     }).end('bar');
                 });
+            });
+        });
+
+        describe('pre-connect error handling', function (done)
+        {
+            beforeEach(function ()
+            {
+                server.once('pre_connect', function (info)
+                {
+                    info.destroy();
+                });
+            });
+
+            setup(1,
+            {
+                access_control: {
+                    publish: {
+                        allow: ['foo'],
+                        disallow: []
+                    },
+                    subscribe: {
+                        allow: ['foo'],
+                        disallow: []
+                    }
+                },
+                skip_ready: true,
+                client_function: function (c, onconnect)
+                {
+                    c.on('error', function (err)
+                    {
+                        this.last_error = err;
+                        onconnect();
+                    });
+                }
+            });
+
+            it('should error if carrier ends before client connects', function (done)
+            {
+                function check_error(err)
+                {
+                    expect(err.message).to.equal('ended before ready');
+                    done();
+                }
+
+                if (clients[0].last_error)
+                {
+                    return check_error(clients[0].last_error);
+                }
+
+                clients[0].on('error', check_error);
             });
         });
     });

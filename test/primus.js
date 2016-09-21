@@ -19,7 +19,10 @@ runner(
             return cb(err);
         }
 
-        var socket = new Socket('http://' + userpass + '@localhost:8700');
+        var socket = new Socket('http://' + userpass + '@localhost:8700',
+        {
+            strategy: false
+        });
 
         cb(null, make_client(new PrimusDuplex(socket)));
     });
