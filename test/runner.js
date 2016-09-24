@@ -7,7 +7,8 @@ var centro = require('..'),
     jsjws = require('jsjws'),
     expect = require('chai').expect,
     async = require('async'),
-    uri = 'mailto:dave@davedoesdev.com';
+    uri = 'mailto:dave@davedoesdev.com',
+    uri2 = 'mailto:david@davedoesdev.com';
 
 function read_all(s, cb)
 {
@@ -83,7 +84,10 @@ module.exports = function (config, connect, options)
 
     describe(name, function ()
     {
-        var server, clients, priv_key, issuer_id, rev,
+        var server, clients,
+            priv_key, priv_key2,
+            issuer_id, issuer_id2,
+            rev, rev2,
             connections = new Map();
 
         before(function (cb)
@@ -119,7 +123,20 @@ module.exports = function (config, connect, options)
                     issuer_id = the_issuer_id;
                     rev = the_rev;
 
-                    cb();
+                    priv_key2 = ursa.generatePrivateKey(2048, 65537);
+                    server.authz.keystore.add_pub_key(uri2, priv_key2.toPublicPem('utf8'),
+                    function (err, the_issuer_id, the_rev)
+                    {
+                        if (err)
+                        {
+                            return cb(err);
+                        }
+                        
+                        issuer_id2 = the_issuer_id;
+                        rev2 = the_rev;
+
+                        cb();
+                    });
                 });
             });
         });
@@ -138,15 +155,23 @@ module.exports = function (config, connect, options)
                     return cb(err);
                 }
 
-                server.close(function ()
+                server.authz.keystore.remove_pub_key(uri2, function (err)
                 {
-                    expect(server.fsq._stopped).to.equal(true);
-                    cb();
+                    if (err)
+                    {
+                        return cb(err);
+                    }
+
+                    server.close(function ()
+                    {
+                        expect(server.fsq._stopped).to.equal(true);
+                        cb();
+                    });
                 });
             });
         });
 
-        function setup(n, options)
+        function setup(n, opts)
         {
             beforeEach(function (cb)
             {
@@ -166,12 +191,18 @@ module.exports = function (config, connect, options)
                             cb();
                         }
                     }
-                };
+                }
 
                 server.on('connect', onconnect);
 
                 var token_exp = new Date();
                 token_exp.setMinutes(token_exp.getMinutes() + 1);
+
+                var access_control = opts.access_control;
+                if (!Array.isArray(access_control))
+                {
+                    access_control = [access_control, access_control];
+                }
 
                 async.times(n, function (i, next)
                 {
@@ -181,14 +212,26 @@ module.exports = function (config, connect, options)
                     },
                     {
                         iss: issuer_id,
-                        access_control: options.access_control,
-                        ack: options.ack,
-                        presence: options.presence
-                    }, token_exp, priv_key)
+                        access_control: access_control[0],
+                        ack: opts.ack,
+                        presence: opts.presence
+                    }, token_exp, priv_key);
+
+                    var token2 = new jsjws.JWT().generateJWTByKey(
+                    {
+                        alg: 'PS256'
+                    },
+                    {
+                        iss: issuer_id2,
+                        access_control: access_control[1],
+                        ack: opts.ack,
+                        presence: opts.presence
+                    }, token_exp, priv_key2);
 
                     connect(
                     {
-                        token: i % 2 === 0 ? token : [token]
+                        token: i % 2 === 0 || options.anon ? token : [token, token2],
+                        handshake_data: new Buffer([i])
                     }, server, function (err, c)
                     {
                         if (err)
@@ -196,12 +239,12 @@ module.exports = function (config, connect, options)
                             return next(err);
                         }
 
-                        if (options.client_function)
+                        if (opts.client_function)
                         {
-                            options.client_function(c, onconnect);
+                            opts.client_function(c, onconnect);
                         }
 
-                        if (options.skip_ready)
+                        if (opts.skip_ready)
                         {
                             return next(null, c);
                         }
@@ -770,12 +813,17 @@ module.exports = function (config, connect, options)
                     }
                 });
 
-                for (var mqserver of connections.keys())
+                function regmsg(mqserver)
                 {
                     mqserver.on('message', function (stream, info, multiplex, done)
                     {
                         done(new Error('dummy'));
                     });
+                }
+
+                for (var mqserver of connections.keys())
+                {
+                    regmsg(mqserver);
                 }
 
                 clients[0].subscribe('foo', function ()
@@ -792,7 +840,7 @@ module.exports = function (config, connect, options)
             });
         });
 
-        describe('pre-connect error handling', function (done)
+        describe('end before connect', function (done)
         {
             beforeEach(function ()
             {
@@ -839,6 +887,322 @@ module.exports = function (config, connect, options)
                 }
 
                 clients[0].on('error', check_error);
+            });
+        });
+
+        describe('non-JSON handshake data', function (done)
+        {
+            beforeEach(function ()
+            {
+                server.once('pre_connect', function (info)
+                {
+                    info.mqserver.on('handshake', function (hsdata, delay)
+                    {
+                        delay()(new Buffer([0, 1, 2]));
+                    });
+                });
+            });
+
+            setup(1,
+            {
+                access_control: {
+                    publish: {
+                        allow: ['foo'],
+                        disallow: []
+                    },
+                    subscribe: {
+                        allow: ['foo'],
+                        disallow: []
+                    }
+                },
+                skip_ready: true,
+                client_function: function (c, onconnect)
+                {
+                    c.on('error', function (err)
+                    {
+                        this.last_error = err;
+                        onconnect();
+                    });
+                }
+            });
+
+            it('should error if carrier ends before client connects', function (done)
+            {
+                function check_error(err)
+                {
+                    expect(err.message).to.equal('Unexpected token \u0000');
+                    done();
+                }
+
+                if (clients[0].last_error)
+                {
+                    return check_error(clients[0].last_error);
+                }
+
+                clients[0].on('error', check_error);
+            });
+        });
+
+        describe('invalid handshake data', function (done)
+        {
+            beforeEach(function ()
+            {
+                server.once('pre_connect', function (info)
+                {
+                    info.mqserver.on('handshake', function (hsdata, delay)
+                    {
+                        delay()(new Buffer(JSON.stringify(
+                        {
+                            hello: 90
+                        })));
+                    });
+                });
+            });
+
+            setup(1,
+            {
+                access_control: {
+                    publish: {
+                        allow: ['foo'],
+                        disallow: []
+                    },
+                    subscribe: {
+                        allow: ['foo'],
+                        disallow: []
+                    }
+                },
+                skip_ready: true,
+                client_function: function (c, onconnect)
+                {
+                    c.on('error', function (err)
+                    {
+                        this.last_error = err;
+                        onconnect();
+                    });
+                }
+            });
+
+            it('should error if carrier ends before client connects', function (done)
+            {
+                function check_error(err)
+                {
+                    expect(err.message).to.equal("data should have required property 'self'");
+                    done();
+                }
+
+                if (clients[0].last_error)
+                {
+                    return check_error(clients[0].last_error);
+                }
+
+                clients[0].on('error', check_error);
+            });
+        });
+
+        describe('multiple tokens', function (done)
+        {
+            setup(2,
+            {
+                access_control: [{
+                    publish: {
+                        allow: ['blue'],
+                        disallow: []
+                    },
+                    subscribe: {
+                        allow: ['foo', 'blue'],
+                        disallow: []
+                    }
+                }, {
+                    publish: {
+                        allow: ['red'],
+                        disallow: []
+                    },
+                    subscribe: {
+                        allow: ['bar', 'red'],
+                        disallow: []
+                    }
+                }]
+            });
+
+            it('should be able to select token to use for operation', function (done)
+            {
+                var sub_tests = [
+                    [0, 0, 'foo', true],
+                    [0, 0, 'bar', false],
+                    [0, 1, 'foo', false],
+                    [0, 1, 'bar', false]
+                ];
+
+                if (!options.anon)
+                {
+                    sub_tests.push(
+                        [1, 0, 'foo', true],
+                        [1, 0, 'bar', false],
+                        [1, 1, 'foo', false],
+                        [1, 1, 'bar', true]);
+                }
+
+                var pub_tests = [
+                    [0, 0, 'blue', true],
+                    [0, 0, 'red', false],
+                    [0, 1, 'blue', false],
+                    [0, 1, 'red', false]
+                ];
+
+                if (!options.anon)
+                {
+                    pub_tests.push(
+                        [1, 0, 'blue', true],
+                        [1, 0, 'red', false],
+                        [1, 1, 'blue', false],
+                        [1, 1, 'red', true]);
+                }
+
+                async.eachSeries(sub_tests, function (t, next)
+                {
+                    function regblock(info)
+                    {
+                        var warning;
+
+                        server.once('warning', function (err)
+                        {
+                            warning = err.message;
+                        });
+
+                        info.access_control.once('subscribe_blocked',
+                        function (topic, mqserver)
+                        {
+                            expect(mqserver).to.equal(info.mqserver);
+                            expect(topic).to.equal(info.prefixes[t[1]] + t[2]);
+                            expect(warning).to.equal('blocked subscribe to topic: ' + topic);
+                            next();
+                        });
+                    }
+
+                    if (!t[3])
+                    {
+                        for (var info of connections.values())
+                        {
+                            if (info.hsdata[0] === t[0])
+                            {
+                                regblock(info);
+                            }
+                        }
+                    }
+     
+                    clients[t[0]].subscribe(t[1], t[2], function (s, info, cb)
+                    {
+                        done(new Error('should not be called'));
+                    }, function (err)
+                    {
+                        if (t[3])
+                        {
+                            expect(err).to.equal(undefined);
+                            next();
+                        }
+                        else
+                        {
+                            expect(err.message).to.equal('server error');
+                        }
+                    });
+                }, function (err)
+                {
+                    if (err) { return done(err); }
+
+                    async.eachSeries(pub_tests, function (t, next)
+                    {
+                        function regblock(info)
+                        {
+                            var warning;
+
+                            server.once('warning', function (err)
+                            {
+                                warning = err.message;
+                            });
+
+                            info.access_control.once('publish_blocked',
+                            function (topic, mqserver)
+                            {
+                                expect(mqserver).to.equal(info.mqserver);
+                                expect(topic).to.equal(info.prefixes[t[1]] + t[2]);
+                                expect(warning).to.equal('blocked publish to topic: ' + topic);
+                                next();
+                            });
+                        }
+
+                        function publish(err)
+                        {
+                            if (err) { return done(err); }
+
+                            var s = clients[t[0]].publish(t[1], t[2], function (err)
+                            {
+                                if (t[3])
+                                {
+                                    expect(err).to.equal(undefined);
+                                }
+                                else
+                                {
+                                    expect(err.message).to.equal('server error');
+                                }
+                            });
+                            
+                            if (t[3])
+                            {
+                                s.end('test');
+                            }
+                            else
+                            {
+                                s.end();
+                            }
+                        }
+
+                        if (t[3])
+                        {
+                            clients[t[0]].subscribe(t[1], t[2], function sub(s, info, cb)
+                            {
+                                expect(info.topic).to.equal(t[2]);
+
+                                var ths = this;
+
+                                read_all(s, function (v)
+                                {
+                                    expect(v.toString()).to.equal('test');
+                                    ths.unsubscribe(t[1], t[2], sub, next);
+                                });
+                            }, publish);
+                        }
+                        else
+                        {
+                            if (options.relay)
+                            {
+                                server.once('connect', function (info)
+                                {
+                                    regblock(info);
+                                });
+                            }
+                            else
+                            {
+                                for (var info of connections.values())
+                                {
+                                    if (info.hsdata[0] === t[0])
+                                    {
+                                        regblock(info);
+                                    }
+                                }
+                            }
+
+                            publish();
+                        }
+                    }, function (err)
+                    {
+                        if (err) { return done(err); }
+
+
+
+                        done();
+
+                    });
+                });
             });
         });
     });

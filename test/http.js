@@ -37,8 +37,16 @@ runner(
 
             mqclient.on('ready', function ()
             {
-                this.publish = function (topic, options, cb)
+                this.publish = function (n, topic, options, cb)
                 {
+                    if (typeof n !== 'number')
+                    {
+                        cb = options;
+                        options = topic;
+                        topic = n;
+                        n = 0;
+                    }
+
                     if (typeof options === 'function')
                     {
                         cb = options;
@@ -51,13 +59,37 @@ runner(
                         auth: userpass,
                         method: 'POST',
                         path: '/publish?' + querystring.stringify(Object.assign(
-                                {}, options, { topic: topic }))
+                                {}, options, { topic: topic, n: n }))
                     }, function (res)
                     {
+                        var msg = '';
+
+                        res.on('end', function ()
+                        {
+                            var err;
+
+                            if (res.statusCode === 200)
+                            {
+                                expect(msg).to.equal('');
+                            }
+                            else
+                            {
+                                err = new Error(msg);
+                            }
+
+                            if (cb)
+                            {
+                                cb(err);
+                            }
+                            else if (err)
+                            {
+                                mqclient._warning(err);
+                            }
+                        });
+
                         if (cb)
                         {
                             res.on('error', cb);
-                            res.on('end', cb);
                         }
                         else
                         {
@@ -66,7 +98,11 @@ runner(
 
                         res.on('readable', function ()
                         {
-                            expect(this.read()).to.equal(null);
+                            var r = this.read();
+                            if (r !== null)
+                            {
+                                msg += r.toString();
+                            }
                         });
                     });
                 };
