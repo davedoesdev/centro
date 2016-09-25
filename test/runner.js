@@ -388,6 +388,35 @@ module.exports = function (config, connect, options)
                     clients[0].publish('foo').end('bar');
                 });
             });
+
+            it('should dedup handlers', function (done)
+            {
+                var called = false;
+
+                function handler(s, info)
+                {
+                    expect(called).to.equal(false);
+                    called = true;
+
+                    expect(info.topic).to.equal('foo');
+                    expect(info.single).to.equal(false);
+
+                    read_all(s, function (v)
+                    {
+                        expect(v.toString()).to.equal('bar');
+                        done();
+                    });
+                }
+ 
+                clients[0].subscribe('foo', handler, function (err)
+                {
+                    if (err) { return done(err); }
+                    clients[0].subscribe('foo', handler, function (err)
+                    {
+                        clients[0].publish('foo').end('bar');
+                    });
+                });
+            });
         });
 
         describe('access control with block', function ()
@@ -1193,15 +1222,7 @@ module.exports = function (config, connect, options)
 
                             publish();
                         }
-                    }, function (err)
-                    {
-                        if (err) { return done(err); }
-
-
-
-                        done();
-
-                    });
+                    }, done);
                 });
             });
         });
