@@ -341,6 +341,121 @@ module.exports = function (config, connect, options)
                 });
             });
 
+            it('should unsubscribe', function (done)
+            {
+                function handler()
+                {
+                    done(new Error('should not be called'));
+                }
+
+                clients[0].subscribe('foo', handler, function (err)
+                {
+                    if (err) { return done(err); }
+                    clients[0].unsubscribe('foo', handler, function (err)
+                    {
+                        if (err) { return done(err); }
+                        clients[0].publish('foo', function (err)
+                        {
+                            setTimeout(done, 1000);
+                        }).end('bar');
+                    });
+                });
+            });
+
+            it('should unsubscribe all handlers on a topic', function (done)
+            {
+                function handler()
+                {
+                    done(new Error('should not be called'));
+                }
+
+                function handler2()
+                {
+                    done(new Error('should not be called'));
+                }
+
+                clients[0].subscribe('foo', handler, function (err)
+                {
+                    if (err) { return done(err); }
+                    clients[0].subscribe('foo', handler2, function (err)
+                    {
+                        if (err) { return done(err); }
+                        clients[0].unsubscribe('foo', undefined, function (err)
+                        {
+                            if (err) { return done(err); }
+                            clients[0].publish('foo', function (err)
+                            {
+                                setTimeout(done, 1000);
+                            }).end('bar');
+                        });
+                    });
+                });
+            });
+
+            it('should unsubscribe twice without error', function (done)
+            {
+                function handler()
+                {
+                    done(new Error('should not be called'));
+                }
+
+                clients[0].subscribe('foo', handler, function (err)
+                {
+                    if (err) { return done(err); }
+                    clients[0].unsubscribe('foo', handler, function (err)
+                    {
+                        if (err) { return done(err); }
+                        clients[0].unsubscribe('foo', handler, function (err)
+                        {
+                            if (err) { return done(err); }
+                            clients[0].publish('foo', function (err)
+                            {
+                                if (err) { return done(err); }
+                                setTimeout(done, 1000);
+                            }).end('bar');
+                        });
+                    });
+                });
+            });
+
+            it('should unsubscribe all handlers on a topic twice without error', function (done)
+            {
+                function handler()
+                {
+                    done(new Error('should not be called'));
+                }
+
+                function handler2()
+                {
+                    done(new Error('should not be called'));
+                }
+
+                clients[0].subscribe('foo', handler, function (err)
+                {
+                    if (err) { return done(err); }
+                    clients[0].subscribe('foo', handler2, function (err)
+                    {
+                        if (err) { return done(err); }
+                        clients[0].unsubscribe('foo', undefined, function (err)
+                        {
+                            if (err) { return done(err); }
+                            clients[0].unsubscribe('foo', undefined, function (err)
+                            {
+                                if (err) { return done(err); }
+                                clients[0].publish('foo', function (err)
+                                {
+                                    setTimeout(done, 1000);
+                                }).end('bar');
+                            });
+                        });
+                    });
+                });
+            });
+
+
+// unsub - check internal maps and matchers are cleared up
+
+
             it('emit publish_requested and subscribe_requested events', function (done)
             {
                 var pubreq = false,
@@ -413,6 +528,7 @@ module.exports = function (config, connect, options)
                     if (err) { return done(err); }
                     clients[0].subscribe('foo', handler, function (err)
                     {
+                        if (err) { return done(err); }
                         clients[0].publish('foo').end('bar');
                     });
                 });
@@ -676,9 +792,8 @@ module.exports = function (config, connect, options)
                         read_all(s, function (v)
                         {
                             expect(v.toString()).to.equal('"someone left"');
-                            clients[1].unsubscribe('leave.all.*');
                             expect(pubreq).to.equal(false);
-                            done();
+                            clients[1].unsubscribe('leave.all.*', undefined, done);
                         });
                     }, function (err)
                     {
@@ -1034,20 +1149,20 @@ module.exports = function (config, connect, options)
             {
                 access_control: [{
                     publish: {
-                        allow: ['blue'],
+                        allow: ['blue', 'test'],
                         disallow: []
                     },
                     subscribe: {
-                        allow: ['foo', 'blue'],
+                        allow: ['foo', 'blue', 'test'],
                         disallow: []
                     }
                 }, {
                     publish: {
-                        allow: ['red'],
+                        allow: ['red', 'test'],
                         disallow: []
                     },
                     subscribe: {
-                        allow: ['bar', 'red'],
+                        allow: ['bar', 'red', 'test'],
                         disallow: []
                     }
                 }]
@@ -1223,6 +1338,95 @@ module.exports = function (config, connect, options)
                             publish();
                         }
                     }, done);
+                });
+            });
+
+            it('should unsubscribe all handlers', function (done)
+            {
+                var called = false;
+
+                function handler(s, info)
+                {
+                    if (options.anon)
+                    {
+                        return done(new Error('should not be called'));
+                    }
+
+                    expect(called).to.equal(false);
+                    called = true;
+
+                    expect(info.single).to.equal(false);
+
+                    read_all(s, function (v)
+                    {
+                        expect(v.toString()).to.equal('bar');
+                        setTimeout(done, 1000);
+                    });
+                }
+
+                var n = options.anon ? 0 : 1;
+
+                clients[1].subscribe('test', handler, function (err)
+                {
+                    if (err) { return done(err); }
+                    clients[1].subscribe(n, 'test', handler, function (err)
+                    {
+                        if (err) { return done(err); }
+                        clients[1].unsubscribe(function (err)
+                        {
+                            if (err) { return done(err); }
+                            clients[1].publish('test', function (err)
+                            {
+                                if (err) { return done(err); }
+                                clients[1].publish(n, 'test', function (err)
+                                {
+                                    if (err) { return done(err); }
+                                    if (options.anon)
+                                    {
+                                        setTimeout(done, 1000);
+                                    }
+                                }).end('bar');
+                            }).end('bar');
+                        });
+                    });
+                });
+            });
+
+            it('should unsubscribe twice without error', function (done)
+            {
+                function handler()
+                {
+                    done(new Error('should not be called'));
+                }
+
+                clients[0].subscribe('test', handler, function (err)
+                {
+                    if (err) { return done(err); }
+                    clients[1].subscribe('test', handler, function (err)
+                    {
+                        if (err) { return done(err); }
+                        clients[0].unsubscribe('test', handler, function (err)
+                        {
+                            if (err) { return done(err); }
+                            clients[0].unsubscribe('test', handler, function (err)
+                            {
+                                if (err) { return done(err); }
+                                clients[1].unsubscribe('foo', handler, function (err)
+                                {
+                                    if (err) { return done(err); }
+                                    clients[1].unsubscribe('test', handler, function (err)
+                                    {
+                                        if (err) { return done(err); }
+                                        clients[0].publish('test', function (err)
+                                        {
+                                            if (err) { return done(err); }
+                                            setTimeout(done, 1000);
+                                        }).end('bar');
+                                    });
+                                });
+                            });
+                        });
+                    });
                 });
             });
         });
