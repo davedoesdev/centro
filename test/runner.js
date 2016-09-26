@@ -196,7 +196,14 @@ module.exports = function (config, connect, options)
                 server.on('connect', onconnect);
 
                 var token_exp = new Date();
-                token_exp.setMinutes(token_exp.getMinutes() + 1);
+				if (opts.ttl)
+                {
+                    token_exp.setSeconds(token_exp.getSeconds() + opts.ttl);
+                }
+                else
+                {
+                    token_exp.setMinutes(token_exp.getMinutes() + 1);
+                }
 
                 var access_control = opts.access_control;
                 if (!Array.isArray(access_control))
@@ -870,7 +877,7 @@ module.exports = function (config, connect, options)
             });
         });
 
-        describe('error handling', function (done)
+        describe('error handling', function ()
         {
             setup(1,
             {
@@ -982,9 +989,20 @@ module.exports = function (config, connect, options)
                     }).end('bar');
                 });
             });
+
+            it('should emit fsq error as error', function (done)
+            {
+                server.on('error', function (err)
+                {
+                    expect(err.message).to.equal('dummy');
+                    done();
+                });
+
+                server.fsq.emit('error', new Error('dummy'));
+            });
         });
 
-        describe('end before connect', function (done)
+        describe('end before connect', function ()
         {
             beforeEach(function ()
             {
@@ -1034,7 +1052,7 @@ module.exports = function (config, connect, options)
             });
         });
 
-        describe('non-JSON handshake data', function (done)
+        describe('non-JSON handshake data', function ()
         {
             beforeEach(function ()
             {
@@ -1087,7 +1105,7 @@ module.exports = function (config, connect, options)
             });
         });
 
-        describe('invalid handshake data', function (done)
+        describe('invalid handshake data', function ()
         {
             beforeEach(function ()
             {
@@ -1143,7 +1161,7 @@ module.exports = function (config, connect, options)
             });
         });
 
-        describe('multiple tokens', function (done)
+        describe('multiple tokens', function ()
         {
             setup(2,
             {
@@ -1427,6 +1445,50 @@ module.exports = function (config, connect, options)
                             });
                         });
                     });
+                });
+            });
+        });
+
+        describe('token expiry', function ()
+        {
+            this.timeout(5000);
+
+            setup(1,
+            {
+                access_control: {
+                    publish: {
+                        allow: ['foo'],
+                        disallow: []
+                    },
+                    subscribe: {
+                        allow: ['foo'],
+                        disallow: []
+                    }
+                },
+                ttl: 2
+            });
+
+            it('should close connection when token expires', function (done)
+            {
+                var empty = false,
+                    ended = false;
+
+                server.on('empty', function ()
+                {
+                    empty = true;
+                    if (ended)
+                    {
+                        done();
+                    }
+                });
+
+                clients[0].mux.on('end', function ()
+                {
+                    ended = true;
+                    if (empty)
+                    {
+                        done();
+                    }
                 });
             });
         });
