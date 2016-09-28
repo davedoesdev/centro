@@ -41,7 +41,7 @@
     "qlobber-fsq": "~3.2.4",
     "authorize-jwt": "~2.0.0",
     "primus": "~6.0.3",
-    "primus-backpressure": "~1.0.0",
+    "primus-backpressure": "~1.0.1",
     "fastest-writable": "~0.0.6",
     "frame-stream": "~1.1.1",
     "ajv": "~4.4.0",

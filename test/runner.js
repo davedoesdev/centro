@@ -196,7 +196,7 @@ module.exports = function (config, connect, options)
                 server.on('connect', onconnect);
 
                 var token_exp = new Date();
-				if (opts.ttl)
+				if (opts.ttl !== undefined)
                 {
                     token_exp.setSeconds(token_exp.getSeconds() + opts.ttl);
                 }
@@ -213,6 +213,11 @@ module.exports = function (config, connect, options)
 
                 async.times(n, function (i, next)
                 {
+                    if (opts.server_function)
+                    {
+                        opts.server_function(server);
+                    }
+
                     var token = new jsjws.JWT().generateJWTByKey(
                     {
                         alg: 'PS256'
@@ -237,7 +242,9 @@ module.exports = function (config, connect, options)
 
                     connect(
                     {
-                        token: i % 2 === 0 || options.anon ? token : [token, token2],
+                        token: opts.no_token ? '' :
+                               i % 2 === 0 || options.anon ? token :
+                               [token, token2],
                         handshake_data: new Buffer([i])
                     }, server, function (err, c)
                     {
@@ -992,7 +999,7 @@ module.exports = function (config, connect, options)
 
             it('should emit fsq error as error', function (done)
             {
-                server.on('error', function (err)
+                server.once('error', function (err)
                 {
                     expect(err.message).to.equal('dummy');
                     done();
@@ -1473,7 +1480,7 @@ module.exports = function (config, connect, options)
                 var empty = false,
                     ended = false;
 
-                server.on('empty', function ()
+                server.once('empty', function ()
                 {
                     empty = true;
                     if (ended)
@@ -1491,6 +1498,150 @@ module.exports = function (config, connect, options)
                     }
                 });
             });
+        });
+
+        function client_function(c, onconnect)
+        {
+            c.errors = [];
+
+            c.on('error', function (err)
+            {
+                console.log(err);
+                this.errors.push(err);
+                onconnect();
+            });
+
+            if (name !== 'primus')
+            {
+                return;
+            }
+
+            c.mux.carrier.msg_stream.on('outgoing::open', function ()
+            {
+                this.socket.on('unexpected-response', function (req, res)
+                {
+                    var ths = this,
+                        err = new Error('unexpected response');
+
+                    err.statusCode = res.statusCode;
+                    err.authenticate = res.headers['www-authenticate'];
+                    err.data = '';
+
+                    res.on('end', function ()
+                    {
+                        c.emit('error', err);
+                    });
+
+                    res.on('readable', function ()
+                    {
+                        var data = this.read();
+                        if (data !== null)
+                        {
+                            err.data += data;
+                        }
+                    });
+                });
+            });
+        }
+
+        function server_function(s)
+        {
+            s.last_warning = null;
+            s.once('warning', function (err)
+            {
+                this.last_warning = err;
+            });
+        }
+
+        function expect_error(msg)
+        {
+            return function (done)
+            {
+                function check_errors()
+                {
+                    expect(server.last_warning.message).to.equal(msg);
+                    expect(server.last_warning.statusCode).to.equal(401);
+                    expect(server.last_warning.authenticate).to.equal('Basic realm="centro"');
+
+                    var errors = clients[0].errors;
+
+                    if (errors.length < 1)
+                    {
+                        return false;
+                    }
+
+                    expect(errors[0].message).to.equal('ended before ready');
+
+                    if (name === 'primus')
+                    {
+                        if (errors.length < 2)
+                        {
+                            return false;
+                        }
+
+                        if (errors.length > 2)
+                        {
+                            done(new Error('too many errors'));
+                            return false;
+                        }
+
+                        expect(errors[1].message).to.equal('unexpected response');
+                        expect(errors[1].statusCode).to.equal(401);
+                        expect(errors[1].authenticate).to.equal('Basic realm="centro"');
+                        expect(errors[1].data).to.equal('{"error":"' + msg + '"}');
+
+                    }
+                    else if (errors.length > 1)
+                    {
+                        done(new Error('too many errors'));
+                        return false;
+                    }
+
+                    done();
+                    return true;
+                }
+
+                if (!check_errors())
+                {
+                    clients[0].on('error', check_errors);
+                }
+            };
+        }
+
+        describe('expired token', function ()
+        {
+            setup(1,
+            {
+                access_control: {
+                    publish: {
+                        allow: ['foo'],
+                        disallow: []
+                    },
+                    subscribe: {
+                        allow: ['foo'],
+                        disallow: []
+                    }
+                },
+                ttl: 0,
+                skip_ready: true,
+                client_function: client_function,
+                server_function: server_function
+            });
+
+            it('should fail to authorize', expect_error('expired'));
+        });
+
+        describe('no tokens', function ()
+        {
+            setup(1,
+            {
+                no_token: true,
+                skip_ready: true,
+                client_function: client_function,
+                server_function: server_function
+            });
+
+            it('should fail to authorize', expect_error('no tokens'));
         });
     });
 };
