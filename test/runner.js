@@ -90,7 +90,7 @@ module.exports = function (config, connect, options)
             rev, rev2,
             connections = new Map();
 
-        before(function (cb)
+        function on_before(cb)
         {
             server = new centro.CentroServer(config);
 
@@ -139,9 +139,11 @@ module.exports = function (config, connect, options)
                     });
                 });
             });
-        });
+        }
+        
+        before(on_before);
 
-        after(function (cb)
+        function on_after(cb)
         {
             if (options.anon)
             {
@@ -169,7 +171,9 @@ module.exports = function (config, connect, options)
                     });
                 });
             });
-        });
+        }
+
+        after(on_after);
 
         function setup(n, opts)
         {
@@ -304,7 +308,8 @@ module.exports = function (config, connect, options)
 
                 async.each(clients, function (c, cb)
                 {
-                    if (c.mux.carrier._readableState.ended)
+                    if (c.mux.carrier._readableState.ended ||
+                        c.mux.carrier.destroyed)
                     {
                         return cb();
                     }
@@ -1642,6 +1647,57 @@ module.exports = function (config, connect, options)
             });
 
             it('should fail to authorize', expect_error('no tokens'));
+        });
+
+        describe('close', function ()
+        {
+            setup(1,
+            {
+                access_control: {
+                    publish: {
+                        allow: ['foo'],
+                        disallow: []
+                    },
+                    subscribe: {
+                        allow: ['foo'],
+                        disallow: []
+                    }
+                }
+            });
+
+            it('should close the server', function (done)
+            {
+                function close()
+                {
+                    server.close(function (err)
+                    {
+                        if (err) { return done(err); }
+                        on_before(done);
+                    });
+                }
+
+                if (options.relay)
+                {
+                    server.once('connect', close);
+                }
+
+                if (name === 'tcp')
+                {
+                    clients[0].on('error', function (err)
+                    {
+                        expect(err.message).to.equal('write EPIPE');
+                    });
+                }
+
+                clients[0].publish('foo').write('bar');
+
+                if (!options.relay)
+                {
+                    close();
+                }
+
+                // can we call it twice when already closed?
+            });
         });
     });
 };
