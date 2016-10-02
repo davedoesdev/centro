@@ -1051,7 +1051,7 @@ module.exports = function (config, connect, options)
             {
                 function check_error(err)
                 {
-                    expect(err.message).to.equal('ended before ready');
+                    expect(err.message).to.equal('ended before handshaken');
                     done();
                 }
 
@@ -1575,8 +1575,6 @@ module.exports = function (config, connect, options)
                         return false;
                     }
 
-                    expect(errors[0].message).to.equal('ended before ready');
-
                     if (name === 'primus')
                     {
                         if (errors.length < 2)
@@ -1590,16 +1588,22 @@ module.exports = function (config, connect, options)
                             return false;
                         }
 
-                        expect(errors[1].message).to.equal('unexpected response');
-                        expect(errors[1].statusCode).to.equal(401);
-                        expect(errors[1].authenticate).to.equal('Basic realm="centro"');
-                        expect(errors[1].data).to.equal('{"error":"' + msg + '"}');
+                        expect(errors[0].message).to.equal('unexpected response');
+                        expect(errors[0].statusCode).to.equal(401);
+                        expect(errors[0].authenticate).to.equal('Basic realm="centro"');
+                        expect(errors[0].data).to.equal('{"error":"' + msg + '"}');
 
+                        expect(errors[1].message).to.equal('ended before handshaken');
                     }
-                    else if (errors.length > 1)
+                    else
                     {
-                        done(new Error('too many errors'));
-                        return false;
+                        if (errors.length > 1)
+                        {
+                            done(new Error('too many errors'));
+                            return false;
+                        }
+
+                        expect(errors[0].message).to.equal('ended before handshaken');
                     }
 
                     done();
@@ -1665,20 +1669,11 @@ module.exports = function (config, connect, options)
                 }
             });
 
-            it('should close the server', function (done)
+            function close(f)
             {
-                function close()
-                {
-                    server.close(function (err)
-                    {
-                        if (err) { return done(err); }
-                        on_before(done);
-                    });
-                }
-
                 if (options.relay)
                 {
-                    server.once('connect', close);
+                    server.once('connect', f);
                 }
 
                 if (name === 'tcp')
@@ -1693,11 +1688,36 @@ module.exports = function (config, connect, options)
 
                 if (!options.relay)
                 {
-                    close();
+                    f();
                 }
+            }
 
-                // can we call it twice when already closed?
+            it('should close the server', function (done)
+            {
+                close(function ()
+                {
+                    server.close(function (err)
+                    {
+                        if (err) { return done(err); }
+                        on_before(done);
+                    });
+                });
             });
+
+            it('should emit a close event', function (done)
+            {
+                close(function ()
+                {
+                    server.on('close', function ()
+                    {
+                        on_before(done);
+                    });
+
+                    server.close();
+                });
+            });
+
+            // can we call it twice when already closed?
         });
     });
 };
