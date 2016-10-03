@@ -1737,7 +1737,74 @@ module.exports = function (config, connect, options)
                 });
             });
 
-            // can we call it twice when already closed?
+            it('should be able to close the server twice in series', function (done)
+            {
+                close(function ()
+                {
+                    server.close(function (err)
+                    {
+                        if (err) { return done(err); }
+                        server.close(function (err)
+                        {
+                            if (err) { return done(err); }
+                            on_before(done);
+                        });
+                    });
+                });
+            });
+
+            it('should be able to close the server twice in parallel', function (done)
+            {
+                var called = 0;
+
+                function check(err)
+                {
+                    if (err) { return done(err); }
+                    called += 1;
+                    if (called === 2)
+                    {
+                        on_before(done);
+                    }
+                    else if (called > 2)
+                    {
+                        done(new Error('called too many times'));
+                    }
+                }
+
+                close(function ()
+                {
+                    server.close(check);
+                    server.close(check);
+                });
+            });
+
+            it('should pass back close transport errors', function (done)
+            {
+                var orig_close = server.transport_ops[0].close;
+
+                server.transport_ops[0].close = function (cb)
+                {
+                    orig_close.call(this, function (err)
+                    {
+                        if (err) { return done(err); }
+                        cb(new Error('dummy'));
+                    });
+                };
+
+                server.on('close', function ()
+                {
+                    on_before(done);
+                });
+
+                close(function ()
+                {
+                    server.close(function (err, cont)
+                    {
+                        expect(err.message).to.equal('dummy');
+                        cont();
+                    });
+                });
+            });
         });
     });
 };
