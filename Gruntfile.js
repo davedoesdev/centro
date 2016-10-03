@@ -21,6 +21,7 @@ module.exports = function (grunt)
                    'test/http.js',
                    'test/in-mem-fsq.js',
                    'test/in-mem-anon.js',
+                   'test/server-error.js',
                    'test/example/example.js' ],
             options: {
                 bail: true
