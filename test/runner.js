@@ -1805,6 +1805,37 @@ module.exports = function (config, connect, options)
                     });
                 });
             });
+
+            if (!options.anon)
+            {
+                it.only('should pass back close keystore errors', function (done)
+                {
+                    var orig_close = server.authz.keystore.close;
+
+                    server.authz.keystore.close = function (cb)
+                    {
+                        orig_close.call(this, function (err)
+                        {
+                            if (err) { return done(err); }
+                            cb(new Error('dummy'));
+                        });
+                    };
+
+                    server.on('close', function ()
+                    {
+                        on_before(done);
+                    });
+
+                    close(function ()
+                    {
+                        server.close(function (err, cont)
+                        {
+                            expect(err.message).to.equal('dummy');
+                            cont();
+                        });
+                    });
+                });
+            }
         });
     });
 };
