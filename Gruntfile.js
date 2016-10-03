@@ -19,6 +19,7 @@ module.exports = function (grunt)
                    'test/embedded.js',
                    'test/embedded-authz.js',
                    'test/http.js',
+                   'test/in-mem-fsq.js',
                    'test/example/example.js' ],
             options: {
                 bail: true

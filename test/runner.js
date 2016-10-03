@@ -92,39 +92,29 @@ module.exports = function (config, connect, options)
 
         function on_before(cb)
         {
-            server = new centro.CentroServer(config);
-
-            server.on('connect', function (info)
+            function start()
             {
-                connections.set(info.mqserver, info);
-            });
+                server = new centro.CentroServer(config);
 
-            server.on('disconnect', function (mqserver)
-            {
-                connections.delete(mqserver);
-            });
-
-            server.on('ready', function ()
-            {
-                if (options.anon)
+                server.on('connect', function (info)
                 {
-                    return cb();
-                }
+                    connections.set(info.mqserver, info);
+                });
 
-                priv_key = ursa.generatePrivateKey(2048, 65537);
-                server.authz.keystore.add_pub_key(uri, priv_key.toPublicPem('utf8'),
-                function (err, the_issuer_id, the_rev)
+                server.on('disconnect', function (mqserver)
                 {
-                    if (err)
+                    connections.delete(mqserver);
+                });
+
+                server.on('ready', function ()
+                {
+                    if (options.anon)
                     {
-                        return cb(err);
+                        return cb();
                     }
-                    
-                    issuer_id = the_issuer_id;
-                    rev = the_rev;
 
-                    priv_key2 = ursa.generatePrivateKey(2048, 65537);
-                    server.authz.keystore.add_pub_key(uri2, priv_key2.toPublicPem('utf8'),
+                    priv_key = ursa.generatePrivateKey(2048, 65537);
+                    server.authz.keystore.add_pub_key(uri, priv_key.toPublicPem('utf8'),
                     function (err, the_issuer_id, the_rev)
                     {
                         if (err)
@@ -132,13 +122,35 @@ module.exports = function (config, connect, options)
                             return cb(err);
                         }
                         
-                        issuer_id2 = the_issuer_id;
-                        rev2 = the_rev;
+                        issuer_id = the_issuer_id;
+                        rev = the_rev;
 
-                        cb();
+                        priv_key2 = ursa.generatePrivateKey(2048, 65537);
+                        server.authz.keystore.add_pub_key(uri2, priv_key2.toPublicPem('utf8'),
+                        function (err, the_issuer_id, the_rev)
+                        {
+                            if (err)
+                            {
+                                return cb(err);
+                            }
+                            
+                            issuer_id2 = the_issuer_id;
+                            rev2 = the_rev;
+
+                            cb();
+                        });
                     });
                 });
-            });
+            }
+
+            if (config.fsq && !config.fsq.initialized)
+            {
+                config.fsq.on('start', start);
+            }
+            else
+            {
+                start();
+            }
         }
         
         before(on_before);
@@ -166,8 +178,16 @@ module.exports = function (config, connect, options)
 
                     server.close(function ()
                     {
-                        expect(server.fsq._stopped).to.equal(true);
-                        cb();
+                        if (config.fsq)
+                        {
+                            expect(server.fsq._stopped).to.equal(false);
+                            config.fsq.stop_watching(cb);
+                        }
+                        else
+                        {
+                            expect(server.fsq._stopped).to.equal(true);
+                            cb();
+                        }
                     });
                 });
             });
