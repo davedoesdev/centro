@@ -491,10 +491,6 @@ module.exports = function (config, connect, options)
                 });
             });
 
-
-// unsub - check internal maps and matchers are cleared up
-
-
             it('emit publish_requested and subscribe_requested events', function (done)
             {
                 var pubreq = false,
