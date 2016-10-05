@@ -35,78 +35,81 @@ runner(
 
             var mqclient = centro.stream_auth(stream, config);
 
-            mqclient.on('ready', function ()
+            if (mqclient)
             {
-                this.publish = function (n, topic, options, cb)
+                mqclient.on('ready', function ()
                 {
-                    if (typeof n !== 'number')
+                    this.publish = function (n, topic, options, cb)
                     {
-                        cb = options;
-                        options = topic;
-                        topic = n;
-                        n = 0;
-                    }
-
-                    if (typeof options === 'function')
-                    {
-                        cb = options;
-                        options = undefined;
-                    }
-
-                    return http.request(
-                    {
-                        port: 8700,
-                        auth: userpass,
-                        method: 'POST',
-                        path: '/publish?' + querystring.stringify(Object.assign(
-                                {}, options, { topic: topic, n: n }))
-                    }, function (res)
-                    {
-                        var msg = '';
-
-                        res.on('end', function ()
+                        if (typeof n !== 'number')
                         {
-                            var err;
+                            cb = options;
+                            options = topic;
+                            topic = n;
+                            n = 0;
+                        }
 
-                            if (res.statusCode === 200)
+                        if (typeof options === 'function')
+                        {
+                            cb = options;
+                            options = undefined;
+                        }
+
+                        return http.request(
+                        {
+                            port: 8700,
+                            auth: userpass,
+                            method: 'POST',
+                            path: '/publish?' + querystring.stringify(Object.assign(
+                                    {}, options, { topic: topic, n: n }))
+                        }, function (res)
+                        {
+                            var msg = '';
+
+                            res.on('end', function ()
                             {
-                                expect(msg).to.equal('');
-                            }
-                            else
-                            {
-                                err = new Error(msg);
-                            }
+                                var err;
+
+                                if (res.statusCode === 200)
+                                {
+                                    expect(msg).to.equal('');
+                                }
+                                else
+                                {
+                                    err = new Error(msg);
+                                }
+
+                                if (cb)
+                                {
+                                    cb(err);
+                                }
+                                else if (err)
+                                {
+                                    mqclient._warning(err);
+                                }
+                            });
 
                             if (cb)
                             {
-                                cb(err);
+                                res.on('error', cb);
                             }
-                            else if (err)
+                            else
                             {
-                                mqclient._warning(err);
+                                res.on('error', mqclient._warning);
                             }
-                        });
 
-                        if (cb)
-                        {
-                            res.on('error', cb);
-                        }
-                        else
-                        {
-                            res.on('error', mqclient._warning);
-                        }
-
-                        res.on('readable', function ()
-                        {
-                            var r = this.read();
-                            if (r !== null)
+                            res.on('readable', function ()
                             {
-                                msg += r.toString();
-                            }
+                                var r = this.read();
+                                if (r !== null)
+                                {
+                                    msg += r.toString();
+                                }
+                            });
                         });
-                    });
-                };
-            });
+                    };
+                });
+            }
 
             cb(null, mqclient);
         });

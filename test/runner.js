@@ -81,6 +81,7 @@ module.exports = function (config, connect, options)
     config.authorize = require('authorize-jwt');
     config.db_type = 'pouchdb';
     config.db_for_update = true;
+    config.max_tokens = 2;
 
     describe(name, function ()
     {
@@ -235,6 +236,24 @@ module.exports = function (config, connect, options)
                     access_control = [access_control, access_control];
                 }
 
+                var orig_stream_auth = centro.stream_auth,
+                    orig_separate_auth = centro.separate_auth;
+                if (opts.end_immediately)
+                {
+                    centro.stream_auth = function (stream, config)
+                    {
+                        stream.end();
+                        return null;
+                    };
+                    centro.separate_auth = function (config, cb)
+                    {
+                        orig_separate_auth.call(this, config, function (err, userpass, make_client)
+                        {
+                            cb(err, '', make_client);
+                        });
+                    };
+                }
+
                 async.times(n, function (i, next)
                 {
                     if (opts.server_function)
@@ -267,6 +286,7 @@ module.exports = function (config, connect, options)
                     connect(
                     {
                         token: opts.no_token ? '' :
+                               opts.too_many_tokens ? [token, token2, token] :
                                i % 2 === 0 || options.anon ? token :
                                [token, token2],
                         handshake_data: new Buffer([i])
@@ -282,7 +302,7 @@ module.exports = function (config, connect, options)
                             opts.client_function(c, onconnect);
                         }
 
-                        if (opts.skip_ready)
+                        if (opts.skip_ready || opts.end_immediately)
                         {
                             return next(null, c);
                         }
@@ -294,12 +314,25 @@ module.exports = function (config, connect, options)
                     });
                 }, function (err, cs)
                 {
+                    if (opts.end_immediately)
+                    {
+                        centro.stream_auth = orig_stream_auth;
+                        centro.separate_auth = orig_separate_auth;
+                    }
+
                     if (err)
                     {
                         return cb(err);
                     }
 
                     clients = cs;
+
+                    if (opts.end_immediately && (name !== 'primus'))
+                    {
+                        server.removeListener('connect', onconnect);
+                        return setTimeout(cb, 1000);
+                    }
+
                     if (connected === n)
                     {
                         cb();
@@ -328,7 +361,8 @@ module.exports = function (config, connect, options)
 
                 async.each(clients, function (c, cb)
                 {
-                    if (c.mux.carrier._readableState.ended ||
+                    if (!c ||
+                        c.mux.carrier._readableState.ended ||
                         c.mux.carrier.destroyed)
                     {
                         return cb();
@@ -1584,42 +1618,45 @@ module.exports = function (config, connect, options)
                     expect(server.last_warning.statusCode).to.equal(401);
                     expect(server.last_warning.authenticate).to.equal('Basic realm="centro"');
 
-                    var errors = clients[0].errors;
-
-                    if (errors.length < 1)
+                    if (clients[0])
                     {
-                        return false;
-                    }
+                        var errors = clients[0].errors;
 
-                    if (name === 'primus')
-                    {
-                        if (errors.length < 2)
+                        if (errors.length < 1)
                         {
                             return false;
                         }
 
-                        if (errors.length > 2)
+                        if (name === 'primus')
                         {
-                            done(new Error('too many errors'));
-                            return false;
+                            if (errors.length < 2)
+                            {
+                                return false;
+                            }
+
+                            if (errors.length > 2)
+                            {
+                                done(new Error('too many errors'));
+                                return false;
+                            }
+
+                            expect(errors[0].message).to.equal('unexpected response');
+                            expect(errors[0].statusCode).to.equal(401);
+                            expect(errors[0].authenticate).to.equal('Basic realm="centro"');
+                            expect(errors[0].data).to.equal('{"error":"' + msg + '"}');
+
+                            expect(errors[1].message).to.equal('ended before handshaken');
                         }
-
-                        expect(errors[0].message).to.equal('unexpected response');
-                        expect(errors[0].statusCode).to.equal(401);
-                        expect(errors[0].authenticate).to.equal('Basic realm="centro"');
-                        expect(errors[0].data).to.equal('{"error":"' + msg + '"}');
-
-                        expect(errors[1].message).to.equal('ended before handshaken');
-                    }
-                    else
-                    {
-                        if (errors.length > 1)
+                        else
                         {
-                            done(new Error('too many errors'));
-                            return false;
-                        }
+                            if (errors.length > 1)
+                            {
+                                done(new Error('too many errors'));
+                                return false;
+                            }
 
-                        expect(errors[0].message).to.equal('ended before handshaken');
+                            expect(errors[0].message).to.equal('ended before handshaken');
+                        }
                     }
 
                     done();
@@ -1667,6 +1704,43 @@ module.exports = function (config, connect, options)
             });
 
             it('should fail to authorize', expect_error('no tokens'));
+        });
+
+        describe('immediate eos', function ()
+        {
+            setup(1,
+            {
+                end_immediately: true,
+                client_function: name === 'primus' ? client_function : undefined,
+                server_function: server_function
+            });
+
+            it('should fail to read tokens',
+               expect_error(name == 'primus' ? 'tokens missing' :
+                                               'ended before frame'));
+        });
+
+        describe('max tokens', function ()
+        {
+            setup(1,
+            {
+                access_control: {
+                    publish: {
+                        allow: ['foo'],
+                        disallow: []
+                    },
+                    subscribe: {
+                        allow: ['foo'],
+                        disallow: []
+                    }
+                },
+                too_many_tokens: true,
+                skip_ready: true,
+                client_function: client_function,
+                server_function: server_function
+            });
+
+            it('should fail to authorize', expect_error('too many tokens'));
         });
 
         describe('close', function ()
@@ -1804,7 +1878,7 @@ module.exports = function (config, connect, options)
 
             if (!options.anon)
             {
-                it.only('should pass back close keystore errors', function (done)
+                it('should pass back close keystore errors', function (done)
                 {
                     var orig_close = server.authz.keystore.close;
 
