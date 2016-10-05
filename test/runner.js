@@ -287,6 +287,7 @@ module.exports = function (config, connect, options)
                     {
                         token: opts.no_token ? '' :
                                opts.too_many_tokens ? [token, token2, token] :
+                               opts.duplicate_tokens ? [token, token] :
                                i % 2 === 0 || options.anon ? token :
                                [token, token2],
                         handshake_data: new Buffer([i])
@@ -1743,6 +1744,51 @@ module.exports = function (config, connect, options)
             it('should fail to authorize', expect_error('too many tokens'));
         });
 
+        describe('duplicate tokens', function ()
+        {
+            setup(1,
+            {
+                access_control: {
+                    publish: {
+                        allow: ['foo'],
+                        disallow: []
+                    },
+                    subscribe: {
+                        allow: ['foo'],
+                        disallow: []
+                    }
+                },
+                duplicate_tokens: true,
+                skip_ready: true,
+                client_function: client_function,
+                server_function: server_function
+            });
+
+            it('should fail to authorize', expect_error(
+                options.anon ? 'too many tokens' : 'duplicate URI: ' + uri));
+        });
+
+        describe('invalid payload', function ()
+        {
+            setup(1,
+            {
+                access_control: {
+                    publish: {
+                        allow: ['foo'],
+                        disallow: []
+                    },
+                    subscribe: {
+                        allow: ['foo'],
+                    }
+                },
+                skip_ready: true,
+                client_function: client_function,
+                server_function: server_function
+            });
+
+            it('should fail to authorize', expect_error("data.access_control.subscribe should have required property 'disallow'"));
+        });
+
         describe('close', function ()
         {
             setup(1,
@@ -1907,5 +1953,64 @@ module.exports = function (config, connect, options)
                 });
             }
         });
+
+        if (!options.anon)
+        {
+            describe('public key change', function ()
+            {
+                setup(1,
+                {
+                    access_control: {
+                        publish: {
+                            allow: ['foo'],
+                            disallow: []
+                        },
+                        subscribe: {
+                            allow: ['foo'],
+                            disallow: []
+                        }
+                    }
+                });
+
+                it('should close connection if public key changes', function (cb)
+                {
+                    var mqs = connections.keys().next().value,
+                        server_done = false,
+                        client_done = false;
+
+                    server.on('disconnect', function (mqserver)
+                    {
+                        expect(mqserver).to.equal(mqs);
+                        server_done = true;
+                        if (client_done)
+                        {
+                            cb();
+                        }
+                    });
+
+                    clients[0].mux.carrier.on('end', function ()
+                    {
+                        client_done = true;
+                        if (server_done)
+                        {
+                            cb();
+                        }
+                    });
+
+                    priv_key = ursa.generatePrivateKey(2048, 65537);
+                    server.authz.keystore.add_pub_key(uri, priv_key.toPublicPem('utf8'),
+                    function (err, the_issuer_id, the_rev)
+                    {
+                        if (err)
+                        {
+                            return cb(err);
+                        }
+                        
+                        issuer_id = the_issuer_id;
+                        rev = the_rev;
+                    });
+                });
+            });
+        }
     });
 };
