@@ -20,9 +20,9 @@
     </h1>
     <div class='clearfix'>
       <div class='fl pad1y space-right2'>
-        <span class="strong">81.82% </span>
+        <span class="strong">81.63% </span>
         <span class="quiet">Statements</span>
-        <span class='fraction'>36/44</span>
+        <span class='fraction'>40/49</span>
       </div>
       <div class='fl pad1y space-right2'>
         <span class="strong">66.67% </span>
@@ -35,9 +35,9 @@
         <span class='fraction'>14/14</span>
       </div>
       <div class='fl pad1y space-right2'>
-        <span class="strong">81.82% </span>
+        <span class="strong">81.63% </span>
         <span class="quiet">Lines</span>
-        <span class='fraction'>36/44</span>
+        <span class='fraction'>40/49</span>
       </div>
     </div>
   </div>
@@ -157,7 +157,18 @@
 112
 113
 114
-115</td><td class="line-coverage quiet"><span class="cline-any cline-yes">1×</span>
+115
+116
+117
+118
+119
+120
+121
+122
+123
+124
+125
+126</td><td class="line-coverage quiet"><span class="cline-any cline-yes">1×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1×</span>
@@ -174,7 +185,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1872×</span>
+<span class="cline-any cline-yes">1870×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -184,9 +195,9 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2040×</span>
+<span class="cline-any cline-yes">2038×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2040×</span>
+<span class="cline-any cline-yes">2038×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -208,7 +219,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2284×</span>
+<span class="cline-any cline-yes">2282×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -218,9 +229,9 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2344×</span>
+<span class="cline-any cline-yes">2342×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2344×</span>
+<span class="cline-any cline-yes">2342×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -234,6 +245,13 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">40×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">40×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">38×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">38×</span>
@@ -245,6 +263,10 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">242×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">242×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">242×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -346,10 +368,17 @@ module.exports = function (config, authorize, connected, ready, error, warning)
 {
     config = config['in-mem'] || config;
 &nbsp;
+    var pending = new Set();
+&nbsp;
     ready(null,
     {
         close: function (cb)
         {
+            for (var left of pending)
+            {
+<span class="cstat-no" title="statement not covered" >                left.end();</span>
+            }
+&nbsp;
             cb();
         },
 &nbsp;
@@ -360,8 +389,12 @@ module.exports = function (config, authorize, connected, ready, error, warning)
                 allowHalfOpen: false
             }, config));
 &nbsp;
+            pending.add(left);
+&nbsp;
             authorize(left.right, function (err, handshakes)
             {
+                pending.delete(left);
+&nbsp;
                 if (err)
                 {
                     return left.right.end();
@@ -391,7 +424,7 @@ module.exports.LeftDuplex = LeftDuplex;
 </div><!-- /wrapper -->
 <div class='footer quiet pad2 space-top1 center small'>
   Code coverage
-  generated by <a href="http://istanbul-js.org/" target="_blank">istanbul</a> at Wed Oct 05 2016 23:32:54 GMT+0100 (BST)
+  generated by <a href="http://istanbul-js.org/" target="_blank">istanbul</a> at Thu Oct 06 2016 23:24:52 GMT+0100 (BST)
 </div>
 </div>
 <script src="../../../prettify.js"></script>

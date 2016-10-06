@@ -142,6 +142,12 @@ module.exports = function (config, connect, options)
                         });
                     });
                 });
+
+                server.on('warning', function (err)
+                {
+                    console.warn(err);
+                    this.last_warning = err;
+                });
             }
 
             if (config.fsq && !config.fsq.initialized)
@@ -200,6 +206,8 @@ module.exports = function (config, connect, options)
         {
             beforeEach(function (cb)
             {
+                server.last_warning = null;
+
                 expect(connections.size).to.equal(0);
 
                 clients = [];
@@ -256,11 +264,6 @@ module.exports = function (config, connect, options)
 
                 async.times(n, function (i, next)
                 {
-                    if (opts.server_function)
-                    {
-                        opts.server_function(server);
-                    }
-
                     var token = new jsjws.JWT().generateJWTByKey(
                     {
                         alg: 'PS256'
@@ -1600,15 +1603,6 @@ module.exports = function (config, connect, options)
             });
         }
 
-        function server_function(s)
-        {
-            s.last_warning = null;
-            s.once('warning', function (err)
-            {
-                this.last_warning = err;
-            });
-        }
-
         function expect_error(msg)
         {
             return function (done)
@@ -1687,8 +1681,7 @@ module.exports = function (config, connect, options)
                 },
                 ttl: 0,
                 skip_ready: true,
-                client_function: client_function,
-                server_function: server_function
+                client_function: client_function
             });
 
             it('should fail to authorize', expect_error('expired'));
@@ -1700,8 +1693,7 @@ module.exports = function (config, connect, options)
             {
                 no_token: true,
                 skip_ready: true,
-                client_function: client_function,
-                server_function: server_function
+                client_function: client_function
             });
 
             it('should fail to authorize', expect_error('no tokens'));
@@ -1712,8 +1704,7 @@ module.exports = function (config, connect, options)
             setup(1,
             {
                 end_immediately: true,
-                client_function: name === 'primus' ? client_function : undefined,
-                server_function: server_function
+                client_function: name === 'primus' ? client_function : undefined
             });
 
             it('should fail to read tokens',
@@ -1737,8 +1728,7 @@ module.exports = function (config, connect, options)
                 },
                 too_many_tokens: true,
                 skip_ready: true,
-                client_function: client_function,
-                server_function: server_function
+                client_function: client_function
             });
 
             it('should fail to authorize', expect_error('too many tokens'));
@@ -1760,8 +1750,7 @@ module.exports = function (config, connect, options)
                 },
                 duplicate_tokens: true,
                 skip_ready: true,
-                client_function: client_function,
-                server_function: server_function
+                client_function: client_function
             });
 
             it('should fail to authorize', expect_error(
@@ -1782,8 +1771,7 @@ module.exports = function (config, connect, options)
                     }
                 },
                 skip_ready: true,
-                client_function: client_function,
-                server_function: server_function
+                client_function: client_function
             });
 
             it('should fail to authorize', expect_error("data.access_control.subscribe should have required property 'disallow'"));
@@ -1857,11 +1845,14 @@ module.exports = function (config, connect, options)
             {
                 close(function ()
                 {
+                    console.log("close1");
                     server.close(function (err)
                     {
+                        console.log("close2");
                         if (err) { return done(err); }
                         server.close(function (err)
                         {
+                            console.log("close3");
                             if (err) { return done(err); }
                             on_before(done);
                         });
@@ -2010,6 +2001,8 @@ module.exports = function (config, connect, options)
                         rev = the_rev;
                     });
                 });
+
+                // shouldn't close second connection on different uri
             });
         }
     });
