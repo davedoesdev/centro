@@ -20,14 +20,14 @@
     </h1>
     <div class='clearfix'>
       <div class='fl pad1y space-right2'>
-        <span class="strong">90% </span>
+        <span class="strong">87.5% </span>
         <span class="quiet">Statements</span>
-        <span class='fraction'>27/30</span>
+        <span class='fraction'>28/32</span>
       </div>
       <div class='fl pad1y space-right2'>
-        <span class="strong">75% </span>
+        <span class="strong">71.43% </span>
         <span class="quiet">Branches</span>
-        <span class='fraction'>9/12</span>
+        <span class='fraction'>10/14</span>
       </div>
       <div class='fl pad1y space-right2'>
         <span class="strong">100% </span>
@@ -35,9 +35,9 @@
         <span class='fraction'>9/9</span>
       </div>
       <div class='fl pad1y space-right2'>
-        <span class="strong">90% </span>
+        <span class="strong">87.5% </span>
         <span class="quiet">Lines</span>
-        <span class='fraction'>27/30</span>
+        <span class='fraction'>28/32</span>
       </div>
     </div>
   </div>
@@ -136,7 +136,12 @@
 91
 92
 93
-94</td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+94
+95
+96
+97
+98
+99</td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -152,26 +157,29 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">7×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">41×</span>
+<span class="cline-any cline-yes">42×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">41×</span>
+<span class="cline-any cline-yes">42×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">41×</span>
+<span class="cline-any cline-yes">42×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">41×</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">42×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">6×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">35×</span>
+<span class="cline-any cline-yes">36×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">35×</span>
+<span class="cline-any cline-yes">36×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">7×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">35×</span>
+<span class="cline-any cline-yes">36×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -183,7 +191,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">35×</span>
+<span class="cline-any cline-yes">36×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -199,6 +207,8 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">7×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">7×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -249,7 +259,10 @@ module.exports = function (config, authorize, connected, ready, error, warning)
 &nbsp;
         authorize(req, function (err, handshakes)
         {
-            pending.delete(cb);
+            <span class="missing-if-branch" title="if path not taken" >I</span>if (!pending.delete(cb))
+            {
+<span class="cstat-no" title="statement not covered" >                return;</span>
+            }
 &nbsp;
             if (err)
             {
@@ -293,6 +306,8 @@ module.exports = function (config, authorize, connected, ready, error, warning)
 <span class="cstat-no" title="statement not covered" >                    pcb({ statusCode: 503, message: 'closed' });</span>
                 }
 &nbsp;
+                pending.clear();
+&nbsp;
                 primus.destroy(config, cb);
             },
 &nbsp;
@@ -328,7 +343,7 @@ module.exports = function (config, authorize, connected, ready, error, warning)
 </div><!-- /wrapper -->
 <div class='footer quiet pad2 space-top1 center small'>
   Code coverage
-  generated by <a href="http://istanbul-js.org/" target="_blank">istanbul</a> at Thu Oct 06 2016 23:24:52 GMT+0100 (BST)
+  generated by <a href="http://istanbul-js.org/" target="_blank">istanbul</a> at Fri Oct 07 2016 22:28:14 GMT+0100 (BST)
 </div>
 </div>
 <script src="../../../prettify.js"></script>

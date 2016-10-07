@@ -292,7 +292,7 @@ module.exports = function (config, connect, options)
                                opts.too_many_tokens ? [token, token2, token] :
                                opts.duplicate_tokens ? [token, token] :
                                i % 2 === 0 || options.anon ? token :
-                               [token, token2],
+                               opts.separate_tokens ? token2 : [token, token2],
                         handshake_data: new Buffer([i])
                     }, server, function (err, c)
                     {
@@ -1158,7 +1158,7 @@ module.exports = function (config, connect, options)
             {
                 function check_error(err)
                 {
-                    expect(err.message).to.equal('Unexpected token \u0000');
+                    expect(err.message.lastIndexOf('Unexpected token \u0000', 0)).to.equal(0);
                     done();
                 }
 
@@ -1845,14 +1845,11 @@ module.exports = function (config, connect, options)
             {
                 close(function ()
                 {
-                    console.log("close1");
                     server.close(function (err)
                     {
-                        console.log("close2");
                         if (err) { return done(err); }
                         server.close(function (err)
                         {
-                            console.log("close3");
                             if (err) { return done(err); }
                             on_before(done);
                         });
@@ -1949,7 +1946,7 @@ module.exports = function (config, connect, options)
         {
             describe('public key change', function ()
             {
-                setup(1,
+                setup(2,
                 {
                     access_control: {
                         publish: {
@@ -1960,33 +1957,65 @@ module.exports = function (config, connect, options)
                             allow: ['foo'],
                             disallow: []
                         }
-                    }
+                    },
+                    separate_tokens: true
                 });
 
-                it('should close connection if public key changes', function (cb)
+                it('should close connection if public key changes', function (done)
                 {
-                    var mqs = connections.keys().next().value,
-                        server_done = false,
-                        client_done = false;
+                    var mqs,
+                        server_done = 0,
+                        client_done = 0;
 
-                    server.on('disconnect', function (mqserver)
+                    for (var info of connections.values())
+                    {
+                        if (info.hsdata[0] === 0)
+                        {
+                            mqs = info.mqserver;
+                            break;
+                        }
+                    }
+
+                    function check()
+                    {
+                        if ((server_done === 1) && (client_done === 1))
+                        {
+                            setTimeout(function ()
+                            {
+                                server.removeListener('disconnect', disconnect);
+                                clients[1].mux.carrier.removeListener('end', end2);
+                                done();
+                            }, 1000);
+                        }
+                        else if ((server_done > 1) || (client_done > 1))
+                        {
+                            done(new Error('called too many times'));
+                        }
+                    }
+
+                    function disconnect(mqserver, info)
                     {
                         expect(mqserver).to.equal(mqs);
-                        server_done = true;
-                        if (client_done)
-                        {
-                            cb();
-                        }
-                    });
+                        server_done += 1;
+                        check();
+                    }
 
-                    clients[0].mux.carrier.on('end', function ()
+                    server.on('disconnect', disconnect);
+
+                    function end()
                     {
-                        client_done = true;
-                        if (server_done)
-                        {
-                            cb();
-                        }
-                    });
+                        client_done += 1;
+                        check();
+                    }
+
+                    function end2()
+                    {
+                        client_done += 1;
+                        check();
+                    }
+
+                    clients[0].mux.carrier.on('end', end);
+                    clients[1].mux.carrier.on('end', end2);
 
                     priv_key = ursa.generatePrivateKey(2048, 65537);
                     server.authz.keystore.add_pub_key(uri, priv_key.toPublicPem('utf8'),
@@ -1994,16 +2023,17 @@ module.exports = function (config, connect, options)
                     {
                         if (err)
                         {
-                            return cb(err);
+                            return done(err);
                         }
                         
                         issuer_id = the_issuer_id;
                         rev = the_rev;
                     });
                 });
-
-                // shouldn't close second connection on different uri
             });
         }
     });
 };
+
+// loop on in-mem
+// close times out?
