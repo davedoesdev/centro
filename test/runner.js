@@ -85,6 +85,8 @@ module.exports = function (config, connect, options)
 
     describe(name, function ()
     {
+        this.timeout(5000);
+
         var server, clients,
             priv_key, priv_key2,
             issuer_id, issuer_id2,
@@ -1517,8 +1519,6 @@ module.exports = function (config, connect, options)
 
         describe('token expiry', function ()
         {
-            this.timeout(5000);
-
             setup(1,
             {
                 access_control: {
@@ -2034,6 +2034,3 @@ module.exports = function (config, connect, options)
         }
     });
 };
-
-// loop on in-mem
-// close times out?

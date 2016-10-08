@@ -20,24 +20,24 @@
     </h1>
     <div class='clearfix'>
       <div class='fl pad1y space-right2'>
-        <span class="strong">80.95% </span>
+        <span class="strong">81.03% </span>
         <span class="quiet">Statements</span>
-        <span class='fraction'>51/63</span>
+        <span class='fraction'>47/58</span>
       </div>
       <div class='fl pad1y space-right2'>
-        <span class="strong">52.63% </span>
+        <span class="strong">52.78% </span>
         <span class="quiet">Branches</span>
-        <span class='fraction'>20/38</span>
+        <span class='fraction'>19/36</span>
       </div>
       <div class='fl pad1y space-right2'>
-        <span class="strong">100% </span>
+        <span class="strong">91.67% </span>
         <span class="quiet">Functions</span>
-        <span class='fraction'>11/11</span>
+        <span class='fraction'>11/12</span>
       </div>
       <div class='fl pad1y space-right2'>
-        <span class="strong">80.95% </span>
+        <span class="strong">81.03% </span>
         <span class="quiet">Lines</span>
-        <span class='fraction'>51/63</span>
+        <span class='fraction'>47/58</span>
       </div>
     </div>
   </div>
@@ -213,19 +213,7 @@
 168
 169
 170
-171
-172
-173
-174
-175
-176
-177
-178
-179
-180
-181
-182
-183</td><td class="line-coverage quiet"><span class="cline-any cline-yes">1×</span>
+171</td><td class="line-coverage quiet"><span class="cline-any cline-yes">1×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -234,7 +222,6 @@
 <span class="cline-any cline-yes">7×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">7×</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">7×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -278,10 +265,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">32×</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">32×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">32×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -377,13 +360,6 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">7×</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">7×</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">7×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -415,8 +391,7 @@ module.exports = function (config, authorize, connected, ready, error, warning)
 {
     config = config.http || config;
 &nbsp;
-    var server = config.server || http.createServer(),
-        pending = new Set();
+    var server = config.server || http.createServer();
 &nbsp;
     server.on('request', function (req, res)
     {
@@ -461,15 +436,11 @@ module.exports = function (config, authorize, connected, ready, error, warning)
 <span class="cstat-no" title="statement not covered" >            return done(404, 'not found');</span>
         }
 &nbsp;
-        pending.add(done);
-&nbsp;
-        authorize(req, function (err, handshakes)
+        authorize(req, <span class="fstat-no" title="function not covered" >function ()</span>
         {
-            <span class="missing-if-branch" title="if path not taken" >I</span>if (!pending.delete(done))
-            {
-<span class="cstat-no" title="statement not covered" >                return;</span>
-            }
-&nbsp;
+<span class="cstat-no" title="statement not covered" >            done(503, 'closed');</span>
+        }, function (err, handshakes)
+        {
             <span class="missing-if-branch" title="if path not taken" >I</span>if (err)
             {
 <span class="cstat-no" title="statement not covered" >                var code = err.statusCode || 401;</span>
@@ -554,13 +525,6 @@ module.exports = function (config, authorize, connected, ready, error, warning)
         {
             close: function (cb)
             {
-                for (var done of pending)
-                {
-<span class="cstat-no" title="statement not covered" >                    done(503, 'closed');</span>
-                }
-&nbsp;
-                pending.clear();
-&nbsp;
                 <span class="missing-if-branch" title="if path not taken" >I</span>if (server.listening === false)
                 {
 <span class="cstat-no" title="statement not covered" >                    cb();</span>
@@ -595,7 +559,7 @@ module.exports = function (config, authorize, connected, ready, error, warning)
 </div><!-- /wrapper -->
 <div class='footer quiet pad2 space-top1 center small'>
   Code coverage
-  generated by <a href="http://istanbul-js.org/" target="_blank">istanbul</a> at Fri Oct 07 2016 22:28:14 GMT+0100 (BST)
+  generated by <a href="http://istanbul-js.org/" target="_blank">istanbul</a> at Sat Oct 08 2016 23:34:21 GMT+0100 (BST)
 </div>
 </div>
 <script src="../../../prettify.js"></script>
