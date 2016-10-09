@@ -264,6 +264,11 @@ module.exports = function (config, connect, options)
                     };
                 }
 
+                if (opts.before_connect_function)
+                {
+                    opts.before_connect_function()
+                }
+
                 async.times(n, function (i, next)
                 {
                     var token = new jsjws.JWT().generateJWTByKey(
@@ -354,6 +359,7 @@ module.exports = function (config, connect, options)
                 {
                     expect(server._connections.size).to.equal(0);
                     expect(server._connids.size).to.equal(0);
+                    expect(server._pending_authz_destroys.size).to.equal(0);
                     expect(connections.size).to.equal(0);
 
                     if (!called)
@@ -1603,15 +1609,21 @@ module.exports = function (config, connect, options)
             });
         }
 
-        function expect_error(msg)
+        function expect_error(msg, ignore_server, code, cb)
         {
+            code = code || 401;
+
             return function (done)
             {
                 function check_errors()
                 {
-                    expect(server.last_warning.message).to.equal(msg);
-                    expect(server.last_warning.statusCode).to.equal(401);
-                    expect(server.last_warning.authenticate).to.equal('Basic realm="centro"');
+                    if (!ignore_server)
+                    {
+                        expect(server.last_warning.message).to.equal(msg);
+                        expect(server.last_warning.statusCode).to.equal(code);
+                        expect(server.last_warning.authenticate).to.equal(
+                            code === 401 ? 'Basic realm="centro"' : undefined);
+                    }
 
                     if (clients[0])
                     {
@@ -1636,8 +1648,9 @@ module.exports = function (config, connect, options)
                             }
 
                             expect(errors[0].message).to.equal('unexpected response');
-                            expect(errors[0].statusCode).to.equal(401);
-                            expect(errors[0].authenticate).to.equal('Basic realm="centro"');
+                            expect(errors[0].statusCode).to.equal(code);
+                            expect(errors[0].authenticate).to.equal(
+                                code == 401 ? 'Basic realm="centro"' : undefined);
                             expect(errors[0].data).to.equal('{"error":"' + msg + '"}');
 
                             expect(errors[1].message).to.equal('ended before handshaken');
@@ -1654,7 +1667,15 @@ module.exports = function (config, connect, options)
                         }
                     }
 
-                    done();
+                    if (cb)
+                    {
+                        cb(done);
+                    }
+                    else
+                    {
+                        done();
+                    }
+
                     return true;
                 }
 
@@ -1940,6 +1961,41 @@ module.exports = function (config, connect, options)
                     });
                 });
             }
+        });
+
+        describe('close while authorising', function ()
+        {
+            setup(1,
+            {
+                access_control: {
+                    publish: {
+                        allow: ['foo'],
+                        disallow: []
+                    },
+                    subscribe: {
+                        allow: ['foo'],
+                        disallow: []
+                    }
+                },
+                before_connect_function: function ()
+                {
+                    server.transport_ops[0].authz.authorize = function ()
+                    {
+                        server.close(function (err)
+                        {
+                            if (err) { return done(err); }
+                        });
+                    };
+                },
+                skip_ready: true,
+                client_function: client_function
+            });
+
+            it("should close connections while they're being authorised",
+                expect_error('closed', true, 503, function (done)
+                {
+                    on_before(done);
+                }));
         });
 
         if (!options.anon)
