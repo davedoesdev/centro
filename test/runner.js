@@ -1979,11 +1979,17 @@ module.exports = function (config, connect, options)
                 },
                 before_connect_function: function ()
                 {
+                    var orig_authorize = server.transport_ops[0].authz.authorize;
+
                     server.transport_ops[0].authz.authorize = function ()
                     {
+                        var self = this,
+                            args = Array.prototype.slice.call(arguments);
+
                         server.close(function (err)
                         {
                             if (err) { return done(err); }
+                            orig_authorize.apply(self, args);
                         });
                     };
                 },
