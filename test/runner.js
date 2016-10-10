@@ -2004,6 +2004,63 @@ module.exports = function (config, connect, options)
                 }));
         });
 
+        describe('close while authorising (with exception)', function ()
+        {
+            setup(1,
+            {
+                access_control: {
+                    publish: {
+                        allow: ['foo'],
+                        disallow: []
+                    },
+                    subscribe: {
+                        allow: ['foo'],
+                        disallow: []
+                    }
+                },
+                before_connect_function: function ()
+                {
+                    var orig_authorize = server.transport_ops[0].authz.authorize;
+
+                    server.transport_ops[0].authz.authorize = function ()
+                    {
+                        var self = this,
+                            args = Array.prototype.slice.call(arguments);
+
+                        function ex(d)
+                        {
+                            return function ()
+                            {
+                                d();
+                                throw new Error('dummy');
+                            };
+                        }
+
+                        var ds = server._pending_authz_destroys;
+                        server._pending_authz_destroys = new Set();
+                        for (var d of ds)
+                        {
+                            server._pending_authz_destroys.add(ex(d));
+                        }
+
+                        server.close(function (err)
+                        {
+                            if (err) { return done(err); }
+                            orig_authorize.apply(self, args);
+                        });
+                    };
+                },
+                skip_ready: true,
+                client_function: client_function
+            });
+
+            it("should close connections while they're being authorised",
+                expect_error('closed', true, 503, function (done)
+                {
+                    on_before(done);
+                }));
+        });
+
         if (!options.anon)
         {
             describe('public key change', function ()
