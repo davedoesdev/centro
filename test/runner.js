@@ -266,7 +266,7 @@ module.exports = function (config, connect, options)
 
                 if (opts.before_connect_function)
                 {
-                    opts.before_connect_function()
+                    opts.before_connect_function();
                 }
 
                 async.times(n, function (i, next)
@@ -1988,7 +1988,7 @@ module.exports = function (config, connect, options)
 
                         server.close(function (err)
                         {
-                            if (err) { return done(err); }
+                            if (err) { throw err; }
                             orig_authorize.apply(self, args);
                         });
                     };
@@ -2045,7 +2045,7 @@ module.exports = function (config, connect, options)
 
                         server.close(function (err)
                         {
-                            if (err) { return done(err); }
+                            if (err) { throw err; }
                             orig_authorize.apply(self, args);
                         });
                     };
@@ -2135,6 +2135,56 @@ module.exports = function (config, connect, options)
 
                     clients[0].mux.carrier.on('end', end);
                     clients[1].mux.carrier.on('end', end2);
+
+                    priv_key = ursa.generatePrivateKey(2048, 65537);
+                    server.authz.keystore.add_pub_key(uri, priv_key.toPublicPem('utf8'),
+                    function (err, the_issuer_id, the_rev)
+                    {
+                        if (err)
+                        {
+                            return done(err);
+                        }
+                        
+                        issuer_id = the_issuer_id;
+                        rev = the_rev;
+                    });
+                });
+
+                it('should not close connection if revision matches', function (done)
+                {
+                    var called = false,
+                        old_rev = rev;
+
+                    function snbc()
+                    {
+                        done(new Error('should not be called'));
+                    }
+
+                    setTimeout(function ()
+                    {
+                        expect(called).to.equal(true);
+                        server.removeListener('disconnect', snbc);
+                        clients[0].mux.carrier.removeListener('end', snbc);
+                        clients[1].mux.carrier.removeListener('end', snbc);
+                        done();
+                    }, 1000);
+
+                    server.on('disconnect', snbc);
+                    clients[0].mux.carrier.on('end', snbc);
+                    clients[1].mux.carrier.on('end', snbc);
+
+                    var listeners = server.authz.keystore.listeners('change');
+                    expect(listeners.length).to.equal(1);
+                    server.authz.keystore.removeAllListeners('change');
+                    server.authz.keystore.on('change', function change(uri, new_rev)
+                    {
+                        called = true;
+                        var conn = server._connections.get(uri).values().next().value;
+                        expect(conn.rev).to.equal(old_rev);
+                        conn.rev = new_rev;
+                        server.authz.keystore.removeListener('change', change);
+                        listeners[0].apply(this, arguments);
+                    });
 
                     priv_key = ursa.generatePrivateKey(2048, 65537);
                     server.authz.keystore.add_pub_key(uri, priv_key.toPublicPem('utf8'),
