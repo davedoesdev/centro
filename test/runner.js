@@ -1931,6 +1931,68 @@ module.exports = function (config, connect, options)
                 });
             });
 
+            it('should be able to call destroy twice', function (done)
+            {
+                var connids = server._connids;
+
+                function dstroy(f)
+                {
+                    return function ()
+                    {
+                        f();
+                        f();
+                    };
+                }
+
+                expect(connids.size).to.equal(1);
+                server._connids = new Map();
+                for (var entry of connids)
+                {
+                    server._connids.set(entry[0], dstroy(entry[1]));
+                }
+
+                close(function ()
+                {
+                    server.close(function (err)
+                    {
+                        if (err) { return done(err); }
+                        on_before(done);
+                    });
+                });
+            });
+
+            it('should handle errors from destroy function', function (done)
+            {
+                var connids = server._connids;
+
+                function dstroy(f)
+                {
+                    var destroy = f.destroy;
+                    f.destroy = function ()
+                    {
+                        destroy();
+                        throw new Error('dummy');
+                    };
+                    return f;
+                }
+
+                expect(connids.size).to.equal(1);
+                server._connids = new Map();
+                for (var entry of connids)
+                {
+                    server._connids.set(entry[0], dstroy(entry[1]));
+                }
+
+                close(function ()
+                {
+                    server.close(function (err)
+                    {
+                        if (err) { return done(err); }
+                        on_before(done);
+                    });
+                });
+            });
+
             if (!options.anon)
             {
                 it('should pass back close keystore errors', function (done)
