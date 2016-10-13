@@ -1611,7 +1611,10 @@ module.exports = function (config, connect, options)
 
         function expect_error(msg, ignore_server, code, cb)
         {
-            code = code || 401;
+            if ((code !== 0) && !code)
+            {
+                code = 401;
+            }
 
             return function (done)
             {
@@ -1620,7 +1623,8 @@ module.exports = function (config, connect, options)
                     if (!ignore_server)
                     {
                         expect(server.last_warning.message).to.equal(msg);
-                        expect(server.last_warning.statusCode).to.equal(code);
+                        expect(server.last_warning.statusCode).to.equal(
+                            code === 401 ? code : undefined);
                         expect(server.last_warning.authenticate).to.equal(
                             code === 401 ? 'Basic realm="centro"' : undefined);
                     }
@@ -1634,7 +1638,7 @@ module.exports = function (config, connect, options)
                             return false;
                         }
 
-                        if (name === 'primus')
+                        if ((name === 'primus') && (code !== 0))
                         {
                             if (errors.length < 2)
                             {
@@ -2261,6 +2265,68 @@ module.exports = function (config, connect, options)
                         rev = the_rev;
                     });
                 });
+            });
+
+            describe('revision check error', function ()
+            {
+                setup(1,
+                {
+                    access_control: {
+                        publish: {
+                            allow: ['foo'],
+                            disallow: []
+                        },
+                        subscribe: {
+                            allow: ['foo'],
+                            disallow: []
+                        }
+                    },
+                    before_connect_function: function ()
+                    {
+                        var orig_get_pub_key_by_uri = server.transport_ops[0].authz.keystore.get_pub_key_by_uri;
+
+                        server.transport_ops[0].authz.keystore.get_pub_key_by_uri = function (uri, cb)
+                        {
+                            this.get_pub_key_by_uri = orig_get_pub_key_by_uri;
+                            cb(new Error('dummy'));
+                        };
+                    },
+                    skip_ready: true,
+                    client_function: client_function
+                });
+
+                it('should warn on destroy if error occurs while checking revision', expect_error('dummy', false, 0));
+            });
+
+            describe('revision mismatch', function ()
+            {
+                setup(1,
+                {
+                    access_control: {
+                        publish: {
+                            allow: ['foo'],
+                            disallow: []
+                        },
+                        subscribe: {
+                            allow: ['foo'],
+                            disallow: []
+                        }
+                    },
+                    before_connect_function: function ()
+                    {
+                        var orig_get_pub_key_by_uri = server.transport_ops[0].authz.keystore.get_pub_key_by_uri;
+
+                        server.transport_ops[0].authz.keystore.get_pub_key_by_uri = function (uri, cb)
+                        {
+                            this.get_pub_key_by_uri = orig_get_pub_key_by_uri;
+                            cb(null, null, 'foo');
+                        };
+                    },
+                    skip_ready: true,
+                    client_function: client_function
+                });
+
+                it('should warn on destroy if old revision', expect_error('uri revision has changed: ' + uri, false, 0));
             });
         }
     });

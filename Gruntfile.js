@@ -23,6 +23,7 @@ module.exports = function (grunt)
                    'test/in-mem-anon.js',
                    'test/server-error.js',
                    'test/read_frame-error.js',
+                   'test/connect-after-close.js',
                    'test/example/example.js' ],
             options: {
                 bail: true
