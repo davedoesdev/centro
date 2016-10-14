@@ -105,8 +105,9 @@ module.exports = function (config, connect, options)
 
                 server.on('connect', function (info)
                 {
-                    pending_presence_topics.add('join.all.' + info.connid);
-                    pending_presence_topics.add('leave.all.' + info.connid);
+                    pending_presence_topics.add('join.' + info.connid);
+                    pending_presence_topics.add('leave.' + info.connid);
+                    pending_presence_topics.add('ready.all.' + info.connid);
                     connections.set(info.mqserver, info);
                 });
 
@@ -275,30 +276,30 @@ module.exports = function (config, connect, options)
                     opts.before_connect_function();
                 }
 
-                async.times(n, function (i, next)
+                var token = new jsjws.JWT().generateJWTByKey(
                 {
-                    var token = new jsjws.JWT().generateJWTByKey(
-                    {
-                        alg: 'PS256'
-                    },
-                    {
-                        iss: issuer_id,
-                        access_control: access_control[0],
-                        ack: opts.ack,
-                        presence: opts.presence
-                    }, token_exp, priv_key);
+                    alg: 'PS256'
+                },
+                {
+                    iss: issuer_id,
+                    access_control: access_control[0],
+                    ack: opts.ack,
+                    presence: opts.presence
+                }, token_exp, priv_key);
 
-                    var token2 = new jsjws.JWT().generateJWTByKey(
-                    {
-                        alg: 'PS256'
-                    },
-                    {
-                        iss: issuer_id2,
-                        access_control: access_control[1],
-                        ack: opts.ack,
-                        presence: opts.presence
-                    }, token_exp, priv_key2);
+                var token2 = new jsjws.JWT().generateJWTByKey(
+                {
+                    alg: 'PS256'
+                },
+                {
+                    iss: issuer_id2,
+                    access_control: access_control[1],
+                    ack: opts.ack,
+                    presence: opts.presence
+                }, token_exp, priv_key2);
 
+                (opts.series ? async.timesSeries : async.times)(n, function (i, next)
+                {
                     connect(
                     {
                         token: opts.no_token ? '' :
@@ -326,6 +327,11 @@ module.exports = function (config, connect, options)
 
                         c.on('ready', function ()
                         {
+                            if (opts.client_ready)
+                            {
+                                return opts.client_ready.call(this, i, next)
+                            }
+
                             next(null, this);
                         });
                     });
@@ -808,7 +814,51 @@ module.exports = function (config, connect, options)
                 }
 
                 done(err);
+            };
+        }
+
+        function client_ready(single, ttl, data)
+        {
+            return function (i, next)
+            {
+                if (i === 0)
+                {
+                    var ths = this;
+                    this.joins = new Set();
+                    return this.subscribe('join.*', function (s, info)
+                    {
+                        if (presence_topics.has(info.topic)) { return; }
+                        expect(info.single).to.equal(single);
+                        if (ttl)
+                        {
+                            expect(info.expires).to.be.below(new Date().getTime() / 1000 + ttl);
+                        }
+                        read_all(s, function (v)
+                        {
+                            expect(v.toString()).to.equal(typeof(data) === 'string' ? data : '"someone joined"');
+                            ths.joins.add(info.topic);
+                        });
+                    }, function (err)
+                    {
+                        next(err, ths);
+                    });
+                }
+
+                next(null, this);
+            };
+        }
+
+        function check_join(cont)
+        {
+            if (clients[0].joins.has('join.' + clients[1].self))
+            {
+                return cont();
             }
+
+            setTimeout(function ()
+            {
+                check_join(cont);
+            }, 1000);
         }
 
         describe('access control with self and presence', function ()
@@ -819,109 +869,98 @@ module.exports = function (config, connect, options)
                     publish: {
                         allow: ['direct.${self}.*.#',
                                 'all.${self}.#',
-                                'join.direct.${self}.*',
-                                'join.all.${self}',
+                                'ready.direct.${self}.*',
+                                'ready.all.${self}',
                                 'foo'],
                         disallow: []
                     },
                     subscribe: {
                         allow: ['direct.*.${self}.#',
                                 'all.*.#',
-                                'join.direct.*.${self}',
-                                'join.all.*',
-                                'leave.all.*',
+                                'join.*',
+                                'leave.*',
+                                'ready.direct.*.${self}',
+                                'ready.all.*',
                                 'foo'],
                         disallow: []
                     }
                 },
                 presence: {
                     connect: {
-                        prefix: 'join.',
+                        topic: 'join.${self}',
                         data: 'someone joined'
                     },
                     disconnect: {
-                        topic: 'leave.all.${self}',
+                        topic: 'leave.${self}',
                         data: 'someone left'
                     }
-                }
+                },
+                series: true,
+                client_ready: client_ready(false)
             });
 
             it('should support presence', function (done)
             {
-                var pubreq = false;
-
-                function regreq(mqserver)
+                check_join(function ()
                 {
-                    mqserver.on('publish_requested', function (topic, stream, options, cb)
-                    {
-                        pubreq = true;
-                        stream.pipe(this.fsq.publish(topic, options, cb));
-                    });
-                }
-
-                for (var mqserver of connections.keys())
-                {
-                    regreq(mqserver);
-                }
-
-                clients[0].subscribe('join.all.*', function (s, info)
-                {
-                    if (presence_topics.has(info.topic)) { return; }
-
-                    if (!options.relay)
-                    {
-                        expect(info.topic).to.equal('join.all.${self}');
-                    }
-
-                    expect(info.single).to.equal(false);
-
-                    read_all(s, function (v)
-                    {
-                        expect(v.toString()).to.equal('"someone joined"');
-                    });
-                }, function (err)
-                {
-                    if (err) { return done(err); }
-                    clients[1].subscribe('leave.all.*', function (s, info)
+                    clients[0].subscribe('ready.all.*', function (s, info)
                     {
                         if (presence_topics.has(info.topic)) { return; }
 
                         if (!options.relay)
                         {
-                            expect(info.topic).to.equal('leave.all.' + clients[0].self);
+                            expect(info.topic).to.equal('ready.all.${self}');
                         }
 
                         expect(info.single).to.equal(false);
 
                         read_all(s, function (v)
                         {
-                            expect(v.toString()).to.equal('"someone left"');
-                            expect(pubreq).to.equal(false);
-                            clients[1].unsubscribe('leave.all.*', undefined, pdone(done));
+                            expect(v.toString()).to.equal('bar');
                         });
                     }, function (err)
                     {
                         if (err) { return done(err); }
-                        clients[1].subscribe('join.all.*', function (s, info)
+                        clients[1].subscribe('leave.*', function (s, info)
                         {
                             if (presence_topics.has(info.topic)) { return; }
 
                             if (!options.relay)
                             {
-                                expect(info.topic).to.equal('join.all.' + clients[0].self);
+                                expect(info.topic).to.equal('leave.' + clients[0].self);
                             }
 
                             expect(info.single).to.equal(false);
 
                             read_all(s, function (v)
                             {
-                                expect(v.toString()).to.equal('"someone joined"');
-                                clients[0].mux.carrier.end();
+                                expect(v.toString()).to.equal('"someone left"');
+                                clients[1].unsubscribe('leave.*', undefined, pdone(done));
                             });
                         }, function (err)
                         {
                             if (err) { return done(err); }
-                            clients[0].publish('join.all.${self}').end('bar');
+                            clients[1].subscribe('ready.all.*', function (s, info)
+                            {
+                                if (presence_topics.has(info.topic)) { return; }
+
+                                if (!options.relay)
+                                {
+                                    expect(info.topic).to.equal('ready.all.' + clients[0].self);
+                                }
+
+                                expect(info.single).to.equal(false);
+
+                                read_all(s, function (v)
+                                {
+                                    expect(v.toString()).to.equal('bar');
+                                    clients[0].mux.carrier.end();
+                                });
+                            }, function (err)
+                            {
+                                if (err) { return done(err); }
+                                clients[0].publish('ready.all.${self}').end('bar');
+                            });
                         });
                     });
                 });
@@ -982,88 +1021,95 @@ module.exports = function (config, connect, options)
             {
                 access_control: {
                     publish: {
-                        allow: ['join.all.${self}'],
+                        allow: ['ready.all.${self}'],
                         disallow: []
                     },
                     subscribe: {
-                        allow: ['join.all.*',
-                                'leave.all.*'],
+                        allow: ['join.*',
+                                'leave.*',
+                                'ready.all.*'],
                         disallow: []
                     }
                 },
                 presence: {
                     connect: {
-                        prefix: 'join.',
-                        data: 'someone joined'
+                        topic: 'join.${self}',
+                        data: 'someone joined',
+                        ttl: 2
                     },
                     disconnect: {
-                        topic: 'leave.all.${self}',
+                        topic: 'leave.${self}',
                         data: 'someone left',
                         ttl: 2
                     }
-                }
+                },
+                series: true,
+                client_ready: client_ready(false, 2)
             });
 
-            it('should send leave message with ttl', function (done)
+            it('should send presence messages with ttl', function (done)
             {
-                clients[0].subscribe('join.all.*', function (s, info)
+                check_join(function ()
                 {
-                    if (presence_topics.has(info.topic)) { return; }
-
-                    if (!options.relay)
-                    {
-                        expect(info.topic).to.equal('join.all.${self}');
-                    }
-
-                    expect(info.single).to.equal(false);
-
-                    read_all(s, function (v)
-                    {
-                        expect(v.toString()).to.equal('"someone joined"');
-                    });
-                }, function (err)
-                {
-                    if (err) { return done(err); }
-                    clients[1].subscribe('leave.all.*', function (s, info)
+                    clients[0].subscribe('ready.all.*', function (s, info)
                     {
                         if (presence_topics.has(info.topic)) { return; }
 
                         if (!options.relay)
                         {
-                            expect(info.topic).to.equal('leave.all.' + clients[0].self);
+                            expect(info.topic).to.equal('ready.all.${self}');
                         }
 
                         expect(info.single).to.equal(false);
 
                         read_all(s, function (v)
                         {
-                            expect(v.toString()).to.equal('"someone left"');
-                            expect(info.expires).to.be.below(new Date().getTime() / 1000 + 2);
-                            clients[1].unsubscribe('leave.all.*', undefined, pdone(done));
+                            expect(v.toString()).to.equal('bar');
                         });
                     }, function (err)
                     {
                         if (err) { return done(err); }
-                        clients[1].subscribe('join.all.*', function (s, info)
+                        clients[1].subscribe('leave.*', function (s, info)
                         {
                             if (presence_topics.has(info.topic)) { return; }
 
                             if (!options.relay)
                             {
-                                expect(info.topic).to.equal('join.all.' + clients[0].self);
+                                expect(info.topic).to.equal('leave.' + clients[0].self);
                             }
 
                             expect(info.single).to.equal(false);
 
                             read_all(s, function (v)
                             {
-                                expect(v.toString()).to.equal('"someone joined"');
-                                clients[0].mux.carrier.end();
+                                expect(v.toString()).to.equal('"someone left"');
+                                expect(info.expires).to.be.below(new Date().getTime() / 1000 + 2);
+                                clients[1].unsubscribe('leave.*', undefined, pdone(done));
                             });
                         }, function (err)
                         {
                             if (err) { return done(err); }
-                            clients[0].publish('join.all.${self}').end('bar');
+                            clients[1].subscribe('ready.all.*', function (s, info)
+                            {
+                                if (presence_topics.has(info.topic)) { return; }
+
+                                if (!options.relay)
+                                {
+                                    expect(info.topic).to.equal('ready.all.' + clients[0].self);
+                                }
+
+                                expect(info.single).to.equal(false);
+
+                                read_all(s, function (v)
+                                {
+                                    expect(v.toString()).to.equal('bar');
+                                    clients[0].mux.carrier.end();
+                                });
+                            }, function (err)
+                            {
+                                if (err) { return done(err); }
+                                clients[0].publish('ready.all.${self}').end('bar');
+                            });
                         });
                     });
                 });
@@ -1076,90 +1122,98 @@ module.exports = function (config, connect, options)
             {
                 access_control: {
                     publish: {
-                        allow: ['join.all.${self}'],
+                        allow: ['ready.all.${self}'],
                         disallow: []
                     },
                     subscribe: {
-                        allow: ['join.all.*',
-                                'leave.all.*'],
+                        allow: ['join.*',
+                                'leave.*',
+                                'ready.all.*'],
                         disallow: []
                     }
                 },
                 presence: {
                     connect: {
-                        prefix: 'join.',
-                        data: 'someone joined'
+                        topic: 'join.${self}',
+                        data: 'someone joined',
+                        single: true,
+                        ttl: 5
                     },
                     disconnect: {
-                        topic: 'leave.all.${self}',
+                        topic: 'leave.${self}',
                         data: 'someone left',
                         single: true,
                         ttl: 5
                     }
-                }
+                },
+                series: true,
+                client_ready: client_ready(true, 5)
             });
 
-            it('should send leave message with single', function (done)
+            it('should send presence message with single', function (done)
             {
-                clients[0].subscribe('join.all.*', function (s, info)
+                check_join(function ()
                 {
-                    if (presence_topics.has(info.topic)) { return; }
-
-                    if (!options.relay)
-                    {
-                        expect(info.topic).to.equal('join.all.${self}');
-                    }
-
-                    expect(info.single).to.equal(false);
-
-                    read_all(s, function (v)
-                    {
-                        expect(v.toString()).to.equal('"someone joined"');
-                    });
-                }, function (err)
-                {
-                    if (err) { return done(err); }
-                    clients[1].subscribe('leave.all.*', function (s, info, ack)
+                    clients[0].subscribe('ready.all.*', function (s, info)
                     {
                         if (presence_topics.has(info.topic)) { return; }
 
                         if (!options.relay)
                         {
-                            expect(info.topic).to.equal('leave.all.' + clients[0].self);
+                            expect(info.topic).to.equal('ready.all.${self}');
                         }
 
-                        expect(info.single).to.equal(true);
-
-                        ack();
+                        expect(info.single).to.equal(false);
 
                         read_all(s, function (v)
                         {
-                            expect(v.toString()).to.equal('"someone left"');
-                            clients[1].unsubscribe('leave.all.*', undefined, pdone(done));
+                            expect(v.toString()).to.equal('bar');
                         });
                     }, function (err)
                     {
                         if (err) { return done(err); }
-                        clients[1].subscribe('join.all.*', function (s, info)
+                        clients[1].subscribe('leave.*', function (s, info, ack)
                         {
                             if (presence_topics.has(info.topic)) { return; }
 
                             if (!options.relay)
                             {
-                                expect(info.topic).to.equal('join.all.' + clients[0].self);
+                                expect(info.topic).to.equal('leave.' + clients[0].self);
                             }
 
-                            expect(info.single).to.equal(false);
+                            expect(info.single).to.equal(true);
+
+                            ack();
 
                             read_all(s, function (v)
                             {
-                                expect(v.toString()).to.equal('"someone joined"');
-                                clients[0].mux.carrier.end();
+                                expect(v.toString()).to.equal('"someone left"');
+                                clients[1].unsubscribe('leave.*', undefined, pdone(done));
                             });
                         }, function (err)
                         {
                             if (err) { return done(err); }
-                            clients[0].publish('join.all.${self}').end('bar');
+                            clients[1].subscribe('ready.all.*', function (s, info)
+                            {
+                                if (presence_topics.has(info.topic)) { return; }
+
+                                if (!options.relay)
+                                {
+                                    expect(info.topic).to.equal('ready.all.' + clients[0].self);
+                                }
+
+                                expect(info.single).to.equal(false);
+
+                                read_all(s, function (v)
+                                {
+                                    expect(v.toString()).to.equal('bar');
+                                    clients[0].mux.carrier.end();
+                                });
+                            }, function (err)
+                            {
+                                if (err) { return done(err); }
+                                clients[0].publish('ready.all.${self}').end('bar');
+                            });
                         });
                     });
                 });
@@ -1172,52 +1226,39 @@ module.exports = function (config, connect, options)
             {
                 access_control: {
                     publish: {
-                        allow: ['join.all.${self}'],
+                        allow: ['ready.all.${self}'],
                         disallow: []
                     },
                     subscribe: {
-                        allow: ['join.all.*',
-                                'leave.all.*'],
+                        allow: ['join.*',
+                                'leave.*',
+                                'ready.all.*'],
                         disallow: []
                     }
                 },
                 presence: {
                     connect: {
-                        prefix: 'join.'
+                        topic: 'join.${self}'
                     },
                     disconnect: {
-                        topic: 'leave.all.${self}'
+                        topic: 'leave.${self}'
                     }
-                }
+                },
+                series: true,
+                client_ready: client_ready(false, 0, '')
             });
 
             it('should send leave message with no data', function (done)
             {
-                clients[0].subscribe('join.all.*', function (s, info)
+                check_join(function ()
                 {
-                    if (presence_topics.has(info.topic)) { return; }
-
-                    if (!options.relay)
-                    {
-                        expect(info.topic).to.equal('join.all.${self}');
-                    }
-
-                    expect(info.single).to.equal(false);
-
-                    read_all(s, function (v)
-                    {
-                        expect(v.toString()).to.equal('');
-                    });
-                }, function (err)
-                {
-                    if (err) { return done(err); }
-                    clients[1].subscribe('leave.all.*', function (s, info)
+                    clients[0].subscribe('ready.all.*', function (s, info)
                     {
                         if (presence_topics.has(info.topic)) { return; }
 
                         if (!options.relay)
                         {
-                            expect(info.topic).to.equal('leave.all.' + clients[0].self);
+                            expect(info.topic).to.equal('ready.all.${self}');
                         }
 
                         expect(info.single).to.equal(false);
@@ -1225,18 +1266,17 @@ module.exports = function (config, connect, options)
                         read_all(s, function (v)
                         {
                             expect(v.toString()).to.equal('');
-                            clients[1].unsubscribe('leave.all.*', undefined, pdone(done));
                         });
                     }, function (err)
                     {
                         if (err) { return done(err); }
-                        clients[1].subscribe('join.all.*', function (s, info)
+                        clients[1].subscribe('leave.*', function (s, info)
                         {
                             if (presence_topics.has(info.topic)) { return; }
 
                             if (!options.relay)
                             {
-                                expect(info.topic).to.equal('join.all.' + clients[0].self);
+                                expect(info.topic).to.equal('leave.' + clients[0].self);
                             }
 
                             expect(info.single).to.equal(false);
@@ -1244,12 +1284,32 @@ module.exports = function (config, connect, options)
                             read_all(s, function (v)
                             {
                                 expect(v.toString()).to.equal('');
-                                clients[0].mux.carrier.end();
+                                clients[1].unsubscribe('leave.*', undefined, pdone(done));
                             });
                         }, function (err)
                         {
                             if (err) { return done(err); }
-                            clients[0].publish('join.all.${self}').end('bar');
+                            clients[1].subscribe('ready.all.*', function (s, info)
+                            {
+                                if (presence_topics.has(info.topic)) { return; }
+
+                                if (!options.relay)
+                                {
+                                    expect(info.topic).to.equal('ready.all.' + clients[0].self);
+                                }
+
+                                expect(info.single).to.equal(false);
+
+                                read_all(s, function (v)
+                                {
+                                    expect(v.toString()).to.equal('');
+                                    clients[0].mux.carrier.end();
+                                });
+                            }, function (err)
+                            {
+                                if (err) { return done(err); }
+                                clients[0].publish('ready.all.${self}').end('');
+                            });
                         });
                     });
                 });
