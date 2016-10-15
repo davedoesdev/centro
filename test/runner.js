@@ -803,43 +803,46 @@ module.exports = function (config, connect, options)
                 });
             });
 
-            it('should not send ack message if prefix not recognised', function (done)
+            if (!options.anon)
             {
-                clients[0].subscribe(options.relay ? 'ack.*.all.*.foo' :
-                                                     'ack.*.all.${self}.foo',
-                function ()
+                it('should not send ack message if prefix not recognised', function (done)
                 {
-                    done(new Error('should not be called'));
-                }, function (err)
-                {
-                    if (err) return done(err);
-
-                    for (var mqserver of connections.keys())
+                    server.once('warning', function (err)
                     {
-                        mqserver.on('ack', function (info)
-                        {
-                            expect(info.topic).to.equal('foo');
-                            done();
-                        });
+                        expect(err.message).to.equal('unknown prefix on ack topic: foo');
+                        done();
+                    });
 
-                        mqserver.subscribe('foo', function (err)
-                        {
-                            if (err) { return done(err); }
+                    clients[0].subscribe(options.relay ? 'ack.*.all.*.foo' :
+                                                         'ack.*.all.${self}.foo',
+                    function ()
+                    {
+                        done(new Error('should not be called'));
+                    }, function (err)
+                    {
+                        if (err) return done(err);
 
-                            clients[0]._matcher.add('foo', function (s, info, done)
+                        for (var mqserver of connections.keys())
+                        {
+                            mqserver.subscribe('foo', function (err)
                             {
-                                done();
+                                if (err) { return done(err); }
+
+                                clients[0]._matcher.add('foo', function (s, info, done)
+                                {
+                                    done();
+                                });
+
+                                mqserver.fsq.publish('foo',
+                                {
+                                    single: true,
+                                    ttl: 2000
+                                }).end();
                             });
-
-                            mqserver.fsq.publish('foo',
-                            {
-                                single: true,
-                                ttl: 2000
-                            }).end();
-                        });
-                    }
+                        }
+                    });
                 });
-            });
+            }
         });
 
         function pdone(done)
@@ -2730,6 +2733,42 @@ module.exports = function (config, connect, options)
                 });
 
                 it('should warn on destroy if old revision', expect_error('uri revision has changed: ' + uri, false, 0));
+            });
+
+            describe('unknown uri on closed connection', function ()
+            {
+                setup(1,
+                {
+                    access_control: {
+                        publish: {
+                            allow: ['foo'],
+                            disallow: []
+                        },
+                        subscribe: {
+                            allow: ['foo'],
+                            disallow: []
+                        }
+                    }
+                });
+
+                it("should warn if uri isn't known", function (done)
+                {
+                    var msg;
+
+                    server.once('warning', function (err)
+                    {
+                        msg = err.message;
+                    });
+
+                    server.once('empty', function ()
+                    {
+                        expect(msg).to.equal('unknown uri on closed connection: ' + uri);
+                        done();
+                    });
+
+                    server._connections.delete(uri);
+                    clients[0].mux.carrier.end();
+                });
             });
         }
     });
