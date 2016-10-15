@@ -802,6 +802,44 @@ module.exports = function (config, connect, options)
                     });
                 });
             });
+
+            it('should not send ack message if prefix not recognised', function (done)
+            {
+                clients[0].subscribe(options.relay ? 'ack.*.all.*.foo' :
+                                                     'ack.*.all.${self}.foo',
+                function ()
+                {
+                    done(new Error('should not be called'));
+                }, function (err)
+                {
+                    if (err) return done(err);
+
+                    for (var mqserver of connections.keys())
+                    {
+                        mqserver.on('ack', function (info)
+                        {
+                            expect(info.topic).to.equal('foo');
+                            done();
+                        });
+
+                        mqserver.subscribe('foo', function (err)
+                        {
+                            if (err) { return done(err); }
+
+                            clients[0]._matcher.add('foo', function (s, info, done)
+                            {
+                                done();
+                            });
+
+                            mqserver.fsq.publish('foo',
+                            {
+                                single: true,
+                                ttl: 2000
+                            }).end();
+                        });
+                    }
+                });
+            });
         });
 
         function pdone(done)
