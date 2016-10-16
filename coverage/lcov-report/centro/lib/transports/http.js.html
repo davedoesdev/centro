@@ -20,14 +20,14 @@
     </h1>
     <div class='clearfix'>
       <div class='fl pad1y space-right2'>
-        <span class="strong">76.56% </span>
+        <span class="strong">78.13% </span>
         <span class="quiet">Statements</span>
-        <span class='fraction'>49/64</span>
+        <span class='fraction'>50/64</span>
       </div>
       <div class='fl pad1y space-right2'>
-        <span class="strong">52.5% </span>
+        <span class="strong">57.5% </span>
         <span class="quiet">Branches</span>
-        <span class='fraction'>21/40</span>
+        <span class='fraction'>23/40</span>
       </div>
       <div class='fl pad1y space-right2'>
         <span class="strong">84.62% </span>
@@ -35,9 +35,9 @@
         <span class='fraction'>11/13</span>
       </div>
       <div class='fl pad1y space-right2'>
-        <span class="strong">76.56% </span>
+        <span class="strong">78.13% </span>
         <span class="quiet">Lines</span>
-        <span class='fraction'>49/64</span>
+        <span class='fraction'>50/64</span>
       </div>
     </div>
   </div>
@@ -239,32 +239,32 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">11×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">37×</span>
+<span class="cline-any cline-yes">38×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">46×</span>
-<span class="cline-any cline-yes">46×</span>
+<span class="cline-any cline-yes">47×</span>
+<span class="cline-any cline-yes">47×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">46×</span>
+<span class="cline-any cline-yes">47×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">14×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">46×</span>
+<span class="cline-any cline-yes">47×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">46×</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">46×</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">46×</span>
+<span class="cline-any cline-yes">47×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">46×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">47×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">46×</span>
+<span class="cline-any cline-yes">47×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">47×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -273,11 +273,11 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">37×</span>
+<span class="cline-any cline-yes">38×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">37×</span>
+<span class="cline-any cline-yes">38×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">37×</span>
@@ -437,7 +437,7 @@ module.exports = function (config, authorize, connected, ready, error, warning)
 &nbsp;
             try
             {
-                <span class="missing-if-branch" title="else path not taken" >E</span>if (left)
+                if (left)
                 {
                     left.end();
                 }
@@ -459,9 +459,9 @@ module.exports = function (config, authorize, connected, ready, error, warning)
 &nbsp;
         var url = require('url').parse(req.url, true);
 &nbsp;
-        <span class="missing-if-branch" title="if path not taken" >I</span>if (url.pathname !== '/publish')
+        if (url.pathname !== '/publish')
         {
-<span class="cstat-no" title="statement not covered" >            return done(404, 'not found');</span>
+            return done(404, 'not found');
         }
 &nbsp;
         authorize(req, <span class="fstat-no" title="function not covered" >function ()</span>
@@ -491,15 +491,15 @@ module.exports = function (config, authorize, connected, ready, error, warning)
                       left.right,
                       function (mqserver)
                       {
-						  <span class="missing-if-branch" title="if path not taken" >I</span>if (!mqserver)
-						  {
-<span class="cstat-no" title="statement not covered" >							  left.right.on('readable', <span class="fstat-no" title="function not covered" >function ()</span></span>
-							  {   
-<span class="cstat-no" title="statement not covered" >								  while (this.read() !== null);</span>
-							  });
+                          <span class="missing-if-branch" title="if path not taken" >I</span>if (!mqserver)
+                          {
+<span class="cstat-no" title="statement not covered" >                              left.right.on('readable', <span class="fstat-no" title="function not covered" >function ()</span></span>
+                              {   
+<span class="cstat-no" title="statement not covered" >                                  while (this.read() !== null);</span>
+                              });
 							  
-<span class="cstat-no" title="statement not covered" >							  while (left.right.read() !== null);</span>
-						  }
+<span class="cstat-no" title="statement not covered" >                              while (left.right.read() !== null);</span>
+                          }
 &nbsp;
                           left.right.end();
                           done(503, 'closed');
@@ -601,7 +601,7 @@ module.exports = function (config, authorize, connected, ready, error, warning)
 </div><!-- /wrapper -->
 <div class='footer quiet pad2 space-top1 center small'>
   Code coverage
-  generated by <a href="http://istanbul-js.org/" target="_blank">istanbul</a> at Sat Oct 15 2016 22:26:27 GMT+0100 (BST)
+  generated by <a href="http://istanbul-js.org/" target="_blank">istanbul</a> at Sun Oct 16 2016 20:15:23 GMT+0100 (BST)
 </div>
 </div>
 <script src="../../../prettify.js"></script>

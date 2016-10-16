@@ -7,31 +7,9 @@ var centro = require('..'),
     jsjws = require('jsjws'),
     expect = require('chai').expect,
     async = require('async'),
+    read_all = require('./read_all'),
     uri = 'mailto:dave@davedoesdev.com',
     uri2 = 'mailto:david@davedoesdev.com';
-
-function read_all(s, cb)
-{
-    var bufs = [];
-
-    s.on('end', function ()
-    {
-        if (cb)
-        {
-            cb(Buffer.concat(bufs));
-        }
-    });
-
-    s.on('readable', function ()
-    {
-        while (true)
-        {
-            var data = this.read();
-            if (data === null) { break; }
-            bufs.push(data);
-        }
-    });
-}
 
 var presence_topics = new Set();
 var pending_presence_topics = new Set();
@@ -329,7 +307,7 @@ module.exports = function (config, connect, options)
                         {
                             if (opts.client_ready)
                             {
-                                return opts.client_ready.call(this, i, next)
+                                return opts.client_ready.call(this, i, next);
                             }
 
                             next(null, this);
@@ -822,24 +800,23 @@ module.exports = function (config, connect, options)
                     {
                         if (err) return done(err);
 
-                        for (var mqserver of connections.keys())
+                        var mqserver = connections.keys().next().value;
+
+                        mqserver.subscribe('foo', function (err)
                         {
-                            mqserver.subscribe('foo', function (err)
+                            if (err) { return done(err); }
+
+                            clients[0]._matcher.add('foo', function (s, info, done)
                             {
-                                if (err) { return done(err); }
-
-                                clients[0]._matcher.add('foo', function (s, info, done)
-                                {
-                                    done();
-                                });
-
-                                mqserver.fsq.publish('foo',
-                                {
-                                    single: true,
-                                    ttl: 2000
-                                }).end();
+                                done();
                             });
-                        }
+
+                            mqserver.fsq.publish('foo',
+                            {
+                                single: true,
+                                ttl: 2000
+                            }).end();
+                        });
                     });
                 });
             }
@@ -2770,6 +2747,11 @@ module.exports = function (config, connect, options)
                     clients[0].mux.carrier.end();
                 });
             });
+        }
+
+        if (options.extra)
+        {
+            options.extra();
         }
     });
 };

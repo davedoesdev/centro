@@ -1,17 +1,20 @@
+/*jshint mocha: true */
 "use strict";
 
 var runner = require('./runner'),
     centro = require('..'),
+    read_all = require('./read_all'),
     http = require('http'),
     querystring = require('querystring'),
-    expect = require('chai').expect;
+    expect = require('chai').expect,
+    port = 8700;
 
 runner(
 {
     transport: [{
         server: 'http',
         config: {
-            port: 8700
+            port: port
         }
     }, {
         server: 'in-mem'
@@ -57,7 +60,7 @@ runner(
 
                         return http.request(
                         {
-                            port: 8700,
+                            port: port,
                             auth: userpass,
                             method: 'POST',
                             path: '/publish?' + querystring.stringify(Object.assign(
@@ -116,5 +119,25 @@ runner(
     });
 },
 {
-    relay: true
+    relay: true,
+    extra: function ()
+    {
+        it('should return 404 for unknown path', function (done)
+        {
+            http.request(
+            {
+                port: port,
+                method: 'POST',
+                path: '/dummy'
+            }, function (res)
+            {
+                expect(res.statusCode).to.equal(404);
+                read_all(res, function (v)
+                {
+                    expect(v.toString()).to.equal('not found');
+                    done();
+                });
+            }).end();
+        });
+    }
 });
