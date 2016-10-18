@@ -121,7 +121,7 @@ runner(
 },
 {
     relay: true,
-    extra: function (get_info)
+    extra: function (get_info, on_before)
     {
         it('should return 404 for unknown path', function (done)
         {
@@ -227,6 +227,46 @@ runner(
             });
         });
 
-		// close while publish
+        it('should return 503 when closed while authorizing', function (done)
+        {
+            var orig_authorize = get_info().server.transport_ops[0].authz.authorize;
+
+            get_info().server.transport_ops[0].authz.authorize = function ()
+            {
+                var self = this,
+                args = Array.prototype.slice.call(arguments);
+
+                get_info().server.close(function (err)
+                {
+                    if (err) { throw err; }
+                    orig_authorize.apply(self, args);
+                });
+            };
+
+            centro.separate_auth(
+            {
+                token: make_token()
+            }, function (err, userpass)
+            {
+                http.request(
+                {
+                    port: port,
+                    auth: userpass,
+                    method: 'POST',
+                    path: '/publish?' + querystring.stringify(
+                    {
+						topic: 'foo',
+                    })
+                }, function (res)
+                {
+                    expect(res.statusCode).to.equal(503);
+                    read_all(res, function (v)
+                    {
+                        expect(v.toString()).to.equal('closed');
+                        on_before(done); 
+                    });
+                }).end('hello');
+            });
+        });
     }
 });
