@@ -2751,7 +2751,14 @@ module.exports = function (config, connect, options)
 
         if (options.extra)
         {
-            options.extra();
+            options.extra(function ()
+            {
+                return {
+                    server: server,
+                    priv_key: priv_key,
+                    issuer_id: issuer_id
+                };
+            });
         }
     });
 };
