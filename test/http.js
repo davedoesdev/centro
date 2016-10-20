@@ -268,5 +268,41 @@ runner(
                 }).end('hello');
             });
         });
+
+        it('should return 503 if error occurs while checking revision', function (done)
+        {
+            var orig_get_pub_key_by_uri = get_info().server.transport_ops[0].authz.keystore.get_pub_key_by_uri;
+
+            get_info().server.transport_ops[0].authz.keystore.get_pub_key_by_uri = function (uri, cb)
+            {
+                this.get_pub_key_by_uri = orig_get_pub_key_by_uri;
+                cb(new Error('dummy'));
+            };
+
+            centro.separate_auth(
+            {
+                token: make_token()
+            }, function (err, userpass)
+            {
+                http.request(
+                {
+                    port: port,
+                    auth: userpass,
+                    method: 'POST',
+                    path: '/publish?' + querystring.stringify(
+                    {
+						topic: 'foo',
+                    })
+                }, function (res)
+                {
+                    expect(res.statusCode).to.equal(503);
+                    read_all(res, function (v)
+                    {
+                        expect(v.toString()).to.equal('closed');
+                        done();
+                    });
+                }).end('hello');
+            });
+        });
     }
 });
