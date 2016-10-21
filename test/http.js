@@ -304,5 +304,41 @@ runner(
                 }).end('hello');
             });
         });
+
+        it('ended before onclose (3)', function (done)
+        {
+            centro.separate_auth(
+            {
+                token: make_token()
+            }, function (err, userpass)
+            {
+                var orig_set = get_info().server._connids.set;
+                get_info().server._connids.set = function (connid, dstroy)
+                {
+                    get_info().server._connids.set = orig_set;
+                    dstroy.stream.push(null);
+                    dstroy();
+                    orig_set.call(this, connid, dstroy);
+                };
+                http.request(
+                {
+                    port: port,
+                    auth: userpass,
+                    method: 'POST',
+                    path: '/publish?' + querystring.stringify(
+                    {
+						topic: 'foo',
+                    })
+                }, function (res)
+                {
+                    expect(res.statusCode).to.equal(503);
+                    read_all(res, function (v)
+                    {
+                        expect(v.toString()).to.equal('closed');
+                        done();
+                    });
+                }).end('hello');
+            });
+        });
     }
 });

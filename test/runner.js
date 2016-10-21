@@ -2510,6 +2510,82 @@ module.exports = function (config, connect, options)
                 }));
         });
 
+        describe('ended before onclose', function ()
+        {
+            setup(1,
+            {
+                access_control: {
+                    publish: {
+                        allow: ['foo'],
+                        disallow: []
+                    },
+                    subscribe: {
+                        allow: ['foo'],
+                        disallow: []
+                    }
+                },
+                before_connect_function: function ()
+                {
+                    var orig_set = server._connids.set;
+                    server._connids.set = function (connid, dstroy)
+                    {
+                        server._connids.set = orig_set;
+                        dstroy();
+                        orig_set.call(this, connid, dstroy);
+                    };
+                },
+                client_function: client_function,
+                skip_ready: true
+            });
+
+            it('should callback if already ended',
+               expect_error('foo', true, 0));
+        });
+
+        describe('ended before onclose (2)', function ()
+        {
+            setup(1,
+            {
+                access_control: {
+                    publish: {
+                        allow: ['foo'],
+                        disallow: []
+                    },
+                    subscribe: {
+                        allow: ['foo'],
+                        disallow: []
+                    }
+                },
+                before_connect_function: function ()
+                {
+                    var orig_set = server._connids.set;
+                    server._connids.set = function (connid, dstroy)
+                    {
+                        server._connids.set = orig_set;
+                        dstroy.stream.push(null);
+                        dstroy();
+                        orig_set.call(this, connid, dstroy);
+
+                        var orig_eachSeries = async.eachSeries;
+                        async.eachSeries = function (hs, cb)
+                        {
+                            async.eachSeries = orig_eachSeries;
+                            var ths = this;
+                            process.nextTick(function ()
+                            {
+                                orig_eachSeries.call(ths, hs, cb);
+                            });
+                        };
+                    };
+                },
+                client_function: client_function,
+                skip_ready: true
+            });
+
+            it('should callback if already ended',
+               expect_error('foo', true, 0));
+        });
+
         if (!options.anon)
         {
             describe('public key change', function ()
