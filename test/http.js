@@ -10,6 +10,29 @@ var runner = require('./runner'),
     expect = require('chai').expect,
     port = 8700;
 
+function make_token(get_info)
+{
+    var token_exp = new Date();
+    token_exp.setMinutes(token_exp.getMinutes() + 1);
+    return new jsjws.JWT().generateJWTByKey(
+    {
+        alg: 'PS256'
+    },
+    {
+        iss: get_info().issuer_id,
+        access_control: {
+            publish: {
+                allow: ['foo'],
+                disallow: []
+            },
+            subscribe: {
+                allow: ['foo'],
+                disallow: []
+            }
+        }
+    }, token_exp, get_info().priv_key);
+}
+
 function connect(config, server, cb)
 {
     centro.separate_auth(config, function (err, userpass)
@@ -148,29 +171,6 @@ function extra(get_info, on_before)
         }).end();
     });
 
-    function make_token()
-    {
-        var token_exp = new Date();
-        token_exp.setMinutes(token_exp.getMinutes() + 1);
-        return new jsjws.JWT().generateJWTByKey(
-        {
-            alg: 'PS256'
-        },
-        {
-            iss: get_info().issuer_id,
-            access_control: {
-                publish: {
-                    allow: ['foo'],
-                    disallow: []
-                },
-                subscribe: {
-                    allow: ['foo'],
-                    disallow: []
-                }
-            }
-        }, token_exp, get_info().priv_key);
-    }
-
     it('should handle bad ttl value', function (done)
     {
         get_info().server.once('connect', function (info)
@@ -190,7 +190,7 @@ function extra(get_info, on_before)
         
         centro.separate_auth(
         {
-            token: make_token()
+            token: make_token(get_info)
         }, function (err, userpass)
         {
             http.request(
@@ -233,7 +233,7 @@ function extra(get_info, on_before)
 
         centro.separate_auth(
         {
-            token: make_token()
+            token: make_token(get_info)
         }, function (err, userpass)
         {
             http.request(
@@ -269,7 +269,7 @@ function extra(get_info, on_before)
 
         centro.separate_auth(
         {
-            token: make_token()
+            token: make_token(get_info)
         }, function (err, userpass)
         {
             http.request(
@@ -297,7 +297,7 @@ function extra(get_info, on_before)
     {
         centro.separate_auth(
         {
-            token: make_token()
+            token: make_token(get_info)
         }, function (err, userpass)
         {
             var orig_set = get_info().server._connids.set;
@@ -361,7 +361,77 @@ runner(
 }, connect,
 {
     relay: true,
-    extra: extra,
+    extra: function (get_info, on_before)
+    {
+        extra(get_info, on_before);
+
+        it('should catch errors when writing response', function (done)
+        {
+            get_info().server.once('connect', function (info)
+            {
+                // make sure another test doesn't pick up the message
+                info.mqserver.once('publish_requested', function (topic, duplex, options, done)
+                {
+                    expect(topic).to.equal(info.prefixes[0] + 'foo');
+                    expect(options.single).to.equal(false);
+                    expect(options.ttl).to.equal(undefined);
+                    read_all(duplex, function (v)
+                    {
+                        expect(v.toString()).to.equal('hello');
+                        done();
+                    });
+                });
+            });
+
+            var msg;
+
+            function request(req, res)
+            {
+                this.removeListener('request', request);
+
+                var orig_writeHead = res.writeHead;
+                res.writeHead = function (code, headers)
+                {
+                    res.writeHead = orig_writeHead;
+
+                    get_info().server.once('warning', function (err)
+                    {
+                        msg = err.message;
+                    });
+
+                    throw new Error('dummy');
+                };
+            }
+
+            get_info().config.server.on('request', request);
+
+            centro.separate_auth(
+            {
+                token: make_token(get_info)
+            }, function (err, userpass)
+            {
+                http.request(
+                {
+                    port: port,
+                    auth: userpass,
+                    method: 'POST',
+                    path: '/publish?' + querystring.stringify(
+                    {
+                        topic: 'foo',
+                    })
+                }, function (res)
+                {
+                    expect(res.statusCode).to.equal(200);
+                    read_all(res, function (v)
+                    {
+                        expect(v.toString()).to.equal('');
+                        expect(msg).to.equal('dummy');
+                        done();
+                    });
+                }).end('hello');
+            });
+        });
+    },
 
     on_before: function (config, cb)
     {

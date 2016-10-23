@@ -2860,6 +2860,7 @@ module.exports = function (config, connect, options)
             options.extra(function ()
             {
                 return {
+                    config: config,
                     server: server,
                     priv_key: priv_key,
                     issuer_id: issuer_id
