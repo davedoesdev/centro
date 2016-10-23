@@ -65,6 +65,11 @@ module.exports = function (config, connect, options)
     config.max_tokens = 2;
     config.send_expires = true;
 
+    function is_transport(n)
+    {
+        return name.lastIndexOf(n) === 0;
+    }
+
     describe(name, function ()
     {
         this.timeout(5000);
@@ -77,7 +82,7 @@ module.exports = function (config, connect, options)
 
         function on_before(cb)
         {
-            function start()
+            function start2()
             {
                 server = new centro.CentroServer(config);
 
@@ -137,20 +142,45 @@ module.exports = function (config, connect, options)
                 });
             }
 
-            if (config.fsq && !config.fsq.initialized)
+            function start()
             {
-                config.fsq.on('start', start);
+                if (config.fsq && !config.fsq.initialized)
+                {
+                    config.fsq.on('start', start2);
+                }
+                else
+                {
+                    start2();
+                }
             }
-            else
+
+            if (options.on_before)
             {
-                start();
+                return options.on_before(config, start);
             }
+
+            start();
         }
         
         before(on_before);
 
-        function on_after(cb)
+        function on_after(cb2)
         {
+            function cb(err)
+            {
+                if (err)
+                {
+                    return cb2(err);
+                }
+
+                if (options.on_after)
+                {
+                    return options.on_after(config, cb2);
+                }
+
+                cb2();
+            }
+
             if (options.anon)
             {
                 return cb();
@@ -328,7 +358,7 @@ module.exports = function (config, connect, options)
 
                     clients = cs;
 
-                    if (opts.end_immediately && (name !== 'primus'))
+                    if (opts.end_immediately && !is_transport('primus'))
                     {
                         server.removeListener('connect', onconnect);
                         return setTimeout(cb, 1000);
@@ -1959,7 +1989,7 @@ module.exports = function (config, connect, options)
                 onconnect();
             });
 
-            if (name !== 'primus')
+            if (!is_transport('primus'))
             {
                 return;
             }
@@ -2021,7 +2051,7 @@ module.exports = function (config, connect, options)
                             return false;
                         }
 
-                        if ((name === 'primus') && (code !== 0))
+                        if (is_transport('primus') && (code !== 0))
                         {
                             if (errors.length < 2)
                             {
@@ -2112,12 +2142,12 @@ module.exports = function (config, connect, options)
             setup(1,
             {
                 end_immediately: true,
-                client_function: name === 'primus' ? client_function : undefined
+                client_function: is_transport('primus') ? client_function : undefined
             });
 
             it('should fail to read tokens',
-               expect_error(name == 'primus' ? 'tokens missing' :
-                                               'ended before frame'));
+               expect_error(is_transport('primus') ? 'tokens missing' :
+                                                     'ended before frame'));
         });
 
         describe('max tokens', function ()
@@ -2208,7 +2238,7 @@ module.exports = function (config, connect, options)
                     server.once('connect', f);
                 }
 
-                if (name === 'tcp')
+                if (is_transport('tcp'))
                 {
                     clients[0].on('error', function (err)
                     {

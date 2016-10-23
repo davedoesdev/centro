@@ -6,11 +6,7 @@ var runner = require('./runner'),
     Socket = Primus.createSocket(),
     PrimusDuplex = require('primus-backpressure').PrimusDuplex;
 
-runner(
-{
-    transport: 'primus',
-    port: 8700
-}, function (config, server, cb)
+function connect(config, server, cb)
 {
     centro.separate_auth(config, function (err, userpass, make_client)
     {
@@ -26,4 +22,33 @@ runner(
 
         cb(null, make_client(new PrimusDuplex(socket)));
     });
+}
+
+runner(
+{
+    transport: 'primus',
+    port: 8700
+}, connect);
+
+runner(
+{
+    transport: 'primus',
+    transport_name: 'primus_passed_in_server'
+}, connect,
+{
+    on_before: function (config, cb)
+    {
+        if (config.server)
+        {
+            return cb();
+        }
+
+        config.server = Primus.createServer({ port: 8700 });
+        config.server.on('initialised', cb);
+    },
+
+    on_after: function (config, cb)
+    {
+        config.server.destroy(config, cb);
+    }
 });
