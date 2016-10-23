@@ -431,6 +431,66 @@ runner(
                 }).end('hello');
             });
         });
+
+        it('should catch errors when publishing', function (done)
+        {
+            get_info().server.once('connect', function (info)
+            {
+                info.mqserver.once('publish_requested', function (topic, duplex, options, done)
+                {
+                    // handshake is sent after carrier finishes
+                    done(new Error('should not be called'));
+                });
+            });
+
+            var msg;
+
+            function request(req, res)
+            {
+                this.removeListener('request', request);
+
+                var orig_pipe = req.pipe;
+                req.pipe = function (dest)
+                {
+                    req.pipe = orig_pipe;
+
+                    get_info().server.once('warning', function (err)
+                    {
+                        msg = err.message;
+                    });
+
+                    throw new Error('dummy');
+                };
+            }
+
+            get_info().config.server.on('request', request);
+
+            centro.separate_auth(
+            {
+                token: make_token(get_info)
+            }, function (err, userpass)
+            {
+                http.request(
+                {
+                    port: port,
+                    auth: userpass,
+                    method: 'POST',
+                    path: '/publish?' + querystring.stringify(
+                    {
+                        topic: 'foo',
+                    })
+                }, function (res)
+                {
+                    expect(res.statusCode).to.equal(500);
+                    read_all(res, function (v)
+                    {
+                        expect(v.toString()).to.equal('server error');
+                        expect(msg).to.equal('dummy');
+                        done();
+                    });
+                }).end('hello');
+            });
+        });
     },
 
     on_before: function (config, cb)
