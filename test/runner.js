@@ -1388,6 +1388,11 @@ module.exports = function (config, connect, options)
                     done();
                 });
 
+                clients[0].on('error', function (err)
+                {
+                    expect(err.message).to.equal('dummy');
+                });
+
                 for (var mqserver of connections.keys())
                 {
                     mqserver.mux.carrier.emit('error', new Error('dummy'));

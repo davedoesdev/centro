@@ -175,7 +175,7 @@ function extra(get_info, on_before)
     {
         get_info().server.once('connect', function (info)
         {
-            info.mqserver.once('publish_requested', function (topic, duplex, options, done)
+            info.mqserver.once('publish_requested', function (topic, duplex, options, done2)
             {
                 expect(topic).to.equal(info.prefixes[0] + 'foo');
                 expect(options.single).to.equal(false);
@@ -183,7 +183,7 @@ function extra(get_info, on_before)
                 read_all(duplex, function (v)
                 {
                     expect(v.toString()).to.equal('hello');
-                    done();
+                    done2();
                 });
             });
         });
@@ -370,7 +370,7 @@ runner(
             get_info().server.once('connect', function (info)
             {
                 // make sure another test doesn't pick up the message
-                info.mqserver.once('publish_requested', function (topic, duplex, options, done)
+                info.mqserver.once('publish_requested', function (topic, duplex, options, done2)
                 {
                     expect(topic).to.equal(info.prefixes[0] + 'foo');
                     expect(options.single).to.equal(false);
@@ -378,7 +378,7 @@ runner(
                     read_all(duplex, function (v)
                     {
                         expect(v.toString()).to.equal('hello');
-                        done();
+                        done2();
                     });
                 });
             });
@@ -436,7 +436,7 @@ runner(
         {
             get_info().server.once('connect', function (info)
             {
-                info.mqserver.once('publish_requested', function (topic, duplex, options, done)
+                info.mqserver.once('publish_requested', function (topic, duplex, options, done2)
                 {
                     // handshake is sent after carrier finishes
                     done(new Error('should not be called'));
@@ -489,6 +489,210 @@ runner(
                         done();
                     });
                 }).end('hello');
+            });
+        });
+
+        it('should handle request errors', function (done)
+        {
+            get_info().server.once('connect', function (info)
+            {
+                info.mqserver.once('publish_requested', function (topic, duplex, options, done2)
+                {
+                    // handshake is sent after carrier finishes
+                    done(new Error('should not be called'));
+                });
+            });
+
+            var msg;
+
+            function request(req, res)
+            {
+                this.removeListener('request', request);
+
+                var orig_pipe = req.pipe;
+                req.pipe = function (dest)
+                {
+                    req.pipe = orig_pipe;
+
+                    get_info().server.once('warning', function (err)
+                    {
+                        msg = err.message;
+                    });
+
+                    req.emit('error', new Error('dummy'));
+                };
+            }
+
+            get_info().config.server.on('request', request);
+
+            centro.separate_auth(
+            {
+                token: make_token(get_info)
+            }, function (err, userpass)
+            {
+                http.request(
+                {
+                    port: port,
+                    auth: userpass,
+                    method: 'POST',
+                    path: '/publish?' + querystring.stringify(
+                    {
+                        topic: 'foo',
+                    })
+                }, function (res)
+                {
+                    expect(res.statusCode).to.equal(500);
+                    read_all(res, function (v)
+                    {
+                        expect(v.toString()).to.equal('server error');
+                        expect(msg).to.equal('dummy');
+                        done();
+                    });
+                }).end('hello');
+            });
+        });
+
+        it('should handle response errors', function (done)
+        {
+            get_info().server.once('connect', function (info)
+            {
+                info.mqserver.once('publish_requested', function (topic, duplex, options, done2)
+                {
+                    // handshake is sent after carrier finishes
+                    done(new Error('should not be called'));
+                });
+            });
+
+            var msg;
+
+            function request(req, res)
+            {
+                this.removeListener('request', request);
+
+                var orig_pipe = req.pipe;
+                req.pipe = function (dest)
+                {
+                    req.pipe = orig_pipe;
+
+                    get_info().server.once('warning', function (err)
+                    {
+                        msg = err.message;
+                    });
+
+                    res.emit('error', new Error('dummy'));
+                    req.emit('error', new Error('dummy2'));
+                };
+            }
+
+            get_info().config.server.on('request', request);
+
+            centro.separate_auth(
+            {
+                token: make_token(get_info)
+            }, function (err, userpass)
+            {
+                http.request(
+                {
+                    port: port,
+                    auth: userpass,
+                    method: 'POST',
+                    path: '/publish?' + querystring.stringify(
+                    {
+                        topic: 'foo',
+                    })
+                }, function (res)
+                {
+                    expect(res.statusCode).to.equal(500);
+                    read_all(res, function (v)
+                    {
+                        expect(v.toString()).to.equal('server error');
+                        expect(msg).to.equal('dummy');
+                        done();
+                    });
+                }).end('hello');
+            });
+        });
+
+        it('should not publish if request errors', function (done)
+        {
+            get_info().server.transport_ops[1].connect(function (err, stream)
+            {
+                if (err) { return done(err); }
+
+                var mqclient = centro.stream_auth(stream,
+                {
+                    token: make_token(get_info)
+                });
+
+                mqclient.on('ready', function ()
+                {
+                    this.subscribe('foo', function ()
+                    {
+                        done(new Error('should not be called'));
+                    }, function (err)
+                    {
+                        if (err) { return done(err); }
+
+                        var msg;
+
+                        function request(req, res)
+                        {
+                            this.removeListener('request', request);
+
+                            var orig_pipe = req.pipe;
+                            req.pipe = function (dest)
+                            {
+                                req.pipe = orig_pipe;
+
+                                get_info().server.once('warning', function (err)
+                                {
+                                    msg = err.message;
+                                });
+
+                                dest.write('hello');
+
+                                // let the handshake (and data) go
+                                setImmediate(function ()
+                                {
+                                    req.emit('error', new Error('dummy'));
+                                    dest.end();
+                                });
+                            };
+                        }
+
+                        get_info().config.server.on('request', request);
+
+                        centro.separate_auth(
+                        {
+                            token: make_token(get_info)
+                        }, function (err, userpass)
+                        {
+                            http.request(
+                            {
+                                port: port,
+                                auth: userpass,
+                                method: 'POST',
+                                path: '/publish?' + querystring.stringify(
+                                {
+                                    topic: 'foo',
+                                })
+                            }, function (res)
+                            {
+                                expect(res.statusCode).to.equal(500);
+                                read_all(res, function (v)
+                                {
+                                    expect(v.toString()).to.equal('server error');
+                                    expect(msg).to.equal('dummy');
+                                    setTimeout(function ()
+                                    {
+                                        stream.on('end', done);
+                                        stream.end();
+                                    }, 1000);
+                                });
+                            }).end('hello');
+                        });
+                    });
+                });
             });
         });
     },
