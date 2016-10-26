@@ -3,6 +3,7 @@
 
 var centro = require('..'),
     CentroServer = centro.CentroServer,
+    crypto = require('crypto'),
     ursa = require('ursa'),
     jsjws = require('jsjws'),
     expect = require('chai').expect,
@@ -64,6 +65,7 @@ module.exports = function (config, connect, options)
     config.db_for_update = true;
     config.max_tokens = 2;
     config.send_expires = true;
+    config.multi_ttl = 10 * 60 * 1000;
 
     function is_transport(n)
     {
@@ -632,6 +634,47 @@ module.exports = function (config, connect, options)
                         if (err) { return done(err); }
                         clients[0].publish('foo').end('bar');
                     });
+                });
+            });
+        });
+
+        describe('large message', function ()
+        {
+            setup(1,
+            {
+                access_control: {
+                    publish: {
+                        allow: ['foo'],
+                        disallow: []
+                    },
+                    subscribe: {
+                        allow: ['foo'],
+                        disallow: []
+                    }
+                },
+                ttl: 10 * 60
+            });
+
+            it('large message', function (done)
+            {
+                this.timeout(10 * 60 * 1000);
+
+                var buf = crypto.randomBytes(1 * 1024 * 1024);
+
+                clients[0].subscribe('foo', function (s, info)
+                {
+                    expect(info.topic).to.equal('foo');
+                    expect(info.single).to.equal(false);
+
+                    read_all(s, function (v)
+                    {
+                        expect(v.equals(buf));
+                        done();
+                    });
+                }, function (err)
+                {
+                    if (err) { return done(err); }
+                    clients[0].publish('foo', { ttl: 10 * 60 }).end(buf);
                 });
             });
         });
