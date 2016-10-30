@@ -2903,6 +2903,55 @@ module.exports = function (config, connect, options)
             });
         }
 
+        describe('stream hooks', function (done)
+        {
+            setup(1,
+            {
+                access_control: {
+                    publish: {
+                        allow: ['foo'],
+                        disallow: []
+                    },
+                    subscribe: {
+                        allow: ['foo'],
+                        disallow: []
+                    }
+                }
+            });
+
+            /*it.only('should be able to throttle streams', function (done)
+            {
+                var mqserver = connections.keys().next().value;
+
+                mqserver.on('publish_requested', function (topic, duplex, options, done)
+                {
+                    insert stream-throttle
+                    relay errors from stream-throttle to publish stream
+                    - separate test to check they're relayed?
+                    fastest-writable should relay errors to its peers
+                    (and if no peers then just emit)
+                    duplex.pipe(this.fsq.publish(topic, options, done));
+
+                });
+
+                clients[0].subscribe('foo', function (s, info)
+                {
+                    expect(info.topic).to.equal('foo');
+                    expect(info.single).to.equal(false);
+
+                    read_all(s, function (v)
+                    {
+                        expect(v.toString()).to.equal('bar');
+                        done();
+                    });
+                }, function (err)
+                {
+                    if (err) { return done(err); }
+                    clients[0].publish('foo').end('bar');
+                });
+            });*/
+        });
+
         if (options.extra)
         {
             options.extra(function ()

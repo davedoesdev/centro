@@ -50,5 +50,31 @@ runner(
                 });
             });
         });
+
+        it('should relay error events', function (done)
+        {
+            var left = new in_mem.LeftDuplex(),
+                errors = [];
+
+            left.on('error', function (err)
+            {
+                errors.push('left', err.message);
+            });
+
+            left.right.on('error', function (err)
+            {
+                errors.push('right', err.message);
+            });
+
+            left.emit('error', new Error('dummy'));
+            left.right.emit('error', new Error('dummy2'));
+
+            expect(errors).to.eql(['right', 'dummy',
+                                   'left', 'dummy',
+                                   'left', 'dummy2',
+                                   'right', 'dummy2']);
+
+            done();
+        });
     }
 });
