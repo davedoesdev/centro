@@ -8,6 +8,7 @@ var centro = require('..'),
     jsjws = require('jsjws'),
     expect = require('chai').expect,
     async = require('async'),
+    Throttle = require('stream-throttle').Throttle,
     read_all = require('./read_all'),
     uri = 'mailto:dave@davedoesdev.com',
     uri2 = 'mailto:david@davedoesdev.com';
@@ -2919,19 +2920,44 @@ module.exports = function (config, connect, options)
                 }
             });
 
-            /*it.only('should be able to throttle streams', function (done)
+            it('should be able to throttle streams', function (done)
             {
-                var mqserver = connections.keys().next().value;
+                this.timeout(8000);
 
-                mqserver.on('publish_requested', function (topic, duplex, options, done)
+                var mqserver = connections.keys().next().value,
+                    date_before_publish,
+                    date_before_deliver;
+
+                mqserver.on('publish_requested', function (topic, duplex, options, cb)
                 {
-                    insert stream-throttle
-                    relay errors from stream-throttle to publish stream
-                    - separate test to check they're relayed?
-                    fastest-writable should relay errors to its peers
-                    (and if no peers then just emit)
-                    duplex.pipe(this.fsq.publish(topic, options, done));
+                    var t = new Throttle({rate: 10}),
+                        d = this.fsq.publish(topic, options, function (err)
+                        {
+                            if (err) { return done(err); }
+                            expect(new Date() - date_before_publish).to.be.at.least(2000);
+                            cb();
+                        });
 
+                    t.on('error', function (err)
+                    {
+                        d.emit('error', err);
+                    });
+
+                    duplex.pipe(t).pipe(d);
+                });
+
+                mqserver.on('message', function (stream, info, multiplex)
+                {
+                    var t = new Throttle({rate: 10}),
+                        d = multiplex();
+
+                    t.on('error', function (err)
+                    {
+                        d.emit('error', err);
+                    });
+
+                    date_before_deliver = new Date();
+                    stream.pipe(t).pipe(d);
                 });
 
                 clients[0].subscribe('foo', function (s, info)
@@ -2941,15 +2967,158 @@ module.exports = function (config, connect, options)
 
                     read_all(s, function (v)
                     {
-                        expect(v.toString()).to.equal('bar');
+                        expect(new Date() - date_before_deliver).to.be.at.least(2000);
+                        expect(v.toString()).to.equal('012345678901234567890');
                         done();
                     });
                 }, function (err)
                 {
                     if (err) { return done(err); }
-                    clients[0].publish('foo').end('bar');
+                    date_before_publish = new Date();
+                    clients[0].publish('foo').end('012345678901234567890');
                 });
-            });*/
+            });
+
+            it('should be able to time-out publish streams', function (done)
+            {
+                var mqserver,
+                    client_done = false,
+                    server_done = false;
+
+                function register()
+                {
+                    mqserver.on('publish_requested', function (topic, duplex, options, cb)
+                    {
+                        var d = this.fsq.publish(topic, options, function (err)
+                        {
+                            expect(err.message).to.equal('dummy');
+                            cb(err);
+                        });
+
+                        setTimeout(function ()
+                        {
+                            d.emit('error', new Error('dummy'));
+                        }, 1000);
+
+                        duplex.pipe(d);
+                    });
+                }
+
+                if (options.relay)
+                {
+                    server.once('connect', function (info)
+                    {
+                        mqserver = info.mqserver;
+                        register();
+                    });
+                }
+                else
+                {
+                    mqserver = connections.keys().next().value;
+                    register();
+                }
+
+                server.once('disconnect', function (mqsrv)
+                {
+                    expect(mqsrv).to.equal(mqserver);
+                    server_done = true;
+                    if (client_done)
+                    {
+                        done();
+                    }
+                });
+
+                clients[0].publish('foo', function (err)
+                {
+                    expect(err.message).to.equal('server error');
+                    clients[0].mux.on('end', function ()
+                    {
+                        client_done = true;
+                        if (server_done)
+                        {
+                            done();
+                        }
+                    });
+                    connections.values().next().value.destroy();
+                }).write('A');
+            });
+
+            it('should be able to time-out message streams', function (done)
+            {
+                var mqserver = connections.keys().next().value,
+                    client_done = false,
+                    server_done = false;
+
+                mqserver.on('message', function (stream, info, multiplex)
+                {
+                    var ended = false;
+
+                    stream.on('end', function ()
+                    {
+                        ended = true;
+                    });
+
+                    var d = multiplex();
+                    stream.pipe(d);
+
+                    setTimeout(function ()
+                    {
+                        expect(ended).to.equal(false);
+                        stream.on('error', function (err)
+                        {
+                            expect(err.message).to.equal('dummy');
+                        });
+                        stream.on('end', function ()
+                        {
+                            connections.get(mqserver).destroy();
+                        });
+                        stream.on('readable', function ()
+                        {
+                            this.read();
+                        });
+                        d.emit('error', new Error('dummy'));
+                    }, 1000);
+                });
+
+                if (is_transport('tcp'))
+                {
+                    clients[0].on('error', function (err)
+                    {
+                        expect(err.message).to.equal('write EPIPE');
+                    });
+                }
+
+                clients[0].mux.on('end', function ()
+                {
+                    client_done = true;
+                    if (server_done)
+                    {
+                        done();
+                    }
+                });
+
+                clients[0].subscribe('foo', function (s, info)
+                {
+                    expect(info.topic).to.equal('foo');
+                    expect(info.single).to.equal(false);
+                }, function (err)
+                {
+                    if (err) { return done(err); }
+                    clients[0].publish('foo', function (err)
+                    {
+                        if (err) { return done(err); }
+                        server.once('disconnect', function (mqsrv)
+                        {
+                            expect(mqsrv).to.equal(mqserver);
+                            server_done = true;
+                            if (client_done)
+                            {
+                                done();
+                            }
+                        });
+                    }).end(new Buffer(128*1024));
+                });
+            });
         });
 
         if (options.extra)
