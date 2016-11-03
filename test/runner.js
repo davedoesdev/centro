@@ -9,6 +9,7 @@ var centro = require('..'),
     expect = require('chai').expect,
     async = require('async'),
     Throttle = require('stream-throttle').Throttle,
+    Transform = require('stream').Transform,
     read_all = require('./read_all'),
     uri = 'mailto:dave@davedoesdev.com',
     uri2 = 'mailto:david@davedoesdev.com';
@@ -67,6 +68,12 @@ module.exports = function (config, connect, options)
     config.max_tokens = 2;
     config.send_expires = true;
     config.multi_ttl = 10 * 60 * 1000;
+
+    config.filter = function (info, handlers, cb)
+    {
+        cb(null, true, handlers);
+
+    };
 
     function is_transport(n)
     {
@@ -3080,14 +3087,6 @@ module.exports = function (config, connect, options)
                     }, 1000);
                 });
 
-                if (is_transport('tcp'))
-                {
-                    clients[0].on('error', function (err)
-                    {
-                        expect(err.message).to.equal('write EPIPE');
-                    });
-                }
-
                 clients[0].mux.on('end', function ()
                 {
                     client_done = true;
@@ -3118,6 +3117,92 @@ module.exports = function (config, connect, options)
                         });
                     }).end(new Buffer(128*1024));
                 });
+            });
+
+            it('should be able to limit data published', function (done)
+            {
+                var mqserver,
+                    client_done = false,
+                    server_done = false;
+
+                function register()
+                {
+                    mqserver.on('publish_requested', function (topic, duplex, options, cb)
+                    {
+                        var p = new Transform(),
+                            d = this.fsq.publish(topic, options, cb);
+
+                        p.on('error', function (err)
+                        {
+                            d.emit('error', err);
+                        });
+
+                        var count = 0;
+
+                        p._transform = function (chunk, enc, cont)
+                        {
+                            count += chunk.length;
+
+                            if (count > 17000)
+                            {
+                                return cont(new Error('too much data'));
+                            }
+
+                            this.push(chunk);
+                            cont();
+                        };
+
+                        duplex.pipe(p).pipe(d);
+                    });
+                }
+
+                if (options.relay)
+                {
+                    server.once('connect', function (info)
+                    {
+                        mqserver = info.mqserver;
+                        register();
+                    });
+                }
+                else
+                {
+                    mqserver = connections.keys().next().value;
+                    register();
+                }
+
+                server.once('disconnect', function (mqsrv)
+                {
+                    expect(mqsrv).to.equal(mqserver);
+                    server_done = true;
+                    if (client_done)
+                    {
+                        done();
+                    }
+                });
+
+                if (is_transport('tcp'))
+                {
+                    clients[0].on('error', function (err)
+                    {
+                        expect(err.message).to.be.oneOf(
+                            ['write EPIPE', 'read ECONNRESET']);
+                    });
+                }
+
+                clients[0].mux.on('end', function ()
+                {
+                    client_done = true;
+                    if (server_done)
+                    {
+                        done();
+                    }
+                });
+
+                clients[0].publish('foo', function (err)
+                {
+                    expect(err.message).to.equal('server error');
+                    connections.values().next().value.destroy();
+                }).end(new Buffer(128 * 1024));
             });
         });
 

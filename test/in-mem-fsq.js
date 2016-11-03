@@ -8,7 +8,6 @@ runner(
 {
     transport: 'in-mem',
     transport_name: 'in-mem-fsq',
-    fsq: new QlobberFSQ()
 }, function (config, server, cb)
 {
     server.transport_ops[0].connect(function (err, stream)
@@ -22,4 +21,13 @@ runner(
     });
 },
 {
+    on_before: function (config, cb)
+    {
+        if (!config.fsq)
+        {
+            config.fsq = new QlobberFSQ();
+        }
+
+        cb();
+    }
 });
