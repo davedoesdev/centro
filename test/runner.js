@@ -69,18 +69,12 @@ module.exports = function (config, connect, options)
     config.send_expires = true;
     config.multi_ttl = 10 * 60 * 1000;
 
-    config.filter = function (info, handlers, cb)
-    {
-        cb(null, true, handlers);
-
-    };
-
     function is_transport(n)
     {
         return name.lastIndexOf(n) === 0;
     }
 
-    describe(name, function ()
+    function run(config)
     {
         this.timeout(5000);
 
@@ -417,6 +411,62 @@ module.exports = function (config, connect, options)
                     {
                         empty();
                     }
+                });
+            });
+        }
+
+        if (config.filter)
+        {
+            describe('fsq filter', function (done)
+            {
+                setup(1,
+                {
+                    access_control: {
+                        publish: {
+                            allow: ['foo', 'bar'],
+                            disallow: []
+                        },
+                        subscribe: {
+                            allow: ['foo', 'bar'],
+                            disallow: []
+                        }
+                    }
+                });
+
+                it('should be able to filter handlers', function (done)
+                {
+                    if (config.fsq) { return done(); }
+
+                    // delay message until all streams are under high-water mark
+
+                    clients[0].subscribe('bar', function (s)
+                    {
+                        var mqserver = connections.keys().next().value;
+                        mqserver.bar_s = s;
+                        // don't read so server is backed up
+                        this.publish('foo', function (err)
+                        {
+                            if (err) { return cb(err); }
+                        }).end('hello');
+                    }, function (err)
+                    {
+                        if (err) { return done(err); }
+                        clients[0].subscribe('foo', function (s)
+                        {
+                            read_all(s, function (v)
+                            {
+                                expect(v.toString()).to.equal('hello')
+                                done();
+                            });
+                        }, function (err)
+                        {
+                            if (err) { return done(err); }
+                            clients[0].publish('bar', function (err)
+                            {
+                                if (err) { return done(err); }
+                            }).end(new Buffer(128 * 1024));
+                        });
+                    });
                 });
             });
         }
@@ -3218,5 +3268,51 @@ module.exports = function (config, connect, options)
                 };
             }, on_before);
         }
+    }
+
+    describe(name, function ()
+    {
+        run.call(this, config);
+    });
+    
+    describe(name + ' (filter)', function ()
+    {
+        run.call(this, Object.assign(
+        {
+            handler_concurrency: 1,
+
+            filter: function (info, handlers, cb)
+            {
+                if (info.topic === 'bar')
+                {
+                    return cb(null, true, handlers);
+                }
+
+                for (var h of handlers)
+                {
+                    if (h.mqlobber_server)
+                    {
+                        for (var d of h.mqlobber_server.mux.duplexes.values())
+                        {
+                            if (d._writableState.length >=
+                                d._writableState.highWaterMark)
+                            {
+                                // drain 'bar' stream on client
+                                var bar_s = h.mqlobber_server.bar_s;
+                                if (bar_s)
+                                {
+                                    read_all(bar_s);
+                                    h.mqlobber_server.bar_s = null;
+                                }
+
+                                return cb(null, false);
+                            }
+                        }
+                    }
+                }
+
+                cb(null, true, handlers);
+            }
+        }, config));
     });
 };
