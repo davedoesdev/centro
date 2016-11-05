@@ -3,6 +3,7 @@
 
 var centro = require('..'),
     CentroServer = centro.CentroServer,
+    util = require('util'),
     crypto = require('crypto'),
     ursa = require('ursa'),
     jsjws = require('jsjws'),
@@ -10,9 +11,22 @@ var centro = require('..'),
     async = require('async'),
     Throttle = require('stream-throttle').Throttle,
     Transform = require('stream').Transform,
+    Writable = require('stream').Writable,
+    FastestWritable = require('fastest-writable').FastestWritable,
     read_all = require('./read_all'),
     uri = 'mailto:dave@davedoesdev.com',
     uri2 = 'mailto:david@davedoesdev.com';
+
+function NullStream()
+{
+    Writable.call(this);
+}
+
+util.inherits(NullStream, Writable);
+
+NullStream.prototype._write = function ()
+{
+};
 
 var presence_topics = new Set();
 var pending_presence_topics = new Set();
@@ -3321,6 +3335,131 @@ module.exports = function (config, connect, options)
                         }
                     }
 
+                    cb(null, true, handlers);
+                }
+            }, config));
+        });
+
+        describe('fastest writable', function ()
+        {
+            run.call(this, Object.assign(
+            {
+                only: function (get_info)
+                {
+                    get_info().setup(2,
+                    {
+                        access_control: {
+                            publish: {
+                                allow: ['foo'],
+                                disallow: []
+                            },
+                            subscribe: {
+                                allow: ['foo', '#'],
+                                disallow: []
+                            }
+                        }
+                    });
+
+                    it('should support setting custom data on message info and stream', function (done)
+                    {
+                        if (config.fsq) { return done(); }
+
+                        var message0_called = false,
+                            message1_called = false,
+                            laggard0_called = false,
+                            laggard1_called = false,
+                            buf = new Buffer(100 * 1024),
+                            mqservers = {},
+                            prefixes = {};
+
+                        buf.fill('a');
+
+                        for (var info of get_info().connections.values())
+                        {
+                            mqservers[info.hsdata[0]] = info.mqserver;
+                            prefixes[info.hsdata[0]] = info.prefixes;
+                        }
+
+                        function check(msg_stream, info, duplex)
+                        {
+                            expect(info.topic).to.equal(prefixes[0][0] + 'foo');
+                            expect(msg_stream.fastest_writable === undefined).to.equal(info.count === 0 ? true : false);
+                            info.count += 1;
+
+                            if (!msg_stream.fastest_writable)
+                            {
+                                msg_stream.fastest_writable = new FastestWritable(
+                                {
+                                    emit_laggard: true
+                                });
+                                msg_stream.pipe(msg_stream.fastest_writable);
+                            }
+
+                            msg_stream.fastest_writable.add_peer(duplex);
+
+                            if (info.count === info.num_handlers)
+                            {
+                                // make fastest_writable enter waiting state
+                                msg_stream.fastest_writable.write(buf);
+                            }
+                        }
+
+                        mqservers[0].on('message', function (msg_stream, info, multiplex)
+                        {
+                            expect(message0_called).to.equal(false);
+                            message0_called = true;
+                            var duplex = multiplex();
+                            check(msg_stream, info, duplex);
+                            duplex.on('laggard', function ()
+                            {
+                                laggard0_called = true;
+                            });
+                        });
+
+                        mqservers[1].on('message', function (msg_stream, info, multiplex)
+                        {
+                            expect(message1_called).to.equal(false);
+                            message1_called = true;
+                            var null_stream = new NullStream();
+                            null_stream.on('laggard', function ()
+                            {
+                                laggard1_called = true;
+                            });
+                            check(msg_stream, info, null_stream);
+                        });
+
+                        get_info().clients[0].subscribe('foo', function (s, info)
+                        {
+                            expect(info.topic).to.equal('foo');
+                            read_all(s, function (v)
+                            {
+                                expect(v.toString()).to.equal(buf.toString() + 'bar');
+                                setTimeout(function ()
+                                {
+                                    expect(laggard0_called).to.equal(false);
+                                    expect(laggard1_called).to.equal(true);
+                                    done();
+                                }, 2000);
+                            });
+                        }, function (err)
+                        {
+                            if (err) { return done(err); }
+                            get_info().clients[1].subscribe('#', function (s, info)
+                            {
+                                done(new Error('should not be called'));
+                            }, function (err)
+                            {
+                                if (err) { return done(err); }
+                                get_info().clients[0].publish('foo').end('bar');
+                            });
+                        });
+                    });
+                },
+
+                filter: function (info, handlers, cb)
+                {
+                    info.num_handlers = handlers.size;
+                    info.count = 0;
                     cb(null, true, handlers);
                 }
             }, config));
