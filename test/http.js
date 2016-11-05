@@ -387,6 +387,7 @@ runner(
 
             function request(req, res)
             {
+                /*jshint validthis: true */
                 this.removeListener('request', request);
 
                 var orig_writeHead = res.writeHead;
@@ -447,6 +448,7 @@ runner(
 
             function request(req, res)
             {
+                /*jshint validthis: true */
                 this.removeListener('request', request);
 
                 var orig_pipe = req.pipe;
@@ -507,6 +509,7 @@ runner(
 
             function request(req, res)
             {
+                /*jshint validthis: true */
                 this.removeListener('request', request);
 
                 var orig_pipe = req.pipe;
@@ -567,6 +570,7 @@ runner(
 
             function request(req, res)
             {
+                /*jshint validthis: true */
                 this.removeListener('request', request);
 
                 var orig_pipe = req.pipe;
@@ -637,6 +641,7 @@ runner(
 
                         function request(req, res)
                         {
+                            /*jshint validthis: true */
                             this.removeListener('request', request);
 
                             var orig_pipe = req.pipe;

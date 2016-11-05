@@ -76,6 +76,7 @@ module.exports = function (config, connect, options)
 
     function run(config)
     {
+        /* jshint validthis: true */
         this.timeout(5000);
 
         var server, clients,
@@ -415,60 +416,22 @@ module.exports = function (config, connect, options)
             });
         }
 
-        if (config.filter)
+        function get_info()
         {
-            describe('fsq filter', function (done)
-            {
-                setup(1,
-                {
-                    access_control: {
-                        publish: {
-                            allow: ['foo', 'bar'],
-                            disallow: []
-                        },
-                        subscribe: {
-                            allow: ['foo', 'bar'],
-                            disallow: []
-                        }
-                    }
-                });
+            return {
+                config: config,
+                server: server,
+                priv_key: priv_key,
+                issuer_id: issuer_id,
+                clients: clients,
+                connections: connections,
+                setup: setup
+            };
+        }
 
-                it('should be able to filter handlers', function (done)
-                {
-                    if (config.fsq) { return done(); }
-
-                    // delay message until all streams are under high-water mark
-
-                    clients[0].subscribe('bar', function (s)
-                    {
-                        var mqserver = connections.keys().next().value;
-                        mqserver.bar_s = s;
-                        // don't read so server is backed up
-                        this.publish('foo', function (err)
-                        {
-                            if (err) { return cb(err); }
-                        }).end('hello');
-                    }, function (err)
-                    {
-                        if (err) { return done(err); }
-                        clients[0].subscribe('foo', function (s)
-                        {
-                            read_all(s, function (v)
-                            {
-                                expect(v.toString()).to.equal('hello')
-                                done();
-                            });
-                        }, function (err)
-                        {
-                            if (err) { return done(err); }
-                            clients[0].publish('bar', function (err)
-                            {
-                                if (err) { return done(err); }
-                            }).end(new Buffer(128 * 1024));
-                        });
-                    });
-                });
-            });
+        if (config.only)
+        {
+            return config.only(get_info, on_before);
         }
 
         describe('simple access control', function ()
@@ -3258,61 +3221,109 @@ module.exports = function (config, connect, options)
 
         if (options.extra)
         {
-            options.extra(function ()
-            {
-                return {
-                    config: config,
-                    server: server,
-                    priv_key: priv_key,
-                    issuer_id: issuer_id
-                };
-            }, on_before);
+            options.extra(get_info, on_before);
         }
     }
 
     describe(name, function ()
     {
-        run.call(this, config);
-    });
-    
-    describe(name + ' (filter)', function ()
-    {
-        run.call(this, Object.assign(
+        describe('main', function ()
         {
-            handler_concurrency: 1,
+            run.call(this, config);
+        });
 
-            filter: function (info, handlers, cb)
+        describe('filter', function ()
+        {
+            run.call(this, Object.assign(
             {
-                if (info.topic === 'bar')
+                only: function (get_info)
                 {
-                    return cb(null, true, handlers);
-                }
-
-                for (var h of handlers)
-                {
-                    if (h.mqlobber_server)
+                    get_info().setup(1,
                     {
-                        for (var d of h.mqlobber_server.mux.duplexes.values())
-                        {
-                            if (d._writableState.length >=
-                                d._writableState.highWaterMark)
-                            {
-                                // drain 'bar' stream on client
-                                var bar_s = h.mqlobber_server.bar_s;
-                                if (bar_s)
-                                {
-                                    read_all(bar_s);
-                                    h.mqlobber_server.bar_s = null;
-                                }
+                        access_control: {
+                            publish: {
+                                allow: ['foo', 'bar'],
+                                disallow: []
+                            },
+                            subscribe: {
+                                allow: ['foo', 'bar'],
+                                disallow: []
+                            }
+                        }
+                    });
 
-                                return cb(null, false);
+                    it('should be able to filter handlers', function (done)
+                    {
+                        if (config.fsq) { return done(); }
+
+                        // delay message until all streams are under high-water mark
+
+                        get_info().clients[0].subscribe('bar', function (s)
+                        {
+                            var mqserver = get_info().connections.keys().next().value;
+                            mqserver.bar_s = s;
+                            // don't read so server is backed up
+                            this.publish('foo', function (err)
+                            {
+                                if (err) { return done(err); }
+                            }).end('hello');
+                        }, function (err)
+                        {
+                            if (err) { return done(err); }
+                            get_info().clients[0].subscribe('foo', function (s)
+                            {
+                                read_all(s, function (v)
+                                {
+                                    expect(v.toString()).to.equal('hello');
+                                    done();
+                                });
+                            }, function (err)
+                            {
+                                if (err) { return done(err); }
+                                get_info().clients[0].publish('bar', function (err)
+                                {
+                                    if (err) { return done(err); }
+                                }).end(new Buffer(128 * 1024));
+                            });
+                        });
+                    });
+                },
+
+                handler_concurrency: 1,
+
+                filter: function (info, handlers, cb)
+                {
+                    if (info.topic === 'bar')
+                    {
+                        return cb(null, true, handlers);
+                    }
+
+                    for (var h of handlers)
+                    {
+                        if (h.mqlobber_server)
+                        {
+                            for (var d of h.mqlobber_server.mux.duplexes.values())
+                            {
+                                if (d._writableState.length >=
+                                    d._writableState.highWaterMark)
+                                {
+                                    // drain 'bar' stream on client
+                                    var bar_s = h.mqlobber_server.bar_s;
+                                    if (bar_s)
+                                    {
+                                        read_all(bar_s);
+                                        h.mqlobber_server.bar_s = null;
+                                    }
+
+                                    return cb(null, false);
+                                }
                             }
                         }
                     }
-                }
 
-                cb(null, true, handlers);
-            }
-        }, config));
+                    cb(null, true, handlers);
+                }
+            }, config));
+        });
     });
 };

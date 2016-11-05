@@ -1,3 +1,4 @@
+/*jshint mocha: true */
 "use strict";
 
 var runner = require('./runner'),
