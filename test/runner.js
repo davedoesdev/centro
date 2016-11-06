@@ -3235,7 +3235,10 @@ module.exports = function (config, connect, options)
 
         if (options.extra)
         {
-            options.extra(get_info, on_before);
+            describe('extra', function ()
+            {
+                options.extra(get_info, on_before);
+            });
         }
     }
 
