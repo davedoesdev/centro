@@ -46,13 +46,12 @@ module.exports = function (config, connect, options)
 
         if (config.transport.server)
         {
-            config.transport.server = require('../lib/transports/' +
-                                              config.transport.server);
+            config.transport.server = CentroServer.load_transport(
+                                          config.transport.server);
         }
         else
         {
-            config.transport = require('../lib/transports/' +
-                                       config.transport);
+            config.transport = CentroServer.load_transport(config.transport);
         }
     }
     else
@@ -65,13 +64,13 @@ module.exports = function (config, connect, options)
         {
             if (config.transport[i].server)
             {
-                config.transport[i].server = require('../lib/transports/' +
-                                                     config.transport[i].server);
+                config.transport[i].server = CentroServer.load_transport(
+                                                 config.transport[i].server);
             }
             else
             {
-                config.transport[i] = require('../lib/transports/' +
-                                              config.transport[i]);
+                config.transport[i] = CentroServer.load_transport(
+                                          config.transport[i]);
             }
         }
     }
