@@ -3232,6 +3232,114 @@ module.exports = function (config, connect, options)
             });
         });
 
+        describe('version check', function ()
+        {
+            setup(1,
+            {
+                access_control: {
+                    publish: {
+                        allow: ['foo'],
+                        disallow: []
+                    },
+                    subscribe: {
+                        allow: ['foo'],
+                        disallow: []
+                    }
+                },
+
+                before_connect_function: function ()
+                {
+                    require('../lib/server').version += 1;
+                },
+
+                client_function: function (c, onconnect)
+                {
+                    c.on('error', function (err)
+                    {
+                        this.last_error = err;
+                        onconnect();
+                    });
+                },
+
+                skip_ready: true
+            });
+
+            it('should check version number', function (done)
+            {
+                function check_error()
+                {
+                    if (clients[0].last_error && server.last_warning)
+                    {
+                        expect(server.last_warning.message).to.equal('unsupported version: 1');
+                        expect(clients[0].last_error.message).to.equal('unsupported version: 2');
+                        require('../lib/server').version -= 1;
+                        return done();
+                    }
+
+                    setTimeout(check_error, 500);
+                }
+
+                check_error();
+            });
+        });
+
+        describe('client handshake length', function ()
+        {
+            setup(1,
+            {
+                access_control: {
+                    publish: {
+                        allow: ['foo'],
+                        disallow: []
+                    },
+                    subscribe: {
+                        allow: ['foo'],
+                        disallow: []
+                    }
+                },
+
+                before_connect_function: function ()
+                {
+                    var client = require('../lib/client');
+                    client.version_buffer_save = client.version_buffer;
+                    client.version_buffer = new Buffer(2);
+                },
+
+                client_function: function (c, onconnect)
+                {
+                    c.on('error', function (err)
+                    {
+                        this.last_error = err;
+                        onconnect();
+                    });
+                },
+
+                skip_ready: true
+            });
+
+            it('server should check client handshake length', function (done)
+            {
+                function check_error()
+                {
+                    if (clients[0].last_error && server.last_warning)
+                    {
+                        expect(server.last_warning.message).to.equal('short handshake');
+                        expect(clients[0].last_error.message).to.equal('Unexpected end of input');
+
+                        var client = require('../lib/client');
+                        client.version_buffer = client.version_buffer_save;
+                        delete client.version_buffer_save;
+
+                        return done();
+                    }
+
+                    setTimeout(check_error, 500);
+                }
+
+                check_error();
+            });
+        });
+
         if (options.extra)
         {
             describe('extra', function ()

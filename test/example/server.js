@@ -1,15 +1,27 @@
 var uri = 'http://davedoesdev.com',
     CentroServer = require('centro').CentroServer,
     assert = require('assert'),
-    jsjws = require('jsjws');
+    jsjws = require('jsjws'),
+    base_port = 8800;
 
-new CentroServer(
-{
+var config = {
     authorize: require('authorize-jwt'),
     db_type: 'pouchdb',
-    transport: CentroServer.load_transport(process.argv[2] || 'tcp'),
-    port: 8800
-}).on('ready', function ()
+    transport: []
+};
+
+for (var i = 2; i < process.argv.length; i += 1)
+{
+    config.transport.push(
+    {
+        server: CentroServer.load_transport(process.argv[i]),
+        config: {
+            port: base_port + i - 2
+        }
+    });
+}
+
+new CentroServer(config).on('ready', function ()
 {
     console.log('READY.');
 });

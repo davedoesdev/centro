@@ -3,7 +3,10 @@
 var runner = require('./runner'),
     centro = require('..'),
     Primus = require('primus'),
-    Socket = Primus.createSocket(),
+    Socket = Primus.createSocket(
+    {
+        pathname: '/centro/v' + centro.version + '/primus'
+    }),
     PrimusDuplex = require('primus-backpressure').PrimusDuplex;
 
 function connect(config, server, cb)
@@ -43,7 +46,12 @@ runner(
             return cb();
         }
 
-        config.server = Primus.createServer({ port: 8700 });
+        config.server = Primus.createServer(
+        {
+            pathname: '/centro/v' + centro.version + '/primus',
+            port: 8700
+        });
+
         config.server.on('initialised', cb);
     },
 

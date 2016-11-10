@@ -8,6 +8,7 @@ var runner = require('./runner'),
     jsjws = require('jsjws'),
     querystring = require('querystring'),
     expect = require('chai').expect,
+    pathname = '/centro/v' + centro.version + '/publish?',
     port = 8700;
 
 function make_token(get_info)
@@ -76,7 +77,7 @@ function connect(config, server, cb)
                             port: port,
                             auth: userpass,
                             method: 'POST',
-                            path: '/publish?' + querystring.stringify(Object.assign(
+                            path: pathname + querystring.stringify(Object.assign(
                                     {}, options, { topic: topic, n: n }))
                         }, function (res)
                         {
@@ -158,7 +159,7 @@ function extra(get_info, on_before)
         {
             port: port,
             method: 'POST',
-            path: '/publish'
+            path: pathname
         }, function (res)
         {
             expect(res.statusCode).to.equal(401);
@@ -198,7 +199,7 @@ function extra(get_info, on_before)
                 port: port,
                 auth: userpass,
                 method: 'POST',
-                path: '/publish?' + querystring.stringify(
+                path: pathname + querystring.stringify(
                 {
                     topic: 'foo',
                     ttl: ['foo', 'foo']
@@ -241,7 +242,7 @@ function extra(get_info, on_before)
                 port: port,
                 auth: userpass,
                 method: 'POST',
-                path: '/publish?' + querystring.stringify(
+                path: pathname + querystring.stringify(
                 {
                     topic: 'foo',
                 })
@@ -277,7 +278,7 @@ function extra(get_info, on_before)
                 port: port,
                 auth: userpass,
                 method: 'POST',
-                path: '/publish?' + querystring.stringify(
+                path: pathname + querystring.stringify(
                 {
                     topic: 'foo',
                 })
@@ -313,7 +314,7 @@ function extra(get_info, on_before)
                 port: port,
                 auth: userpass,
                 method: 'POST',
-                path: '/publish?' + querystring.stringify(
+                path: pathname + querystring.stringify(
                 {
                     topic: 'foo',
                 })
@@ -416,7 +417,7 @@ runner(
                     port: port,
                     auth: userpass,
                     method: 'POST',
-                    path: '/publish?' + querystring.stringify(
+                    path: pathname + querystring.stringify(
                     {
                         topic: 'foo',
                     })
@@ -477,7 +478,7 @@ runner(
                     port: port,
                     auth: userpass,
                     method: 'POST',
-                    path: '/publish?' + querystring.stringify(
+                    path: pathname + querystring.stringify(
                     {
                         topic: 'foo',
                     })
@@ -538,7 +539,7 @@ runner(
                     port: port,
                     auth: userpass,
                     method: 'POST',
-                    path: '/publish?' + querystring.stringify(
+                    path: pathname + querystring.stringify(
                     {
                         topic: 'foo',
                     })
@@ -600,7 +601,7 @@ runner(
                     port: port,
                     auth: userpass,
                     method: 'POST',
-                    path: '/publish?' + querystring.stringify(
+                    path: pathname + querystring.stringify(
                     {
                         topic: 'foo',
                     })
@@ -677,7 +678,7 @@ runner(
                                 port: port,
                                 auth: userpass,
                                 method: 'POST',
-                                path: '/publish?' + querystring.stringify(
+                                path: pathname + querystring.stringify(
                                 {
                                     topic: 'foo',
                                 })
