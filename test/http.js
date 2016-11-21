@@ -85,7 +85,7 @@ function connect(config, server, cb)
 
                             res.on('end', function ()
                             {
-                                var err;
+                                var err = null;
 
                                 if (res.statusCode === 200)
                                 {

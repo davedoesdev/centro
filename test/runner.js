@@ -79,6 +79,8 @@ module.exports = function (config, connect, options)
     config.db_type = 'pouchdb';
     config.db_for_update = true;
     config.max_tokens = 2;
+    config.max_token_size = 16 * 1024;
+    config.maxSize = config.max_token_size;
     config.send_expires = true;
     config.multi_ttl = 10 * 60 * 1000;
 
@@ -310,7 +312,7 @@ module.exports = function (config, connect, options)
                     iss: issuer_id,
                     access_control: access_control[0],
                     ack: opts.ack,
-                    presence: opts.presence
+                    presence: opts.presence,
                 }, token_exp, priv_key);
 
                 var token2 = new jsjws.JWT().generateJWTByKey(
@@ -318,11 +320,12 @@ module.exports = function (config, connect, options)
                     alg: 'PS256'
                 },
                 {
-                    iss: issuer_id2,
+                    iss: opts.same_issuer ? issuer_id : issuer_id2,
                     access_control: access_control[1],
                     ack: opts.ack,
-                    presence: opts.presence
-                }, token_exp, priv_key2);
+                    presence: opts.presence,
+                    subscribe: opts.subscribe
+                }, token_exp, opts.same_issuer ? priv_key : priv_key2);
 
                 (opts.series ? async.timesSeries : async.times)(n, function (i, next)
                 {
@@ -330,8 +333,9 @@ module.exports = function (config, connect, options)
                     {
                         token: opts.no_token ? '' :
                                opts.too_many_tokens ? [token, token2, token] :
+                               opts.long_token ? new Array(config.max_token_size + 2).join('A') :
                                opts.duplicate_tokens ? [token, token] :
-                               i % 2 === 0 || options.anon ? token :
+                               i % 2 === 0 || (options.anon && !opts.separate_tokens) ? token :
                                opts.separate_tokens ? token2 : [token, token2],
                         handshake_data: new Buffer([i])
                     }, server, function (err, c)
@@ -351,8 +355,10 @@ module.exports = function (config, connect, options)
                             return next(null, c);
                         }
 
-                        c.on('ready', function ()
+                        c.on('ready', function (subscriptions)
                         {
+                            c.subscriptions = subscriptions;
+
                             if (opts.client_ready)
                             {
                                 return opts.client_ready.call(this, i, next);
@@ -465,6 +471,8 @@ module.exports = function (config, connect, options)
 
             it('should publish and subscribe', function (done)
             {
+                expect(clients[0].subscriptions).to.equal(undefined);
+
                 clients[0].subscribe('foo', function (s, info)
                 {
                     expect(info.topic).to.equal('foo');
@@ -1828,7 +1836,7 @@ module.exports = function (config, connect, options)
                     {
                         if (t[3])
                         {
-                            expect(err).to.equal(undefined);
+                            expect(err).to.equal(null);
                             next();
                         }
                         else
@@ -1869,7 +1877,7 @@ module.exports = function (config, connect, options)
                             {
                                 if (t[3])
                                 {
-                                    expect(err).to.equal(undefined);
+                                    expect(err).to.equal(null);
                                 }
                                 else
                                 {
@@ -2252,6 +2260,28 @@ module.exports = function (config, connect, options)
             });
 
             it('should fail to authorize', expect_error('too many tokens'));
+        });
+
+        describe('long token', function ()
+        {
+            setup(1,
+            {
+                access_control: {
+                    publish: {
+                        allow: ['foo'],
+                        disallow: []
+                    },
+                    subscribe: {
+                        allow: ['foo'],
+                        disallow: []
+                    }
+                },
+                long_token: true,
+                skip_ready: true,
+                client_function: client_function
+            });
+
+            it('should fail to authorize', expect_error(is_transport('primus') ? 'token too long' : 'Message is larger than the allowed maximum of ' + config.max_token_size));
         });
 
         describe('duplicate tokens', function ()
@@ -3337,6 +3367,86 @@ module.exports = function (config, connect, options)
                 }
 
                 check_error();
+            });
+        });
+
+        describe('existing messages', function ()
+        {
+            var topic = crypto.randomBytes(64).toString('hex'),
+                subscribe = {};
+            subscribe[topic] = true;
+
+            setup(2,
+            {
+                access_control: {
+                    publish: {
+                        allow: [topic],
+                        disallow: []
+                    },
+                    subscribe: {
+                        allow: [topic],
+                        disallow: []
+                    }
+                },
+
+                subscribe: subscribe,
+
+                separate_tokens: true,
+                series: true,
+                same_issuer: true,
+
+                client_ready: function (i, next)
+                {
+                    var client = this;
+
+                    if (i === 0)
+                    {
+                        return client.subscribe(topic, function (s, info)
+                        {
+                            expect(info.single).to.equal(false);
+                            expect(info.topic).to.equal(topic);
+                            expect(info.existing).to.equal(false);
+
+                            read_all(s, function (v)
+                            {
+                                expect(v.toString()).to.equal('bar');
+                                next(null, client);
+                            });
+                        }, function (err)
+                        {
+                            if (err) { throw err; }
+                            client.publish(topic, function (err)
+                            {
+                                if (err) { throw err; }
+                            }).end('bar');
+                        });
+                    }
+
+                    client.subscribe(topic, function (s, info)
+                    {
+                        this.s = s;
+                        this.info = info;
+                        next(null, this);
+                    });
+                }
+            });
+
+            it('should support subscribing to existing messages', function (done)
+            {
+                expect(clients[0].subscriptions).to.equal(undefined);
+                var sub = {};
+                sub[topic] = true;
+                expect(clients[1].subscriptions).to.eql([sub]);
+
+                expect(clients[1].info.single).to.equal(false);
+                expect(clients[1].info.topic).to.equal(topic);
+                expect(clients[1].info.existing).to.equal(true);
+
+                read_all(clients[1].s, function (v)
+                {
+                    expect(v.toString()).to.equal('bar');
+                    done();
+                });
             });
         });
 
