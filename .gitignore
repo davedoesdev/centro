@@ -1,2 +1,3 @@
 /node_modules
 /test/example/priv_key.pem
+/dist

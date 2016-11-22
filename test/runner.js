@@ -3378,7 +3378,7 @@ module.exports = function (config, connect, options)
 
             setup(2,
             {
-                access_control: {
+                access_control: [{
                     publish: {
                         allow: [topic],
                         disallow: []
@@ -3387,7 +3387,16 @@ module.exports = function (config, connect, options)
                         allow: [topic],
                         disallow: []
                     }
-                },
+                }, {
+                    publish: {
+                        allow: [],
+                        disallow: []
+                    },
+                    subscribe: {
+                        allow: [],
+                        disallow: []
+                    }
+                }],
 
                 subscribe: subscribe,
 

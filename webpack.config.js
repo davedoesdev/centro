@@ -3,10 +3,11 @@ var webpack = require('webpack'),
 
 module.exports = {
     context: __dirname,
-    entry: './lib/client.js',
+    entry: './browser.js',
     output: {
         filename: 'centro.js',
-        path: path.join(__dirname, './dist')
+        path: path.join(__dirname, './dist'),
+        library: 'centro'
     },
     module: {
         loaders: [
