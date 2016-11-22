@@ -17,13 +17,16 @@ fs.readFile(path.join(__dirname, 'priv_key.pem'), function (err, priv_key)
     {
         db_type: 'pouchdb',
         deploy_name: 'token',
-        no_changes: true
+        no_changes: true,
+        silent: true
     }, function (err, ks)
     {
         assert.ifError(err);
         ks.get_pub_key_by_uri(uri, function (err, pub_key, issuer_id)
         {
             assert.ifError(err);
+            assert(pub_key);
+            assert(issuer_id);
             console.log(new jsjws.JWT().generateJWTByKey(
             {
                 alg: 'PS256'
