@@ -51,6 +51,10 @@ module.exports = function (grunt)
 
             coveralls: {
                 command: 'cat coverage/lcov.info | coveralls'
+            },
+
+            webpack: {
+                command: './node_modules/.bin/webpack'
             }
         }
     });
@@ -62,7 +66,8 @@ module.exports = function (grunt)
 
     grunt.registerTask('lint', 'jshint');
     grunt.registerTask('test', 'mochaTest');
-    grunt.registerTask('docs', ['apidox']);
+    grunt.registerTask('docs', 'apidox');
+    grunt.registerTask('dist', 'shell:webpack');
     grunt.registerTask('coverage', ['shell:cover', 'shell:check_cover']);
     grunt.registerTask('coveralls', 'shell:coveralls');
     grunt.registerTask('default', ['lint', 'test']);
