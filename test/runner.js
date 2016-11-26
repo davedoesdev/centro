@@ -1087,7 +1087,13 @@ module.exports = function (config, connect, options)
                                 read_all(s, function (v)
                                 {
                                     expect(v.toString()).to.equal('bar');
-                                    clients[0].mux.carrier.end();
+                                    if (!options.relay)
+                                    {
+                                        setTimeout(function ()
+                                        {
+                                            clients[0].mux.carrier.end();
+                                        }, 500);
+                                    }
                                 });
                             }, function (err)
                             {
@@ -1236,7 +1242,13 @@ module.exports = function (config, connect, options)
                                 read_all(s, function (v)
                                 {
                                     expect(v.toString()).to.equal('bar');
-                                    clients[0].mux.carrier.end();
+                                    if (!options.relay)
+                                    {
+                                        setTimeout(function ()
+                                        {
+                                            clients[0].mux.carrier.end();
+                                        }, 500);
+                                    }
                                 });
                             }, function (err)
                             {
@@ -1340,7 +1352,13 @@ module.exports = function (config, connect, options)
                                 read_all(s, function (v)
                                 {
                                     expect(v.toString()).to.equal('bar');
-                                    clients[0].mux.carrier.end();
+                                    if (!options.relay)
+                                    {
+                                        setTimeout(function ()
+                                        {
+                                            clients[0].mux.carrier.end();
+                                        }, 500);
+                                    }
                                 });
                             }, function (err)
                             {
@@ -1436,7 +1454,13 @@ module.exports = function (config, connect, options)
                                 read_all(s, function (v)
                                 {
                                     expect(v.toString()).to.equal('');
-                                    clients[0].mux.carrier.end();
+                                    if (!options.relay)
+                                    {
+                                        setTimeout(function ()
+                                        {
+                                            clients[0].mux.carrier.end();
+                                        }, 500);
+                                    }
                                 });
                             }, function (err)
                             {
@@ -1725,7 +1749,7 @@ module.exports = function (config, connect, options)
             {
                 function check_error(err)
                 {
-                    expect(err.message).to.equal("data should have required property 'self'");
+                    expect(err.message).to.equal('data should NOT have additional properties');
                     done();
                 }
 
@@ -2354,7 +2378,8 @@ module.exports = function (config, connect, options)
                 {
                     clients[0].on('error', function (err)
                     {
-                        expect(err.message).to.equal('write EPIPE');
+                        expect(err.message).to.be.oneOf(
+                            ['write EPIPE', 'read ECONNRESET']);
                     });
                 }
 
