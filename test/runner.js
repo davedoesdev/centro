@@ -337,7 +337,8 @@ module.exports = function (config, connect, options)
                                opts.duplicate_tokens ? [token, token] :
                                i % 2 === 0 || (options.anon && !opts.separate_tokens) ? token :
                                opts.separate_tokens ? token2 : [token, token2],
-                        handshake_data: new Buffer([i])
+                        handshake_data: new Buffer([i]),
+                        max_topic_length: opts.max_topic_length
                     }, server, function (err, c)
                     {
                         if (err)
@@ -347,7 +348,7 @@ module.exports = function (config, connect, options)
 
                         if (opts.client_function)
                         {
-                            opts.client_function(c, onconnect);
+                            opts.client_function(c, i, onconnect);
                         }
 
                         if (opts.skip_ready || opts.end_immediately)
@@ -1626,7 +1627,7 @@ module.exports = function (config, connect, options)
                     }
                 },
                 skip_ready: true,
-                client_function: function (c, onconnect)
+                client_function: function (c, i, onconnect)
                 {
                     c.on('error', function (err)
                     {
@@ -1679,7 +1680,7 @@ module.exports = function (config, connect, options)
                     }
                 },
                 skip_ready: true,
-                client_function: function (c, onconnect)
+                client_function: function (c, i, onconnect)
                 {
                     c.on('error', function (err)
                     {
@@ -1735,7 +1736,7 @@ module.exports = function (config, connect, options)
                     }
                 },
                 skip_ready: true,
-                client_function: function (c, onconnect)
+                client_function: function (c, i, onconnect)
                 {
                     c.on('error', function (err)
                     {
@@ -2092,7 +2093,7 @@ module.exports = function (config, connect, options)
             });
         });
 
-        function client_function(c, onconnect)
+        function client_function(c, i, onconnect)
         {
             c.errors = [];
 
@@ -3307,7 +3308,7 @@ module.exports = function (config, connect, options)
                     require('../lib/server').version += 1;
                 },
 
-                client_function: function (c, onconnect)
+                client_function: function (c, i, onconnect)
                 {
                     c.on('error', function (err)
                     {
@@ -3326,7 +3327,7 @@ module.exports = function (config, connect, options)
                     if (clients[0].last_error && server.last_warning)
                     {
                         expect(server.last_warning.message).to.equal('unsupported version: 1');
-                        expect(clients[0].last_error.message).to.equal('unsupported version: 2');
+                        expect(clients[0].last_error.message).to.equal('data.version should be equal to one of the allowed values');
                         require('../lib/server').version -= 1;
                         return done();
                     }
@@ -3360,7 +3361,7 @@ module.exports = function (config, connect, options)
                     client.version_buffer = new Buffer(2);
                 },
 
-                client_function: function (c, onconnect)
+                client_function: function (c, i, onconnect)
                 {
                     c.on('error', function (err)
                     {
@@ -3392,6 +3393,50 @@ module.exports = function (config, connect, options)
                 }
 
                 check_error();
+            });
+        });
+
+        describe('subscriptions in token', function ()
+        {
+            setup(2,
+            {
+                access_control: {
+                    publish: {
+                        allow: ['foo'],
+                        disallow: []
+                    },
+                    subscribe: {
+                        allow: [],
+                        disallow: ['foo']
+                    }
+                },
+
+                separate_tokens: true,
+
+                subscribe: {
+                    foo: false
+                }
+            });
+
+            it('should override access control', function (done)
+            {
+                clients[1].subscribe('foo', function (s, info)
+                {
+                    expect(info.topic).to.equal('foo');
+                    expect(info.single).to.equal(false);
+                    read_all(s, function (v)
+                    {
+                        expect(v.toString()).to.equal('bar');
+                        done();
+                    });
+                }, function (err)
+                {
+                    if (err) { return done(err); }
+                    clients[1].publish('foo', function (err)
+                    {
+                        if (err) { return done(err); }
+                    }).end('bar');
+                });
             });
         });
 
@@ -3481,6 +3526,103 @@ module.exports = function (config, connect, options)
                     expect(v.toString()).to.equal('bar');
                     done();
                 });
+            });
+        });
+
+        describe('max topic length in subscriptions', function ()
+        {
+            setup(2,
+            {
+                access_control: {
+                    publish: {
+                        allow: ['foo'],
+                        disallow: []
+                    },
+                    subscribe: {
+                        allow: [],
+                        disallow: ['foo']
+                    }
+                },
+
+                separate_tokens: true,
+
+                subscribe: {
+                    foo: false
+                },
+
+                max_topic_length: 3
+            });
+
+            it('should override access control', function (done)
+            {
+                clients[1].subscribe('foo', function (s, info)
+                {
+                    expect(info.topic).to.equal('foo');
+                    expect(info.single).to.equal(false);
+                    read_all(s, function (v)
+                    {
+                        expect(v.toString()).to.equal('bar');
+                        done();
+                    });
+                }, function (err)
+                {
+                    if (err) { return done(err); }
+                    clients[1].publish('foo', function (err)
+                    {
+                        if (err) { return done(err); }
+                    }).end('bar');
+                });
+            });
+        });
+
+        describe('exceed max topic length in subscriptions', function ()
+        {
+            setup(2,
+            {
+                access_control: {
+                    publish: {
+                        allow: ['foo'],
+                        disallow: []
+                    },
+                    subscribe: {
+                        allow: [],
+                        disallow: ['foo']
+                    }
+                },
+
+                separate_tokens: true,
+
+                subscribe: {
+                    foo: false
+                },
+
+                max_topic_length: 2,
+
+                skip_ready: true,
+                client_function: function (c, i, onconnect)
+                {
+                    c.on('error', function (err)
+                    {
+                        this.last_error = err;
+                        onconnect();
+                    });
+                }
+            });
+
+            it('should error', function (done)
+            {
+                function check_error(err)
+                {
+                    expect(err.message).to.equal('data.subscriptions[0] should NOT have additional properties');
+                    done();
+                }
+
+                if (clients[1].last_error)
+                {
+                    return check_error(clients[1].last_error);
+                }
+
+                clients[1].on('error', check_error);
             });
         });
 
