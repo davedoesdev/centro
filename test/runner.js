@@ -79,8 +79,8 @@ module.exports = function (config, connect, options)
     config.db_type = 'pouchdb';
     config.db_for_update = true;
     config.max_tokens = 2;
-    config.max_token_size = 16 * 1024;
-    config.maxSize = config.max_token_size;
+    config.max_token_length = 16 * 1024;
+    config.maxSize = config.max_token_length;
     config.send_expires = true;
     config.multi_ttl = 10 * 60 * 1000;
 
@@ -333,7 +333,7 @@ module.exports = function (config, connect, options)
                     {
                         token: opts.no_token ? '' :
                                opts.too_many_tokens ? [token, token2, token] :
-                               opts.long_token ? new Array(config.max_token_size + 2).join('A') :
+                               opts.long_token ? new Array(config.max_token_length + 2).join('A') :
                                opts.duplicate_tokens ? [token, token] :
                                i % 2 === 0 || (options.anon && !opts.separate_tokens) ? token :
                                opts.separate_tokens ? token2 : [token, token2],
@@ -445,7 +445,9 @@ module.exports = function (config, connect, options)
                 issuer_id: issuer_id,
                 clients: clients,
                 connections: connections,
-                setup: setup
+                setup: setup,
+                client_function: client_function,
+                expect_error: expect_error
             };
         }
 
@@ -969,7 +971,7 @@ module.exports = function (config, connect, options)
                         }
                         read_all(s, function (v)
                         {
-                            expect(v.toString()).to.equal(typeof(data) === 'string' ? data : '"someone joined"');
+                            expect(v.toString()).to.equal(typeof(data) === 'string' ? data : 'someone joined');
                             ths.joins.add(info.topic);
                         });
                     }, function (err)
@@ -1068,7 +1070,7 @@ module.exports = function (config, connect, options)
 
                             read_all(s, function (v)
                             {
-                                expect(v.toString()).to.equal('"someone left"');
+                                expect(v.toString()).to.equal('someone left');
                                 clients[1].unsubscribe('leave.*', undefined, pdone(done));
                             });
                         }, function (err)
@@ -1222,7 +1224,7 @@ module.exports = function (config, connect, options)
 
                             read_all(s, function (v)
                             {
-                                expect(v.toString()).to.equal('"someone left"');
+                                expect(v.toString()).to.equal('someone left');
                                 expect(info.expires).to.be.below(new Date().getTime() / 1000 + 2);
                                 clients[1].unsubscribe('leave.*', undefined, pdone(done));
                             });
@@ -1333,7 +1335,7 @@ module.exports = function (config, connect, options)
 
                             read_all(s, function (v)
                             {
-                                expect(v.toString()).to.equal('"someone left"');
+                                expect(v.toString()).to.equal('someone left');
                                 clients[1].unsubscribe('leave.*', undefined, pdone(done));
                             });
                         }, function (err)
@@ -2137,12 +2139,14 @@ module.exports = function (config, connect, options)
             });
         }
 
-        function expect_error(msg, ignore_server, code, cb)
+        function expect_error(msg, ignore_server, code, n, cb)
         {
             if ((code !== 0) && !code)
             {
                 code = 401;
             }
+
+            n = n || 0;
 
             return function (done)
             {
@@ -2157,9 +2161,9 @@ module.exports = function (config, connect, options)
                             code === 401 ? 'Basic realm="centro"' : undefined);
                     }
 
-                    if (clients[0])
+                    if (clients[n])
                     {
-                        var errors = clients[0].errors;
+                        var errors = clients[n].errors;
 
                         if (errors.length < 1)
                         {
@@ -2213,7 +2217,7 @@ module.exports = function (config, connect, options)
 
                 if (!check_errors())
                 {
-                    clients[0].on('error', check_errors);
+                    clients[n].on('error', check_errors);
                 }
             };
         }
@@ -2306,7 +2310,7 @@ module.exports = function (config, connect, options)
                 client_function: client_function
             });
 
-            it('should fail to authorize', expect_error(is_transport('primus') ? 'token too long' : 'Message is larger than the allowed maximum of ' + config.max_token_size));
+            it('should fail to authorize', expect_error(is_transport('primus') ? 'token too long' : 'Message is larger than the allowed maximum of ' + config.max_token_length));
         });
 
         describe('duplicate tokens', function ()
@@ -2615,7 +2619,7 @@ module.exports = function (config, connect, options)
             });
 
             it("should close connections while they're being authorised",
-                expect_error('closed', true, 503, function (done)
+                expect_error('closed', true, 503, 0, function (done)
                 {
                     on_before(done);
                 }));
@@ -2672,7 +2676,7 @@ module.exports = function (config, connect, options)
             });
 
             it("should close connections while they're being authorised",
-                expect_error('closed', true, 503, function (done)
+                expect_error('closed', true, 503, 0, function (done)
                 {
                     on_before(done);
                 }));
@@ -3859,6 +3863,44 @@ module.exports = function (config, connect, options)
                     cb(null, true, handlers);
                 }
             }, config));
+        });
+
+        describe('max topic length', function ()
+        {
+            run.call(this, Object.assign(
+            {
+                only: function (get_info)
+                {
+                    get_info().setup(2,
+                    {
+                        access_control: {
+                            publish: {
+                                allow: ['foo'],
+                                disallow: []
+                            },
+                            subscribe: {
+                                allow: ['foo'],
+                                disallow: []
+                            }
+                        },
+
+                        subscribe: {
+                            foobar: false
+                        },
+
+                        separate_tokens: true,
+                        skip_ready: true,
+                        client_function: get_info().client_function
+                    });
+
+                    it('should reject subscribe topics',
+                       get_info().expect_error('data.subscribe should NOT have additional properties', false, 401, 1));
+                },
+
+                max_topic_length: 3
+            }, config));
+
+
         });
     });
 };

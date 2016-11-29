@@ -72,6 +72,4 @@ function connect()
     });
 }
 
-function publish()
-{
-}
+var publish = function () {};
