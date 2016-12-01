@@ -3942,6 +3942,90 @@ module.exports = function (config, connect, options)
             }, config));
         });
 
+        describe('max subscriptions', function ()
+        {
+            run.call(this, Object.assign(
+            {
+                only: function (get_info)
+                {
+                    get_info().setup(1,
+                    {
+                        access_control: {
+                            publish: {
+                                allow: ['foo'],
+                                disallow: []
+                            },
+                            subscribe: {
+                                allow: ['foo', 'bar'],
+                                disallow: []
+                            }
+                        }
+                    });
 
+                    it('should limit subscriptions', function (done)
+                    {
+                        get_info().clients[0].subscribe('foo', function () {},
+                        function (err)
+                        {
+                            if (err) { return done(err); }
+                            get_info().clients[0].subscribe('bar', function () {},
+                            function (err)
+                            {
+                                expect(err.message).to.equal('server error');
+                                expect(get_info().server.last_warning.message).to.equal('subscription limit 1 already reached: ' + get_info().connections.values().next().value.prefixes[0] + 'bar');
+                                done();
+                            });
+                        });
+                    });
+                },
+
+                max_subscriptions: 1
+            }, config));
+        });
+
+        describe('max publish data', function ()
+        {
+            run.call(this, Object.assign(
+            {
+                only: function (get_info)
+                {
+                    get_info().setup(1,
+                    {
+                        access_control: {
+                            publish: {
+                                allow: ['foo'],
+                                disallow: []
+                            },
+                            subscribe: {
+                                allow: ['foo'],
+                                disallow: []
+                            }
+                        }
+                    });
+
+                    it('should limit publish data', function (done)
+                    {
+                        get_info().clients[0].subscribe('foo', function ()
+                        {
+                            done(new Error('should not be called'));
+                        },
+                        function (err)
+                        {
+                            if (err) { return done(err); }
+                            var s = get_info().clients[0].publish('foo', function (err)
+                            {
+                                expect(err.message).to.equal('server error');
+                                expect(get_info().server.last_warning.message).to.equal(options.relay ? 'server error' : ('message data exceeded limit 1000: ' + get_info().connections.values().next().value.prefixes[0] + 'foo'));
+                                done();
+                            });
+                            s.write(new Buffer(500));
+                            s.end(new Buffer(501));
+                        });
+                    });
+                },
+
+                max_publish_data_length: 1000
+            }, config));
+        });
     });
 };
