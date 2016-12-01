@@ -3579,7 +3579,7 @@ module.exports = function (config, connect, options)
             });
         });
 
-        describe('exceed max topic length in subscriptions', function ()
+        describe('exceed max topic length in subscriptions (client-enforced)', function ()
         {
             setup(2,
             {
@@ -3865,7 +3865,7 @@ module.exports = function (config, connect, options)
             }, config));
         });
 
-        describe('max topic length', function ()
+        describe('max topic length in subscriptions (server-enforced)', function ()
         {
             run.call(this, Object.assign(
             {
@@ -3899,8 +3899,49 @@ module.exports = function (config, connect, options)
 
                 max_topic_length: 3
             }, config));
-
-
         });
+
+        describe('max topic length when subscribing', function ()
+        {
+            run.call(this, Object.assign(
+            {
+                only: function (get_info)
+                {
+                    get_info().setup(1,
+                    {
+                        access_control: {
+                            publish: {
+                                allow: ['foo'],
+                                disallow: []
+                            },
+                            subscribe: {
+                                allow: ['foo'],
+                                disallow: []
+                            }
+                        }
+                    });
+
+                    it('should block long topic', function (done)
+                    {
+                        get_info().clients[0].subscribe('foo', function () {},
+                        function (err)
+                        {
+                            if (err) { return done(err); }
+                            get_info().clients[0].subscribe('foobar', function () {},
+                            function (err)
+                            {
+                                expect(err.message).to.equal('server error');
+                                expect(get_info().server.last_warning.message).to.equal('subscribe topic longer than ' + (options.anon ? 3 : 68));
+                                done();
+                            });
+                        });
+                    });
+                },
+
+                max_topic_length: 3
+            }, config));
+        });
+
+
     });
 };
