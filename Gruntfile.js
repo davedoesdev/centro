@@ -55,6 +55,10 @@ module.exports = function (grunt)
 
             webpack: {
                 command: './node_modules/.bin/webpack'
+            },
+
+            keys: {
+                command: './test/keys.sh'
             }
         }
     });
@@ -65,6 +69,7 @@ module.exports = function (grunt)
     grunt.loadNpmTasks('grunt-apidox');
 
     grunt.registerTask('lint', 'jshint');
+    grunt.registerTask('keys', 'shell:keys');
     grunt.registerTask('test', 'mochaTest');
     grunt.registerTask('docs', 'apidox');
     grunt.registerTask('dist', 'shell:webpack');

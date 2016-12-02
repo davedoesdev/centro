@@ -4,11 +4,12 @@
 var runner = require('./runner'),
     centro = require('..'),
     read_all = require('./read_all'),
-    http = require('http'),
     jsjws = require('jsjws'),
     querystring = require('querystring'),
     expect = require('chai').expect,
     pathname = '/centro/v' + centro.version + '/publish?',
+    path = require('path'),
+    fs = require('fs'),
     port = 8700;
 
 function make_token(get_info)
@@ -33,6 +34,9 @@ function make_token(get_info)
         }
     }, token_exp, get_info().priv_key);
 }
+
+function setup(mod, transport_config, client_config, server_config)
+{
 
 function connect(config, server, cb)
 {
@@ -72,14 +76,14 @@ function connect(config, server, cb)
                             options = undefined;
                         }
 
-                        return http.request(
+                        return require(mod).request(Object.assign(
                         {
                             port: port,
                             auth: userpass,
                             method: 'POST',
                             path: pathname + querystring.stringify(Object.assign(
                                     {}, options, { topic: topic, n: n }))
-                        }, function (res)
+                        }, client_config), function (res)
                         {
                             var msg = '';
 
@@ -137,12 +141,12 @@ function extra(get_info, on_before)
 {
     it('should return 404 for unknown path', function (done)
     {
-        http.request(
+        require(mod).request(Object.assign(
         {
             port: port,
             method: 'POST',
             path: '/dummy'
-        }, function (res)
+        }, client_config), function (res)
         {
             expect(res.statusCode).to.equal(404);
             read_all(res, function (v)
@@ -155,12 +159,12 @@ function extra(get_info, on_before)
 
     it('should return 401 for authorise error', function (done)
     {
-        http.request(
+        require(mod).request(Object.assign(
         {
             port: port,
             method: 'POST',
             path: pathname
-        }, function (res)
+        }, client_config), function (res)
         {
             expect(res.statusCode).to.equal(401);
             expect(res.headers['www-authenticate']).to.equal('Basic realm="centro"');
@@ -194,7 +198,7 @@ function extra(get_info, on_before)
             token: make_token(get_info)
         }, function (err, userpass)
         {
-            http.request(
+            require(mod).request(Object.assign(
             {
                 port: port,
                 auth: userpass,
@@ -204,7 +208,7 @@ function extra(get_info, on_before)
                     topic: 'foo',
                     ttl: ['foo', 'foo']
                 })
-            }, function (res)
+            }, client_config), function (res)
             {
                 expect(res.statusCode).to.equal(200);
                 read_all(res, function (v)
@@ -237,7 +241,7 @@ function extra(get_info, on_before)
             token: make_token(get_info)
         }, function (err, userpass)
         {
-            http.request(
+            require(mod).request(Object.assign(
             {
                 port: port,
                 auth: userpass,
@@ -246,7 +250,7 @@ function extra(get_info, on_before)
                 {
                     topic: 'foo',
                 })
-            }, function (res)
+            }, client_config), function (res)
             {
                 expect(res.statusCode).to.equal(503);
                 read_all(res, function (v)
@@ -273,7 +277,7 @@ function extra(get_info, on_before)
             token: make_token(get_info)
         }, function (err, userpass)
         {
-            http.request(
+            require(mod).request(Object.assign(
             {
                 port: port,
                 auth: userpass,
@@ -282,7 +286,7 @@ function extra(get_info, on_before)
                 {
                     topic: 'foo',
                 })
-            }, function (res)
+            }, client_config), function (res)
             {
                 expect(res.statusCode).to.equal(503);
                 read_all(res, function (v)
@@ -309,7 +313,7 @@ function extra(get_info, on_before)
                 dstroy();
                 orig_set.call(this, connid, dstroy);
             };
-            http.request(
+            require(mod).request(Object.assign(
             {
                 port: port,
                 auth: userpass,
@@ -318,7 +322,7 @@ function extra(get_info, on_before)
                 {
                     topic: 'foo',
                 })
-            }, function (res)
+            }, client_config), function (res)
             {
                 expect(res.statusCode).to.equal(503);
                 read_all(res, function (v)
@@ -335,13 +339,11 @@ runner(
 {
     transport: [{
         server: 'http',
-        config: {
-            port: port
-        }
+        config: transport_config
     }, {
         server: 'in-mem'
     }],
-    transport_name: 'http'
+    transport_name: mod
 }, connect,
 {
     relay: true,
@@ -352,13 +354,11 @@ runner(
 {
     transport: [{
         server: 'http',
-        config: {
-            port: port
-        }
+        config: transport_config
     }, {
         server: 'in-mem'
     }],
-    transport_name: 'http_passed_in_server'
+    transport_name: mod + '_passed_in_server'
 }, connect,
 {
     relay: true,
@@ -412,7 +412,7 @@ runner(
                 token: make_token(get_info)
             }, function (err, userpass)
             {
-                http.request(
+                require(mod).request(Object.assign(
                 {
                     port: port,
                     auth: userpass,
@@ -421,7 +421,7 @@ runner(
                     {
                         topic: 'foo',
                     })
-                }, function (res)
+                }, client_config), function (res)
                 {
                     expect(res.statusCode).to.equal(200);
                     read_all(res, function (v)
@@ -473,7 +473,7 @@ runner(
                 token: make_token(get_info)
             }, function (err, userpass)
             {
-                http.request(
+                require(mod).request(Object.assign(
                 {
                     port: port,
                     auth: userpass,
@@ -482,7 +482,7 @@ runner(
                     {
                         topic: 'foo',
                     })
-                }, function (res)
+                }, client_config), function (res)
                 {
                     expect(res.statusCode).to.equal(500);
                     read_all(res, function (v)
@@ -534,7 +534,7 @@ runner(
                 token: make_token(get_info)
             }, function (err, userpass)
             {
-                http.request(
+                require(mod).request(Object.assign(
                 {
                     port: port,
                     auth: userpass,
@@ -543,7 +543,7 @@ runner(
                     {
                         topic: 'foo',
                     })
-                }, function (res)
+                }, client_config), function (res)
                 {
                     expect(res.statusCode).to.equal(500);
                     read_all(res, function (v)
@@ -596,7 +596,7 @@ runner(
                 token: make_token(get_info)
             }, function (err, userpass)
             {
-                http.request(
+                require(mod).request(Object.assign(
                 {
                     port: port,
                     auth: userpass,
@@ -605,7 +605,7 @@ runner(
                     {
                         topic: 'foo',
                     })
-                }, function (res)
+                }, client_config), function (res)
                 {
                     expect(res.statusCode).to.equal(500);
                     read_all(res, function (v)
@@ -673,7 +673,7 @@ runner(
                             token: make_token(get_info)
                         }, function (err, userpass)
                         {
-                            http.request(
+                            require(mod).request(Object.assign(
                             {
                                 port: port,
                                 auth: userpass,
@@ -682,7 +682,7 @@ runner(
                                 {
                                     topic: 'foo',
                                 })
-                            }, function (res)
+                            }, client_config), function (res)
                             {
                                 expect(res.statusCode).to.equal(500);
                                 read_all(res, function (v)
@@ -710,7 +710,15 @@ runner(
             return cb();
         }
 
-        config.server = http.createServer();
+        if (server_config)
+        {
+            config.server = require(mod).createServer(server_config);
+        }
+        else
+        {
+            config.server = require(mod).createServer();
+        }
+
         config.server.listen(port, cb);
     },
 
@@ -718,4 +726,23 @@ runner(
     {
         config.server.close(cb);
     }
+});
+
+}
+
+setup('http', { port: port });
+
+setup('https',
+{
+    port: port,
+    key: fs.readFileSync(path.join(__dirname, 'server.key')),
+    cert: fs.readFileSync(path.join(__dirname, 'server.pem'))
+},
+{
+    agent: new (require('https').Agent)(),
+    ca: fs.readFileSync(path.join(__dirname, 'ca.pem'))
+},
+{
+    key: fs.readFileSync(path.join(__dirname, 'server.key')),
+    cert: fs.readFileSync(path.join(__dirname, 'server.pem'))
 });
