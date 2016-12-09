@@ -7,7 +7,13 @@ var runner = require('./runner'),
     {
         pathname: '/centro/v' + centro.version + '/primus'
     }),
-    PrimusDuplex = require('primus-backpressure').PrimusDuplex;
+    PrimusDuplex = require('primus-backpressure').PrimusDuplex,
+    path = require('path'),
+    fs = require('fs'),
+    port = 8700;
+
+function setup(mod, transport_config, client_config, server_config)
+{
 
 function connect(config, server, cb)
 {
@@ -18,10 +24,12 @@ function connect(config, server, cb)
             return cb(err);
         }
 
-        var socket = new Socket('http://' + userpass + '@localhost:8700',
-        {
-            strategy: false
-        });
+        var socket = new Socket(
+                mod + '://' + userpass + '@localhost:' + port,
+                {
+                    strategy: false,
+                    transport: client_config
+                }, client_config);
 
         cb(null, make_client(new PrimusDuplex(socket)));
     });
@@ -29,14 +37,20 @@ function connect(config, server, cb)
 
 runner(
 {
-    transport: 'primus',
-    port: 8700
+    transport: {
+        server: 'primus',
+        config: transport_config
+    },
+    transport_name: 'primus_' + mod
 }, connect);
 
 runner(
 {
-    transport: 'primus',
-    transport_name: 'primus_passed_in_server'
+    transport: {
+        server: 'primus',
+        config: transport_config
+    },
+    transport_name: 'primus_' + mod + '_passed_in_server'
 }, connect,
 {
     on_before: function (config, cb)
@@ -46,11 +60,11 @@ runner(
             return cb();
         }
 
-        config.server = Primus.createServer(
+        config.server = Primus.createServer(Object.assign(
         {
             pathname: '/centro/v' + centro.version + '/primus',
-            port: 8700
-        });
+            port: port
+        }, server_config));
 
         config.server.on('initialised', cb);
     },
@@ -59,4 +73,23 @@ runner(
     {
         config.server.destroy(config, cb);
     }
+});
+
+}
+
+setup('http', { port: port });
+
+setup('https',
+{
+    port: port,
+    key: fs.readFileSync(path.join(__dirname, 'server.key')),
+    cert: fs.readFileSync(path.join(__dirname, 'server.pem'))
+},
+{
+    agent: new (require('https').Agent)(),
+    ca: fs.readFileSync(path.join(__dirname, 'ca.pem'))
+},
+{
+    key: fs.readFileSync(path.join(__dirname, 'server.key')),
+    cert: fs.readFileSync(path.join(__dirname, 'server.pem'))
 });

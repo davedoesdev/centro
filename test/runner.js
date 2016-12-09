@@ -158,7 +158,11 @@ module.exports = function (config, connect, options)
                 server.on('warning', function (err)
                 {
                     console.warn(err);
-                    this.last_warning = err;
+
+                    if (err.message !== 'carrier stream ended before end message received')
+                    {
+                        this.last_warning = err;
+                    }
                 });
             }
 
@@ -890,7 +894,11 @@ module.exports = function (config, connect, options)
 
                         expect(info.single).to.equal(false);
 
-                        done();
+                        read_all(s, function (v)
+                        {
+                            expect(v.length).to.equal(0);
+                            done();
+                        });
                     }, function (err)
                     {
                         if (err) return done(err);
@@ -1039,6 +1047,16 @@ module.exports = function (config, connect, options)
             {
                 check_join(function ()
                 {
+                    clients[0].on('error', function (err)
+                    {
+                        expect(err.message).to.equal('carrier stream finished before duplex finished');
+                    });
+
+                    clients[1].on('error', function (err)
+                    {
+                        expect(err.message).to.equal('carrier stream finished before duplex finished');
+                    });
+
                     clients[0].subscribe('ready.all.*', function (s, info)
                     {
                         if (presence_topics.has(info.topic)) { return; }
@@ -1193,6 +1211,16 @@ module.exports = function (config, connect, options)
             {
                 check_join(function ()
                 {
+                    clients[0].on('error', function (err)
+                    {
+                        expect(err.message).to.equal('carrier stream finished before duplex finished');
+                    });
+
+                    clients[1].on('error', function (err)
+                    {
+                        expect(err.message).to.equal('carrier stream finished before duplex finished');
+                    });
+
                     clients[0].subscribe('ready.all.*', function (s, info)
                     {
                         if (presence_topics.has(info.topic)) { return; }
@@ -1302,6 +1330,16 @@ module.exports = function (config, connect, options)
             {
                 check_join(function ()
                 {
+                    clients[0].on('error', function (err)
+                    {
+                        expect(err.message).to.equal('carrier stream finished before duplex finished');
+                    });
+
+                    clients[1].on('error', function (err)
+                    {
+                        expect(err.message).to.equal('carrier stream finished before duplex finished');
+                    });
+
                     clients[0].subscribe('ready.all.*', function (s, info)
                     {
                         if (presence_topics.has(info.topic)) { return; }
@@ -1406,6 +1444,16 @@ module.exports = function (config, connect, options)
             {
                 check_join(function ()
                 {
+                    clients[0].on('error', function (err)
+                    {
+                        expect(err.message).to.equal('carrier stream finished before duplex finished');
+                    });
+
+                    clients[1].on('error', function (err)
+                    {
+                        expect(err.message).to.equal('carrier stream finished before duplex finished');
+                    });
+
                     clients[0].subscribe('ready.all.*', function (s, info)
                     {
                         if (presence_topics.has(info.topic)) { return; }
@@ -1643,7 +1691,7 @@ module.exports = function (config, connect, options)
             {
                 function check_error(err)
                 {
-                    expect(err.message).to.equal('ended before handshaken');
+                    expect(err.message).to.equal('carrier stream ended before end message received');
                     done();
                 }
 
@@ -2170,6 +2218,15 @@ module.exports = function (config, connect, options)
                             return false;
                         }
 
+                        if (errors[0].message !== 'socket hang up')
+                        {
+                            expect(errors[0].message).to.be.oneOf(
+                            [
+                                'carrier stream ended before end message received',
+                                'carrier stream finished before duplex finished',
+                            ]);
+                        }
+
                         if (is_transport('primus') && (code !== 0))
                         {
                             if (errors.length < 2)
@@ -2177,29 +2234,39 @@ module.exports = function (config, connect, options)
                                 return false;
                             }
 
-                            if (errors.length > 2)
+                            if (errors[0].message === 'socket hang up')
                             {
-                                done(new Error('too many errors'));
-                                return false;
+                                for (var i = 1; i < errors.length - 1; i += 1)
+                                {
+                                    expect(errors[i].message).to.equal('socket hang up');
+                                }
+
+                                if (errors[errors.length - 1].message === 'socket hang up')
+                                {
+                                    return false;
+                                }
+
+                                expect(errors[errors.length - 1].message).to.equal('carrier stream ended before end message received');
                             }
+                            else
+                            {
+                                if (errors.length > 2)
+                                {
+                                    done(new Error('too many errors'));
+                                    return false;
+                                }
 
-                            expect(errors[0].message).to.equal('unexpected response');
-                            expect(errors[0].statusCode).to.equal(code);
-                            expect(errors[0].authenticate).to.equal(
-                                code == 401 ? 'Basic realm="centro"' : undefined);
-                            expect(errors[0].data).to.equal('{"error":"' + msg + '"}');
-
-                            expect(errors[1].message).to.equal('ended before handshaken');
+                                expect(errors[1].message).to.equal('unexpected response');
+                                expect(errors[1].statusCode).to.equal(code);
+                                expect(errors[1].authenticate).to.equal(
+                                    code == 401 ? 'Basic realm="centro"' : undefined);
+                                expect(errors[1].data).to.equal('{"error":"' + msg + '"}');
+                            }
                         }
-                        else
+                        else if (errors.length > 1)
                         {
-                            if (errors.length > 1)
-                            {
-                                done(new Error('too many errors'));
-                                return false;
-                            }
-
-                            expect(errors[0].message).to.equal('ended before handshaken');
+                            done(new Error('too many errors'));
+                            return false;
                         }
                     }
 
@@ -2379,14 +2446,12 @@ module.exports = function (config, connect, options)
                     server.once('connect', f);
                 }
 
-                if (is_transport('tcp'))
+                clients[0].on('error', function (err)
                 {
-                    clients[0].on('error', function (err)
-                    {
-                        expect(err.message).to.be.oneOf(
-                            ['write EPIPE', 'read ECONNRESET']);
-                    });
-                }
+                    expect(err.message).to.be.oneOf(is_transport('tcp') ?
+                            ['write EPIPE', 'read ECONNRESET'] :
+                            ['write after end']);
+                });
 
                 clients[0].publish('foo').write('bar');
 
@@ -3142,6 +3207,15 @@ module.exports = function (config, connect, options)
                     client_done = false,
                     server_done = false;
 
+                clients[0].on('error', function (err)
+                {
+                    expect(err.message).to.be.oneOf(
+                    [
+                        'carrier stream finished before duplex finished',
+                        'carrier stream ended before end message received'
+                    ]);
+                });
+
                 mqserver.on('message', function (stream, info, multiplex)
                 {
                     var ended = false;
@@ -3331,7 +3405,10 @@ module.exports = function (config, connect, options)
                     if (clients[0].last_error && server.last_warning)
                     {
                         expect(server.last_warning.message).to.equal('unsupported version: 1');
-                        expect(clients[0].last_error.message).to.equal('data.version should be equal to one of the allowed values');
+                        if (!is_transport('primus') || (clients[0].last_error.message !== 'carrier stream ended before end message received'))
+                        {
+                            expect(clients[0].last_error.message).to.equal('data.version should be equal to one of the allowed values');
+                        }
                         require('../lib/server').version -= 1;
                         return done();
                     }
@@ -4015,7 +4092,7 @@ module.exports = function (config, connect, options)
                             var s = get_info().clients[0].publish('foo', function (err)
                             {
                                 expect(err.message).to.equal('server error');
-                                expect(get_info().server.last_warning.message).to.equal(options.relay ? 'server error' : ('message data exceeded limit 1000: ' + get_info().connections.values().next().value.prefixes[0] + 'foo'));
+                                expect(get_info().server.last_warning.message).to.equal(options.relay ? 'carrier stream finished before duplex finished' : ('message data exceeded limit 1000: ' + get_info().connections.values().next().value.prefixes[0] + 'foo'));
                                 done();
                             });
                             s.write(new Buffer(500));
