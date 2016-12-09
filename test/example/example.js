@@ -2,6 +2,7 @@ function connect()
 {
     var topic = document.getElementById('topic'),
         message = document.getElementById('message'),
+        messages = document.getElementById('messages'),
         params = new URLSearchParams(window.location.search);
 
     centro.separate_auth(
@@ -24,7 +25,8 @@ function connect()
             var status = document.createElement('div');
             status.className = 'status';
             status.appendChild(document.createTextNode('open'));
-            document.body.appendChild(status);
+            messages.appendChild(status);
+            messages.scrollTop = messages.scrollHeight;
 
             var client = make_client(new centro.PrimusDuplex(primus));
 
@@ -47,7 +49,8 @@ function connect()
                         data.appendChild(document.createTextNode(v.toString()));
                         msg.appendChild(data);
 
-                        document.body.appendChild(msg);
+                        messages.appendChild(msg);
+                        messages.scrollTop = messages.scrollHeight;
                     });
                 });
 
@@ -67,7 +70,8 @@ function connect()
             var status = document.createElement('div');
             status.className = 'status';
             status.appendChild(document.createTextNode('closed'));
-            document.body.appendChild(status);
+            messages.appendChild(status);
+            messages.scrollTop = messages.scrollHeight;
         });
     });
 }
