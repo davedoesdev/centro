@@ -7,9 +7,12 @@ var runner = require('./runner'),
     jsjws = require('jsjws'),
     querystring = require('querystring'),
     expect = require('chai').expect,
-    pathname = '/centro/v' + centro.version + '/publish?',
+    pub_pathname = '/centro/v' + centro.version + '/publish?',
+    sub_pathname = '/centro/v' + centro.version + '/subscribe?',
     path = require('path'),
     fs = require('fs'),
+    readline = require('readline'),
+    PassThrough = require('stream').PassThrough,
     port = 8700;
 
 function make_token(get_info)
@@ -81,7 +84,7 @@ function connect(config, server, cb)
                             port: port,
                             auth: userpass,
                             method: 'POST',
-                            path: pathname + querystring.stringify(Object.assign(
+                            path: pub_pathname + querystring.stringify(Object.assign(
                                     {}, options, { topic: topic, n: n }))
                         }, client_config), function (res)
                         {
@@ -129,6 +132,168 @@ function connect(config, server, cb)
                             });
                         });
                     };
+
+                    var nsubs = [];
+
+                    this.subscribe = function (n, topic, handler, cb)
+                    {
+                        if (typeof n !== 'number')
+                        {
+                            cb = handler;
+                            handler = topic;
+                            topic = n;
+                            n = 0;
+                        }
+
+                        cb = cb || function () {};
+
+                        var subs = nsubs[n];
+                        if (!subs)
+                        {
+                            subs = nsubs[n] = new Map();
+                        }
+
+                        var handlers = subs.get(topic);
+                        if (!handlers)
+                        {
+                            handlers = new Set();
+                            subs.set(topic, handlers)
+                        } else if (handlers.has(handler))
+                        {
+                            return cb();
+                        }
+                        handlers.add(handler);
+                        
+                        require(mod).request(Object.assign(
+                        {
+                            port: port,
+                            auth: userpass,
+                            method: 'GET',
+                            path: sub_pathname + querystring.stringify(
+                                    { topic: topic, n: n })
+                        }, client_config), function (res)
+                        {
+                            if (res.statusCode !== 200)
+                            {
+                                return cb(new Error('server error'));
+                            }
+
+                            var rl = readline.createInterface(
+                            {
+                                input: res
+                            }), ev = '', passthrus = new Map();
+
+                            rl.on('line', function (line)
+                            {
+                                if (line === ':ok')
+                                {
+                                    cb(null);
+                                }
+                                else if (line === 'event: start')
+                                {
+                                    ev = 'start';
+                                }
+                                else if (line === 'event: data')
+                                {
+                                    ev = 'data';
+                                }
+                                else if (line === 'event: end')
+                                {
+                                    ev = 'end';
+                                }
+                                else if (line.lastIndexOf('data:') === 0)
+                                {
+                                    var info = JSON.parse(line.substr(6));
+
+                                    if (ev === 'start')
+                                    {
+                                        var handlers = subs.get(topic);
+                                        if (handlers && handlers.has(handler))
+                                        {
+                                            var pthru = new PassThrough();
+                                            passthrus.set(info.id, pthru);
+                                            handler.call(mqclient, pthru, info, function (err)
+                                            {
+                                                if (err)
+                                                {
+                                                    mqclient._warning(err);
+                                                }
+                                            });
+                                        }
+                                    }
+                                    else if (ev === 'data')
+                                    {
+                                        var pthru = passthrus.get(info.id);
+                                        if (pthru && !pthru.write(new Buffer(info.data, 'base64')))
+                                        {
+                                            pthru.once('drain', function ()
+                                            {
+                                                rl.resume();
+                                            });
+                                            rl.pause();
+                                        }
+                                    }
+                                    else if (ev === 'end')
+                                    {
+                                        var pthru = passthrus.get(info.id);
+                                        if (pthru)
+                                        {
+                                            passthrus.get(info.id).end();
+                                            passthrus.delete(info.id);
+                                        }
+                                    }
+                                }
+                            });
+                        }).end();
+                    };
+
+                    this.unsubscribe = function (n, topic, handler, cb)
+                    {
+						if (typeof n !== 'number')
+						{
+							cb = handler;
+							handler = topic;
+							topic = n;
+							n = 0;
+						}
+
+						if (typeof topic === 'function')
+						{
+							cb = topic;
+							topic = undefined;
+							handler = undefined;
+						}
+
+                        cb = cb || function () {};
+
+                        var subs = nsubs[n];
+                        if (!subs)
+                        {
+                            subs = nsubs[n] = new Map();
+                        }
+
+                        if (topic === undefined)
+                        {
+                            subs.clear();
+                        }
+                        else
+                        {
+                            var handlers = subs.get(topic);
+                            if (handlers)
+                            {
+                                if (handler === undefined)
+                                {
+                                    handlers.clear();
+                                }
+                                else
+                                {
+                                    handlers.delete(handler);
+                                }
+                            }
+                        }
+
+                        cb();
+                    };
                 });
             }
 
@@ -163,7 +328,7 @@ function extra(get_info, on_before)
         {
             port: port,
             method: 'POST',
-            path: pathname
+            path: pub_pathname
         }, client_config), function (res)
         {
             expect(res.statusCode).to.equal(401);
@@ -203,7 +368,7 @@ function extra(get_info, on_before)
                 port: port,
                 auth: userpass,
                 method: 'POST',
-                path: pathname + querystring.stringify(
+                path: pub_pathname + querystring.stringify(
                 {
                     topic: 'foo',
                     ttl: ['foo', 'foo']
@@ -246,7 +411,7 @@ function extra(get_info, on_before)
                 port: port,
                 auth: userpass,
                 method: 'POST',
-                path: pathname + querystring.stringify(
+                path: pub_pathname + querystring.stringify(
                 {
                     topic: 'foo',
                 })
@@ -282,7 +447,7 @@ function extra(get_info, on_before)
                 port: port,
                 auth: userpass,
                 method: 'POST',
-                path: pathname + querystring.stringify(
+                path: pub_pathname + querystring.stringify(
                 {
                     topic: 'foo',
                 })
@@ -318,7 +483,7 @@ function extra(get_info, on_before)
                 port: port,
                 auth: userpass,
                 method: 'POST',
-                path: pathname + querystring.stringify(
+                path: pub_pathname + querystring.stringify(
                 {
                     topic: 'foo',
                 })
@@ -417,7 +582,7 @@ runner(
                     port: port,
                     auth: userpass,
                     method: 'POST',
-                    path: pathname + querystring.stringify(
+                    path: pub_pathname + querystring.stringify(
                     {
                         topic: 'foo',
                     })
@@ -428,6 +593,74 @@ runner(
                     {
                         expect(v.toString()).to.equal('');
                         expect(msg).to.equal('dummy');
+                        done();
+                    });
+                }).end('hello');
+            });
+        });
+
+        it('should catch errors when ending response', function (done)
+        {
+            get_info().server.once('connect', function (info)
+            {
+                // make sure another test doesn't pick up the message
+                info.mqserver.once('publish_requested', function (topic, duplex, options, done2)
+                {
+                    expect(topic).to.equal(info.prefixes[0] + 'foo');
+                    expect(options.single).to.equal(false);
+                    expect(options.ttl).to.equal(undefined);
+                    read_all(duplex, function (v)
+                    {
+                        expect(v.toString()).to.equal('hello');
+                        done2();
+                    });
+                });
+            });
+
+            var msg;
+
+            function request(req, res)
+            {
+                /*jshint validthis: true */
+                this.removeListener('request', request);
+
+                var orig_end = res.end;
+                res.end = function ()
+                {
+                    res.end = orig_end;
+
+                    get_info().server.once('warning', function (err)
+                    {
+                        msg = err.message;
+                    });
+
+                    throw new Error('dummy2');
+                };
+            }
+
+            get_info().config.server.on('request', request);
+
+            centro.separate_auth(
+            {
+                token: make_token(get_info)
+            }, function (err, userpass)
+            {
+                require(mod).request(Object.assign(
+                {
+                    port: port,
+                    auth: userpass,
+                    method: 'POST',
+                    path: pub_pathname + querystring.stringify(
+                    {
+                        topic: 'foo',
+                    })
+                }, client_config), function (res)
+                {
+                    expect(res.statusCode).to.equal(200);
+                    read_all(res, function (v)
+                    {
+                        expect(v.toString()).to.equal('');
+                        expect(msg).to.equal('dummy2');
                         done();
                     });
                 }).end('hello');
@@ -478,7 +711,7 @@ runner(
                     port: port,
                     auth: userpass,
                     method: 'POST',
-                    path: pathname + querystring.stringify(
+                    path: pub_pathname + querystring.stringify(
                     {
                         topic: 'foo',
                     })
@@ -492,6 +725,56 @@ runner(
                         done();
                     });
                 }).end('hello');
+            });
+        });
+
+        it('should not return 200 status if response ends before subscribed', function (done)
+        {
+            var response;
+
+            get_info().server.once('connect', function (info)
+            {
+                info.mqserver.once('subscribe_requested', function (topic, done)
+                {
+                    response.emit('close');
+                    this.subscribe(topic, done);
+                    response.writeHead(500);
+                    response.end('server error');
+                });
+            });
+
+            function request(req, res)
+            {
+                /*jshint validthis: true */
+                this.removeListener('request', request);
+                response = res;
+            }
+
+            get_info().config.server.on('request', request);
+
+            centro.separate_auth(
+            {
+                token: make_token(get_info)
+            }, function (err, userpass)
+            {
+                require(mod).request(Object.assign(
+                {
+                    port: port,
+                    auth: userpass,
+                    method: 'GET',
+                    path: sub_pathname + querystring.stringify(
+                    {
+                        topic: 'foo',
+                    })
+                }, client_config), function (res)
+                {
+                    expect(res.statusCode).to.equal(500);
+                    read_all(res, function (v)
+                    {
+                        expect(v.toString()).to.equal('server error');
+                        done();
+                    });
+                }).end();
             });
         });
 
@@ -539,7 +822,7 @@ runner(
                     port: port,
                     auth: userpass,
                     method: 'POST',
-                    path: pathname + querystring.stringify(
+                    path: pub_pathname + querystring.stringify(
                     {
                         topic: 'foo',
                     })
@@ -601,7 +884,7 @@ runner(
                     port: port,
                     auth: userpass,
                     method: 'POST',
-                    path: pathname + querystring.stringify(
+                    path: pub_pathname + querystring.stringify(
                     {
                         topic: 'foo',
                     })
@@ -678,7 +961,7 @@ runner(
                                 port: port,
                                 auth: userpass,
                                 method: 'POST',
-                                path: pathname + querystring.stringify(
+                                path: pub_pathname + querystring.stringify(
                                 {
                                     topic: 'foo',
                                 })

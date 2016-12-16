@@ -82,6 +82,7 @@ module.exports = function (config, connect, options)
     config.max_token_length = 16 * 1024;
     config.maxSize = config.max_token_length;
     config.send_expires = true;
+    config.send_size = true;
     config.multi_ttl = 10 * 60 * 1000;
 
     function is_transport(n)
@@ -436,6 +437,14 @@ module.exports = function (config, connect, options)
                     {
                         empty();
                     }
+
+                    if (options.relay)
+                    {
+                        for (var dstroy of server._connids.values())
+                        {
+                            dstroy();
+                        }
+                    }
                 });
             });
         }
@@ -757,7 +766,7 @@ module.exports = function (config, connect, options)
                         expect(topic).to.equal(info.prefixes[0] + 'foo.bar');
                         expect(mqserver).to.equal(info.mqserver);
                         blocked += 1;
-                        if (blocked === connections.size)
+                        if (blocked === 1)
                         {
                             setTimeout(done, 1000);
                         }
@@ -767,18 +776,14 @@ module.exports = function (config, connect, options)
                         }
                     });
                 }
-
-                for (var info of connections.values())
-                {
-                    regblock(info);
-                }
-                
+               
                 clients[0].subscribe('foo.bar', function (s, info)
                 {
                     done(new Error('should not be called'));
                 }, function (err)
                 {
                     if (err) { return done(err); }
+
                     clients[0].subscribe('foo', function (s, info)
                     {
                         expect(info.topic).to.equal('foo');
@@ -792,6 +797,12 @@ module.exports = function (config, connect, options)
                     }, function (err)
                     {
                         if (err) { return done(err); }
+
+                        for (var info of connections.values())
+                        {
+                            regblock(info);
+                        }
+
                         clients[0].publish('foo').end('bar');
                     });
                 });
@@ -1130,6 +1141,11 @@ module.exports = function (config, connect, options)
             {
                 var pubreq = false,
                     subreq = false;
+
+                clients[0].on('error', function (err)
+                {
+                    expect(err.message).to.equal('carrier stream finished before duplex finished');
+                });
 
                 function regreq(mqserver)
                 {
@@ -1624,17 +1640,18 @@ module.exports = function (config, connect, options)
                     });
                 }
 
-                for (var mqserver of connections.keys())
-                {
-                    regmsg(mqserver);
-                }
-
                 clients[0].subscribe('foo', function ()
                 {
                     done(new Error('should not be called'));
                 }, function (err)
                 {
                     if (err) { return done(err); }
+
+                    for (var mqserver of connections.keys())
+                    {
+                        regmsg(mqserver);
+                    }
+
                     clients[0].publish('foo', function (err)
                     {
                         if (err) { return done(err); }
@@ -1902,6 +1919,11 @@ module.exports = function (config, connect, options)
                                 regblock(info);
                             }
                         }
+
+                        if (options.relay)
+                        {
+                            server.once('pre_connect', regblock);
+                        }
                     }
      
                     clients[t[0]].subscribe(t[1], t[2], function (s, info, cb)
@@ -1989,10 +2011,7 @@ module.exports = function (config, connect, options)
                         {
                             if (options.relay)
                             {
-                                server.once('connect', function (info)
-                                {
-                                    regblock(info);
-                                });
+                                server.once('pre_connect', regblock);
                             }
                             else
                             {
@@ -3086,37 +3105,49 @@ module.exports = function (config, connect, options)
                     date_before_publish,
                     date_before_deliver;
 
-                mqserver.on('publish_requested', function (topic, duplex, options, cb)
+                function reg(mqs)
                 {
-                    var t = new Throttle({rate: 10}),
-                        d = this.fsq.publish(topic, options, function (err)
+                    mqs.on('publish_requested', function (topic, duplex, options, cb)
+                    {
+                        var t = new Throttle({rate: 10}),
+                            d = this.fsq.publish(topic, options, function (err)
+                            {
+                                if (err) { return done(err); }
+                                expect(new Date() - date_before_publish).to.be.at.least(2000);
+                                cb();
+                            });
+
+                        t.on('error', function (err)
                         {
-                            if (err) { return done(err); }
-                            expect(new Date() - date_before_publish).to.be.at.least(2000);
-                            cb();
+                            d.emit('error', err);
                         });
 
-                    t.on('error', function (err)
-                    {
-                        d.emit('error', err);
+                        duplex.pipe(t).pipe(d);
                     });
 
-                    duplex.pipe(t).pipe(d);
-                });
+                    mqs.on('message', function (stream, info, multiplex)
+                    {
+                        var t = new Throttle({rate: 10}),
+                            d = multiplex();
 
-                mqserver.on('message', function (stream, info, multiplex)
+                        t.on('error', function (err)
+                        {
+                            d.emit('error', err);
+                        });
+
+                        date_before_deliver = new Date();
+                        stream.pipe(t).pipe(d);
+                    });
+                }
+
+                reg(mqserver);
+                if (options.relay)
                 {
-                    var t = new Throttle({rate: 10}),
-                        d = multiplex();
-
-                    t.on('error', function (err)
+                    server.once('pre_connect', function (info)
                     {
-                        d.emit('error', err);
+                        reg(info.mqserver);
                     });
-
-                    date_before_deliver = new Date();
-                    stream.pipe(t).pipe(d);
-                });
+                }
 
                 clients[0].subscribe('foo', function (s, info)
                 {
@@ -3132,6 +3163,15 @@ module.exports = function (config, connect, options)
                 }, function (err)
                 {
                     if (err) { return done(err); }
+
+                    if (options.relay)
+                    {
+                        server.once('pre_connect', function (info)
+                        {
+                            reg(info.mqserver);
+                        });
+                    }
+
                     date_before_publish = new Date();
                     clients[0].publish('foo').end('012345678901234567890');
                 });
@@ -3216,36 +3256,48 @@ module.exports = function (config, connect, options)
                     ]);
                 });
 
-                mqserver.on('message', function (stream, info, multiplex)
+                function reg(mqs)
                 {
-                    var ended = false;
-
-                    stream.on('end', function ()
+                    mqs.on('message', function (stream, info, multiplex)
                     {
-                        ended = true;
-                    });
+                        var ended = false;
 
-                    var d = multiplex();
-                    stream.pipe(d);
-
-                    setTimeout(function ()
-                    {
-                        expect(ended).to.equal(false);
-                        stream.on('error', function (err)
-                        {
-                            expect(err.message).to.equal('dummy');
-                        });
                         stream.on('end', function ()
                         {
-                            connections.get(mqserver).destroy();
+                            ended = true;
                         });
-                        stream.on('readable', function ()
+
+                        var d = multiplex();
+                        stream.pipe(d);
+
+                        setTimeout(function ()
                         {
-                            this.read();
-                        });
-                        d.emit('error', new Error('dummy'));
-                    }, 1000);
-                });
+                            expect(ended).to.equal(false);
+                            stream.on('error', function (err)
+                            {
+                                expect(err.message).to.equal('dummy');
+                            });
+                            stream.on('end', function ()
+                            {
+                                connections.get(mqserver).destroy();
+                            });
+                            stream.on('readable', function ()
+                            {
+                                this.read();
+                            });
+                            d.emit('error', new Error('dummy'));
+                        }, 1000);
+                    });
+                }
+
+                reg(mqserver);
+                if (options.relay)
+                {
+                    server.once('pre_connect', function (info)
+                    {
+                        reg(info.mqserver);
+                    });
+                }
 
                 clients[0].mux.on('end', function ()
                 {
@@ -3263,6 +3315,7 @@ module.exports = function (config, connect, options)
                 }, function (err)
                 {
                     if (err) { return done(err); }
+
                     clients[0].publish('foo', function (err)
                     {
                         if (err) { return done(err); }
@@ -3275,7 +3328,7 @@ module.exports = function (config, connect, options)
                                 done();
                             }
                         });
-                    }).end(new Buffer(128*1024));
+                    }).end(new Buffer((options.relay ? 16 : 1)*1024*1024));
                 });
             });
 
@@ -3851,12 +3904,6 @@ module.exports = function (config, connect, options)
 
                         buf.fill('a');
 
-                        for (var info of get_info().connections.values())
-                        {
-                            mqservers[info.hsdata[0]] = info.mqserver;
-                            prefixes[info.hsdata[0]] = info.prefixes;
-                        }
-
                         function check(msg_stream, info, duplex)
                         {
                             expect(info.topic).to.equal(prefixes[0][0] + 'foo');
@@ -3881,7 +3928,7 @@ module.exports = function (config, connect, options)
                             }
                         }
 
-                        mqservers[0].on('message', function (msg_stream, info, multiplex)
+                        function message0(msg_stream, info, multiplex)
                         {
                             expect(message0_called).to.equal(false);
                             message0_called = true;
@@ -3891,9 +3938,9 @@ module.exports = function (config, connect, options)
                             {
                                 laggard0_called = true;
                             });
-                        });
-
-                        mqservers[1].on('message', function (msg_stream, info, multiplex)
+                        }
+                        
+                        function message1(msg_stream, info, multiplex)
                         {
                             expect(message1_called).to.equal(false);
                             message1_called = true;
@@ -3903,7 +3950,35 @@ module.exports = function (config, connect, options)
                                 laggard1_called = true;
                             });
                             check(msg_stream, info, null_stream);
-                        });
+                        }
+
+                        if (options.relay)
+                        {
+                            get_info().server.once('connect', function (info)
+                            {
+                                mqservers[0] = info.mqserver;
+                                prefixes[0] = info.prefixes;
+                                info.mqserver.on('message', message0);
+
+                                this.once('connect', function (info)
+                                {
+                                    mqservers[1] = info.mqserver;
+                                    prefixes[1] = info.prefixes;
+                                    info.mqserver.on('message', message1);
+                                });
+                            });
+                        }
+                        else
+                        {
+                            for (var info of get_info().connections.values())
+                            {
+                                mqservers[info.hsdata[0]] = info.mqserver;
+                                prefixes[info.hsdata[0]] = info.prefixes;
+                            }
+
+                            mqservers[0].on('message', message0);
+                            mqservers[1].on('message', message1);
+                        }
 
                         get_info().clients[0].subscribe('foo', function (s, info)
                         {
@@ -4008,7 +4083,7 @@ module.exports = function (config, connect, options)
                             function (err)
                             {
                                 expect(err.message).to.equal('server error');
-                                expect(get_info().server.last_warning.message).to.equal('subscribe topic longer than ' + (options.anon ? 3 : 68));
+                                expect(get_info().server.last_warning.message).to.equal(options.relay ? 'server error' : ('subscribe topic longer than ' + (options.anon ? 3 : 68)));
                                 done();
                             });
                         });
@@ -4019,46 +4094,49 @@ module.exports = function (config, connect, options)
             }, config));
         });
 
-        describe('max subscriptions', function ()
+        if (!options.relay)
         {
-            run.call(this, Object.assign(
+            describe('max subscriptions', function ()
             {
-                only: function (get_info)
+                run.call(this, Object.assign(
                 {
-                    get_info().setup(1,
+                    only: function (get_info)
                     {
-                        access_control: {
-                            publish: {
-                                allow: ['foo'],
-                                disallow: []
-                            },
-                            subscribe: {
-                                allow: ['foo', 'bar'],
-                                disallow: []
-                            }
-                        }
-                    });
-
-                    it('should limit subscriptions', function (done)
-                    {
-                        get_info().clients[0].subscribe('foo', function () {},
-                        function (err)
+                        get_info().setup(1,
                         {
-                            if (err) { return done(err); }
-                            get_info().clients[0].subscribe('bar', function () {},
+                            access_control: {
+                                publish: {
+                                    allow: ['foo'],
+                                    disallow: []
+                                },
+                                subscribe: {
+                                    allow: ['foo', 'bar'],
+                                    disallow: []
+                                }
+                            }
+                        });
+
+                        it('should limit subscriptions', function (done)
+                        {
+                            get_info().clients[0].subscribe('foo', function () {},
                             function (err)
                             {
-                                expect(err.message).to.equal('server error');
-                                expect(get_info().server.last_warning.message).to.equal('subscription limit 1 already reached: ' + get_info().connections.values().next().value.prefixes[0] + 'bar');
-                                done();
+                                if (err) { return done(err); }
+                                get_info().clients[0].subscribe('bar', function () {},
+                                function (err)
+                                {
+                                    expect(err.message).to.equal('server error');
+                                    expect(get_info().server.last_warning.message).to.equal('subscription limit 1 already reached: ' + get_info().connections.values().next().value.prefixes[0] + 'bar');
+                                    done();
+                                });
                             });
                         });
-                    });
-                },
+                    },
 
-                max_subscriptions: 1
-            }, config));
-        });
+                    max_subscriptions: 1
+                }, config));
+            });
+        }
 
         describe('max publish data', function ()
         {
@@ -4092,7 +4170,7 @@ module.exports = function (config, connect, options)
                             var s = get_info().clients[0].publish('foo', function (err)
                             {
                                 expect(err.message).to.equal('server error');
-                                expect(get_info().server.last_warning.message).to.equal(options.relay ? 'carrier stream finished before duplex finished' : ('message data exceeded limit 1000: ' + get_info().connections.values().next().value.prefixes[0] + 'foo'));
+                                expect(get_info().server.last_warning.message).to.equal(options.relay ? 'server error' : ('message data exceeded limit 1000: ' + get_info().connections.values().next().value.prefixes[0] + 'foo'));
                                 done();
                             });
                             s.write(new Buffer(500));
