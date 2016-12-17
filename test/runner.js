@@ -2173,6 +2173,11 @@ module.exports = function (config, connect, options)
                 onconnect();
             });
 
+            c.on('ready', function ()
+            {
+                this.ready = true;
+            });
+
             if (!is_transport('primus'))
             {
                 return;
@@ -3735,11 +3740,22 @@ module.exports = function (config, connect, options)
                 skip_ready: true,
                 client_function: function (c, i, onconnect)
                 {
-                    c.on('error', function (err)
+                    if (i === 0)
                     {
-                        this.last_error = err;
-                        onconnect();
-                    });
+                        c.on('ready', function ()
+                        {
+                            this.ready = true;
+                            onconnect();
+                        });
+                    }
+                    else
+                    {
+                        c.on('error', function (err)
+                        {
+                            this.last_error = err;
+                            onconnect();
+                        });
+                    }
                 }
             });
 
@@ -3751,12 +3767,24 @@ module.exports = function (config, connect, options)
                     done();
                 }
 
-                if (clients[1].last_error)
+                function check_error2()
                 {
-                    return check_error(clients[1].last_error);
+                    if (clients[1].last_error)
+                    {
+                        return check_error(clients[1].last_error);
+                    }
+
+                    clients[1].on('error', check_error);
                 }
 
-                clients[1].on('error', check_error);
+                // make sure clients[0] doesn't connect later
+
+                if (clients[0].ready)
+                {
+                    return check_error2();
+                }
+
+                clients[0].on('ready', check_error2);
             });
         });
 
@@ -4046,7 +4074,17 @@ module.exports = function (config, connect, options)
                     });
 
                     it('should reject subscribe topics',
-                       get_info().expect_error('data.subscribe should NOT have additional properties', false, 401, 1));
+                       get_info().expect_error('data.subscribe should NOT have additional properties', false, 401, 1, function (done)
+                       {
+                           // make sure clients[0] doesn't connect later
+
+                           if (get_info().clients[0].ready)
+                           {
+                               return done();
+                           }
+
+                           get_info().clients[0].on('ready', done);
+                       }));
                 },
 
                 max_topic_length: 3

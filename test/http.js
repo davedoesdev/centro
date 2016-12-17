@@ -667,67 +667,6 @@ runner(
             });
         });
 
-        it('should catch errors when publishing', function (done)
-        {
-            get_info().server.once('connect', function (info)
-            {
-                info.mqserver.once('publish_requested', function (topic, duplex, options, done2)
-                {
-                    // handshake is sent after carrier finishes
-                    done(new Error('should not be called'));
-                });
-            });
-
-            var msg;
-
-            function request(req, res)
-            {
-                /*jshint validthis: true */
-                this.removeListener('request', request);
-
-                var orig_pipe = req.pipe;
-                req.pipe = function (dest)
-                {
-                    req.pipe = orig_pipe;
-
-                    get_info().server.once('warning', function (err)
-                    {
-                        msg = err.message;
-                    });
-
-                    throw new Error('dummy');
-                };
-            }
-
-            get_info().config.server.on('request', request);
-
-            centro.separate_auth(
-            {
-                token: make_token(get_info)
-            }, function (err, userpass)
-            {
-                require(mod).request(Object.assign(
-                {
-                    port: port,
-                    auth: userpass,
-                    method: 'POST',
-                    path: pub_pathname + querystring.stringify(
-                    {
-                        topic: 'foo',
-                    })
-                }, client_config), function (res)
-                {
-                    expect(res.statusCode).to.equal(500);
-                    read_all(res, function (v)
-                    {
-                        expect(v.toString()).to.equal('server error');
-                        expect(msg).to.equal('dummy');
-                        done();
-                    });
-                }).end('hello');
-            });
-        });
-
         it('should not return 200 status if response ends before subscribed', function (done)
         {
             var response;
