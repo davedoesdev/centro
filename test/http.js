@@ -137,7 +137,7 @@ function connect(config, server, cb)
 
                     this.subscribe = function (n, topic, handler, cb)
                     {
-                        if (typeof n !== 'number')
+                        if (typeof n === 'string')
                         {
                             cb = handler;
                             handler = topic;
@@ -147,22 +147,35 @@ function connect(config, server, cb)
 
                         cb = cb || function () {};
 
-                        var subs = nsubs[n];
-                        if (!subs)
-                        {
-                            subs = nsubs[n] = new Map();
-                        }
+                        var subs;
 
-                        var handlers = subs.get(topic);
-                        if (!handlers)
+                        if (typeof topic === 'string')
                         {
-                            handlers = new Set();
-                            subs.set(topic, handlers)
-                        } else if (handlers.has(handler))
-                        {
-                            return cb();
+                            subs = nsubs[n];
+                            if (!subs)
+                            {
+                                subs = nsubs[n] = new Map();
+                            }
+
+                            var handlers = subs.get(topic);
+                            if (!handlers)
+                            {
+                                handlers = new Set();
+                                subs.set(topic, handlers)
+                            } else if (handlers.has(handler))
+                            {
+                                return cb();
+                            }
+                            handlers.add(handler);
                         }
-                        handlers.add(handler);
+                        else
+                        {
+                            subs = new Map();
+                            for (var t of topic)
+                            {
+                                subs.set(t, new Set([handler]));
+                            }
+                        }
                         
                         require(mod).request(Object.assign(
                         {
@@ -207,7 +220,7 @@ function connect(config, server, cb)
 
                                     if (ev === 'start')
                                     {
-                                        var handlers = subs.get(topic);
+                                        var handlers = subs.get(typeof topic === 'string' ? topic : info.topic);
                                         if (handlers && handlers.has(handler))
                                         {
                                             var pthru = new PassThrough();
@@ -343,21 +356,6 @@ function extra(get_info, on_before)
 
     it('should handle bad ttl value', function (done)
     {
-        get_info().server.once('connect', function (info)
-        {
-            info.mqserver.once('publish_requested', function (topic, duplex, options, done2)
-            {
-                expect(topic).to.equal(info.prefixes[0] + 'foo');
-                expect(options.single).to.equal(false);
-                expect(options.ttl).to.equal(undefined);
-                read_all(duplex, function (v)
-                {
-                    expect(v.toString()).to.equal('hello');
-                    done2();
-                });
-            });
-        });
-        
         centro.separate_auth(
         {
             token: make_token(get_info)
@@ -375,10 +373,10 @@ function extra(get_info, on_before)
                 })
             }, client_config), function (res)
             {
-                expect(res.statusCode).to.equal(200);
+                expect(res.statusCode).to.equal(400);
                 read_all(res, function (v)
                 {
-                    expect(v.toString()).to.equal('');
+                    expect(v.toString()).to.equal('data.ttl should be integer');
                     done();
                 });
             }).end('hello');
@@ -496,6 +494,60 @@ function extra(get_info, on_before)
                     done();
                 });
             }).end('hello');
+        });
+    });
+    
+    describe('multiple topics', function ()
+    {
+        get_info().setup(2,
+        {
+            access_control: {
+                publish: {
+                    allow: ['foo', 'bar'],
+                    disallow: []
+                },
+                subscribe: {
+                    allow: ['foo', 'bar'],
+                    disallow: []
+                }
+            }
+        });
+
+        it('should support subscribing to multiple topics', function (done)
+        {
+            var foo = false, bar = false;
+
+            get_info().clients[1].subscribe([0, 1], ['foo', 'bar'], function (s, info)
+            {
+                read_all(s, function (data)
+                {
+                    expect(data.toString()).to.equal(info.topic === 'foo' ?
+                            'bar' : 'fooey');
+                    if (info.topic === 'foo')
+                    {
+                        foo = true;
+                    }
+                    else if (info.topic === 'bar')
+                    {
+                        bar = true;
+                    }
+                    if (foo && bar)
+                    {
+                        done();
+                    }
+                });
+            }, function (err)
+            {
+                if (err) { return done(err); }
+                get_info().clients[0].publish('foo', function (err)
+                {
+                    if (err) { return done(err); }
+                    get_info().clients[1].publish(1, 'bar', function (err)
+                    {
+                        if (err) { return done(err); }
+                    }).end('fooey');
+                }).end('bar');
+            });
         });
     });
 }

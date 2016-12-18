@@ -4121,7 +4121,7 @@ module.exports = function (config, connect, options)
                             function (err)
                             {
                                 expect(err.message).to.equal('server error');
-                                expect(get_info().server.last_warning.message).to.equal(options.relay ? 'server error' : ('subscribe topic longer than ' + (options.anon ? 3 : 68)));
+                                expect(get_info().server.last_warning.message).to.equal(options.relay ? 'data.topics[0] should NOT be longer than 3 characters' : ('subscribe topic longer than ' + (options.anon ? 3 : 68)));
                                 done();
                             });
                         });
