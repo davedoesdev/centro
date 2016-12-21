@@ -46,7 +46,8 @@
     "fastest-writable": "~1.0.0",
     "frame-stream": "~1.1.1",
     "ajv": "~4.8.2",
-    "async": "~2.1.2"
+    "async": "~2.1.2",
+    "access-control": "~1.0.0"
   },
   "devDependencies": {
     "grunt": "~1.0.1",

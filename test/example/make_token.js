@@ -11,7 +11,7 @@ fs.readFile(path.join(__dirname, 'priv_key.pem'), function (err, priv_key)
     assert.ifError(err);
 
     var expiry = new Date();
-    expiry.setHours(expiry.getHours() + 1);
+    expiry.setHours(expiry.getHours() + 24);
 
     pub_keystore(
     {
