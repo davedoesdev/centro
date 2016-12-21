@@ -161,7 +161,7 @@ function connect(config, server, cb)
                             if (!handlers)
                             {
                                 handlers = new Set();
-                                subs.set(topic, handlers)
+                                subs.set(topic, handlers);
                             } else if (handlers.has(handler))
                             {
                                 return cb();
@@ -198,6 +198,8 @@ function connect(config, server, cb)
 
                             rl.on('line', function (line)
                             {
+                                var pthru;
+
                                 if (line === ':ok')
                                 {
                                     cb(null);
@@ -223,7 +225,7 @@ function connect(config, server, cb)
                                         var handlers = subs.get(typeof topic === 'string' ? topic : info.topic);
                                         if (handlers && handlers.has(handler))
                                         {
-                                            var pthru = new PassThrough();
+                                            pthru = new PassThrough();
                                             passthrus.set(info.id, pthru);
                                             handler.call(mqclient, pthru, info, function (err)
                                             {
@@ -236,7 +238,7 @@ function connect(config, server, cb)
                                     }
                                     else if (ev === 'data')
                                     {
-                                        var pthru = passthrus.get(info.id);
+                                        pthru = passthrus.get(info.id);
                                         if (pthru && !pthru.write(new Buffer(info.data, 'base64')))
                                         {
                                             pthru.once('drain', function ()
@@ -248,7 +250,7 @@ function connect(config, server, cb)
                                     }
                                     else if (ev === 'end')
                                     {
-                                        var pthru = passthrus.get(info.id);
+                                        pthru = passthrus.get(info.id);
                                         if (pthru)
                                         {
                                             passthrus.get(info.id).end();
