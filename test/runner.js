@@ -3788,6 +3788,63 @@ module.exports = function (config, connect, options)
             });
         });
 
+        describe('should be able to error and end', function ()
+        {
+            setup(1,
+            {
+                access_control: {
+                    publish: {
+                        allow: ['foo'],
+                        disallow: []
+                    },
+                    subscribe: {
+                        allow: ['foo'],
+                        disallow: []
+                    }
+                }
+            });
+
+            it('should get peer error', function (done)
+            {
+                function regmsg(mqserver)
+                {
+                    mqserver.on('message', function (stream, info, multiplex, done)
+                    {
+                        stream.pipe(multiplex());
+                        done(new Error('dummy'));
+                    });
+                }
+
+                var s_obj;
+
+                clients[0].on('error', function (err, obj)
+                {
+                    expect(err.message).to.equal('peer error');
+                    s_obj = obj;
+                });
+
+                clients[0].subscribe('foo', function (s, info)
+                {
+                    s.on('error', function (err)
+                    {
+                        expect(err.message).to.equal('peer error');
+                        expect(s).to.equal(s_obj);
+                        done();
+                    });
+                }, function (err)
+                {
+                    if (err) { return done(err); }
+
+                    for (var mqserver of connections.keys())
+                    {
+                        regmsg(mqserver);
+                    }
+
+                    clients[0].publish('foo').end('bar');
+                });
+            });
+        });
+
         if (options.extra)
         {
             describe('extra', function ()

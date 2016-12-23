@@ -216,6 +216,10 @@ function connect(config, server, cb)
                                 {
                                     ev = 'end';
                                 }
+                                else if (line === 'event: error')
+                                {
+                                    ev = 'error';
+                                }
                                 else if (line.lastIndexOf('data:') === 0)
                                 {
                                     var info = JSON.parse(line.substr(6));
@@ -255,6 +259,16 @@ function connect(config, server, cb)
                                         {
                                             passthrus.get(info.id).end();
                                             passthrus.delete(info.id);
+                                        }
+                                    }
+                                    else if (ev === 'error')
+                                    {
+                                        pthru = passthrus.get(info.id);
+                                        var err = new Error('peer error');
+                                        mqclient.emit('error', err, pthru);
+                                        if (pthru && (pthru.listenerCount('error') > 0))
+                                        {
+                                            pthru.emit('error', err);
                                         }
                                     }
                                 }
@@ -332,6 +346,63 @@ function extra(get_info, on_before)
             read_all(res, function (v)
             {
                 expect(v.toString()).to.equal('not found');
+                done();
+            });
+        }).end();
+    });
+
+    it('should return 405 for non-POSTs to publish', function (done)
+    {
+        require(mod).request(Object.assign(
+        {
+            port: port,
+            method: 'GET',
+            path: pub_pathname
+        }, client_config), function (res)
+        {
+            expect(res.statusCode).to.equal(405);
+            read_all(res, function (v)
+            {
+                expect(v.toString()).to.equal('method not allowed');
+                done();
+            });
+        }).end();
+    });
+
+    it('should return 405 for non-GETs to subscribe', function (done)
+    {
+        require(mod).request(Object.assign(
+        {
+            port: port,
+            method: 'POST',
+            path: sub_pathname
+        }, client_config), function (res)
+        {
+            expect(res.statusCode).to.equal(405);
+            read_all(res, function (v)
+            {
+                expect(v.toString()).to.equal('method not allowed');
+                done();
+            });
+        }).end();
+    });
+
+    it('should return 403 for invalid CORS request', function (done)
+    {
+        require(mod).request(Object.assign(
+        {
+            port: port,
+            method: 'GET',
+            path: sub_pathname,
+            headers: {
+                origin: '%'
+            }
+        }, client_config), function (res)
+        {
+            expect(res.statusCode).to.equal(403);
+            read_all(res, function (v)
+            {
+                expect(v.toString()).to.equal('Invalid HTTP Access Control (CORS) request:\n  Origin: %\n  Method: GET');
                 done();
             });
         }).end();
