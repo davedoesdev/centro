@@ -20,8 +20,6 @@ function connect()
     {
         publish = function ()
         {
-            console.log(topic.value, message.value);
-
             var r = new XMLHttpRequest();
             r.open('POST', 'http://localhost:8801/centro/v1/publish?authz_token=' + params.get('token') + '&topic=' + encodeURIComponent(topic.value));
             r.send(message.value);
@@ -78,6 +76,11 @@ function connect()
         messages.scrollTop = messages.scrollHeight;
 
         msgs.delete(info.id);
+    });
+
+    source.addEventListener('peer_error', function ()
+    {
+        add_status('error');
     });
 }
 

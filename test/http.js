@@ -216,9 +216,9 @@ function connect(config, server, cb)
                                 {
                                     ev = 'end';
                                 }
-                                else if (line === 'event: error')
+                                else if (line === 'event: peer_error')
                                 {
-                                    ev = 'error';
+                                    ev = 'peer_error';
                                 }
                                 else if (line.lastIndexOf('data:') === 0)
                                 {
@@ -261,7 +261,7 @@ function connect(config, server, cb)
                                             passthrus.delete(info.id);
                                         }
                                     }
-                                    else if (ev === 'error')
+                                    else if (ev === 'peer_error')
                                     {
                                         pthru = passthrus.get(info.id);
                                         var err = new Error('peer error');
@@ -407,6 +407,91 @@ function extra(get_info, on_before)
             });
         }).end();
     });
+
+    if (get_info().config.transport[0].config.sse_keep_alive_interval)
+    {
+        it('should send periodic keep-alive comment', function (done)
+        {
+            centro.separate_auth(
+            {
+                token: make_token(get_info)
+            }, function (err, userpass)
+            {
+                require(mod).request(Object.assign(
+                {
+                    port: port,
+                    auth: userpass,
+                    method: 'GET',
+                    path: sub_pathname + querystring.stringify(
+                    {
+                        topic: 'foo'
+                    })
+                }, client_config), function (res)
+                {
+                    expect(res.statusCode).to.equal(200);
+
+                    var rl = readline.createInterface(
+                    {
+                        input: res
+                    }), lines = [];
+
+                    rl.on('line', function (line)
+                    {
+                        lines.push(line);
+                    });
+
+                    setTimeout(function ()
+                    {
+                        expect(lines).to.eql([':ok', '', ':ka', '', ':ka', '']);
+                        res.destroy();
+                        done();
+                    }, 2500);
+                }).end();
+            });
+        });
+    }
+    else
+    {
+        it('should not send periodic keep-alive comment', function (done)
+        {
+            centro.separate_auth(
+            {
+                token: make_token(get_info)
+            }, function (err, userpass)
+            {
+                require(mod).request(Object.assign(
+                {
+                    port: port,
+                    auth: userpass,
+                    method: 'GET',
+                    path: sub_pathname + querystring.stringify(
+                    {
+                        topic: 'foo'
+                    })
+                }, client_config), function (res)
+                {
+                    expect(res.statusCode).to.equal(200);
+
+                    var rl = readline.createInterface(
+                    {
+                        input: res
+                    }), lines = [];
+
+                    rl.on('line', function (line)
+                    {
+                        lines.push(line);
+                    });
+
+                    setTimeout(function ()
+                    {
+                        expect(lines).to.eql([':ok', '']);
+                        res.destroy();
+                        done();
+                    }, 2000);
+                }).end();
+            });
+        });
+    }
 
     it('should return 401 for authorise error', function (done)
     {
@@ -644,7 +729,10 @@ runner(
 {
     transport: [{
         server: 'http',
-        config: transport_config
+        config: Object.assign(
+        {
+            sse_keep_alive_interval: 1
+        }, transport_config)
     }, {
         server: 'in-mem'
     }],
