@@ -2242,7 +2242,8 @@ module.exports = function (config, connect, options)
                             return false;
                         }
 
-                        if (errors[0].message !== 'socket hang up')
+                        if ((errors[0].message !== 'socket hang up') &&
+                            (errors[0].message !== 'write EPIPE'))
                         {
                             expect(errors[0].message).to.be.oneOf(
                             [
@@ -3845,6 +3846,142 @@ module.exports = function (config, connect, options)
             });
         });
 
+        describe('authorization start and end events', function ()
+        {
+            setup(1,
+            {
+                access_control: {
+                    publish: {
+                        allow: ['foo'],
+                        disallow: []
+                    },
+                    subscribe: {
+                        allow: ['foo'],
+                        disallow: []
+                    }
+                },
+
+                before_connect_function: function ()
+                {
+                    server.count_authz_start = 0;
+                    server.count_authz_end = 0;
+
+                    server.on('authz_start', function ()
+                    {
+                        this.count_authz_start += 1;
+                    });
+
+                    server.on('authz_end', function ()
+                    {
+                        this.count_authz_end += 1;
+                    });
+                }
+            });
+
+            it('should emit authz_start and authz_end', function (done)
+            {
+                clients[0].publish('foo', function (err)
+                {
+                    expect(server.count_authz_start).to.equal(options.relay ? 2 :1);
+                    expect(server.count_authz_end).to.equal(options.relay ? 2 :1);
+                    server.removeAllListeners('authz_start');
+                    server.removeAllListeners('authz_end');
+                    delete server.count_authz_start;
+                    delete server.count_authz_end;
+                    done();
+                }).end('bar');
+            });
+        });
+
+        describe('cancel authorization', function ()
+        {
+            setup(1,
+            {
+                access_control: {
+                    publish: {
+                        allow: ['foo'],
+                        disallow: []
+                    },
+                    subscribe: {
+                        allow: ['foo'],
+                        disallow: []
+                    }
+                },
+
+                before_connect_function: function ()
+                {
+                    server.on('authz_start', function (obj, cb)
+                    {
+                        cb();
+                    });
+
+                    server.on('authz_end', function (obj, err)
+                    {
+                        expect(err.message).to.equal('cancelled');
+                    });
+                },
+
+                client_function: client_function,
+                skip_ready: true
+            });
+
+            it('should cancel authorization',
+               expect_error('cancelled', true, 401, 0, function (done)
+               {
+                   server.removeAllListeners('authz_start');
+                   server.removeAllListeners('authz_end');
+                   done();
+               }));
+        });
+
+        if (options.relay)
+        {
+            describe('cancel publish and subscribe authorization', function ()
+            {
+                setup(1,
+                {
+                    access_control: {
+                        publish: {
+                            allow: ['foo'],
+                            disallow: []
+                        },
+                        subscribe: {
+                            allow: ['foo'],
+                            disallow: []
+                        }
+                    }
+                });
+
+                it('should cancel authorization', function (done)
+                {
+                    server.on('authz_start', function (obj, cb)
+                    {
+                        cb(new Error('dummy'));
+                    });
+
+                    server.on('authz_end', function (obj, err)
+                    {
+                        expect(err.message).to.equal('dummy');
+                    });
+
+                    clients[0].subscribe('foo', function ()
+                    {
+                        done(new Error('should not be called'));
+                    }, function (err)
+                    {
+                        expect(err.message).to.equal('dummy');
+                        clients[0].publish('foo', function (err)
+                        {
+                            expect(err.message).to.equal('dummy');
+                            server.removeAllListeners('authz_start');
+                            server.removeAllListeners('authz_end');
+                            done();
+                        }).end('bar');
+                    })
+                });
+            });
+        }
+
         if (options.extra)
         {
             describe('extra', function ()
@@ -4177,7 +4314,11 @@ module.exports = function (config, connect, options)
                             get_info().clients[0].subscribe('foobar', function () {},
                             function (err)
                             {
-                                expect(err.message).to.equal('server error');
+                                expect(err.message).to.be.oneOf(
+                                [
+                                    'server error',
+                                    'data.topics[0] should NOT be longer than 3 characters'
+                                ]);
                                 expect(get_info().server.last_warning.message).to.equal(options.relay ? 'data.topics[0] should NOT be longer than 3 characters' : ('subscribe topic longer than ' + (options.anon ? 3 : 68)));
                                 done();
                             });

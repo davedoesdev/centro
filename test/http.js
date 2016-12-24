@@ -15,8 +15,9 @@ var runner = require('./runner'),
     PassThrough = require('stream').PassThrough,
     port = 8700;
 
-function make_token(get_info)
+function make_token(get_info, topic)
 {
+    topic = topic || 'foo';
     var token_exp = new Date();
     token_exp.setMinutes(token_exp.getMinutes() + 1);
     return new jsjws.JWT().generateJWTByKey(
@@ -27,11 +28,11 @@ function make_token(get_info)
         iss: get_info().issuer_id,
         access_control: {
             publish: {
-                allow: ['foo'],
+                allow: [topic],
                 disallow: []
             },
             subscribe: {
-                allow: ['foo'],
+                allow: [topic],
                 disallow: []
             }
         }
@@ -188,7 +189,38 @@ function connect(config, server, cb)
                         {
                             if (res.statusCode !== 200)
                             {
-                                return cb(new Error('server error'));
+                                var msg = '';
+
+                                res.on('end', function ()
+                                {
+                                    var err = new Error(msg);
+                                    if (cb)
+                                    {
+                                        cb(err);
+                                    }
+                                    else
+                                    {
+                                        mqclient._warning(err);
+                                    }
+                                });
+
+                                if (cb)
+                                {
+                                    res.on('error', cb);
+                                }
+                                else
+                                {
+                                    res.on('error', mqclient._warning);
+                                }
+
+                                return res.on('readable', function ()
+                                {
+                                    var r = this.read();
+                                    if (r !== null)
+                                    {
+                                        msg += r.toString();
+                                    }
+                                });
                             }
 
                             var rl = readline.createInterface(
@@ -414,7 +446,7 @@ function extra(get_info, on_before)
         {
             centro.separate_auth(
             {
-                token: make_token(get_info)
+                token: make_token(get_info, 'sspkac')
             }, function (err, userpass)
             {
                 require(mod).request(Object.assign(
@@ -424,7 +456,7 @@ function extra(get_info, on_before)
                     method: 'GET',
                     path: sub_pathname + querystring.stringify(
                     {
-                        topic: 'foo'
+                        topic: 'sspkac'
                     })
                 }, client_config), function (res)
                 {
@@ -456,7 +488,7 @@ function extra(get_info, on_before)
         {
             centro.separate_auth(
             {
-                token: make_token(get_info)
+                token: make_token(get_info, 'snspkac')
             }, function (err, userpass)
             {
                 require(mod).request(Object.assign(
@@ -466,7 +498,7 @@ function extra(get_info, on_before)
                     method: 'GET',
                     path: sub_pathname + querystring.stringify(
                     {
-                        topic: 'foo'
+                        topic: 'snspkac'
                     })
                 }, client_config), function (res)
                 {
