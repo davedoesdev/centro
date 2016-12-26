@@ -356,7 +356,11 @@ module.exports = function (config, connect, options)
                             opts.client_function(c, i, onconnect);
                         }
 
-                        if (opts.skip_ready || opts.end_immediately)
+                        if (((typeof opts.skip_ready === 'boolean') &&
+                             opts.skip_ready) ||
+                            ((typeof opts.skip_ready === 'number') &&
+                             (opts.skip_ready === i)) ||
+                            opts.end_immediately)
                         {
                             return next(null, c);
                         }
@@ -2168,7 +2172,6 @@ module.exports = function (config, connect, options)
 
             c.on('error', function (err)
             {
-                console.log(err);
                 this.errors.push(err);
                 onconnect();
             });
@@ -2242,15 +2245,13 @@ module.exports = function (config, connect, options)
                             return false;
                         }
 
-                        if ((errors[0].message !== 'socket hang up') &&
-                            (errors[0].message !== 'write EPIPE'))
-                        {
-                            expect(errors[0].message).to.be.oneOf(
-                            [
-                                'carrier stream ended before end message received',
-                                'carrier stream finished before duplex finished',
-                            ]);
-                        }
+                        expect(errors[0].message).to.be.oneOf(
+                        [
+                            'socket hang up',
+                            'write EPIPE',
+                            'carrier stream ended before end message received',
+                            'carrier stream finished before duplex finished',
+                        ]);
 
                         if (is_transport('primus') && (code !== 0))
                         {
@@ -2288,10 +2289,19 @@ module.exports = function (config, connect, options)
                                 expect(errors[1].data).to.equal('{"error":"' + msg + '"}');
                             }
                         }
-                        else if (errors.length > 1)
+                        else if (errors.length > 2)
                         {
                             done(new Error('too many errors'));
                             return false;
+                        }
+                        else if (errors.length === 2)
+                        {
+                            expect(errors[1].message).to.be.oneOf(
+                            [
+                                'write EPIPE',
+                                'carrier stream ended before end message received',
+                                'carrier stream finished before duplex finished',
+                            ]);
                         }
                     }
 
@@ -3910,9 +3920,9 @@ module.exports = function (config, connect, options)
 
                 before_connect_function: function ()
                 {
-                    server.on('authz_start', function (obj, cb)
+                    server.on('authz_start', function (cancel)
                     {
-                        cb();
+                        cancel();
                     });
 
                     server.on('authz_end', function (obj, err)
@@ -3930,6 +3940,116 @@ module.exports = function (config, connect, options)
                {
                    server.removeAllListeners('authz_start');
                    server.removeAllListeners('authz_end');
+                   done();
+               }));
+        });
+
+        describe('track connections', function ()
+        {
+            setup(2,
+            {
+                access_control: {
+                    publish: {
+                        allow: ['foo'],
+                        disallow: []
+                    },
+                    subscribe: {
+                        allow: ['foo'],
+                        disallow: []
+                    }
+                },
+
+                before_connect_function: function ()
+                {
+                    server.conn_count = 0;
+
+                    server.on('authz_start', function (cancel, onclose)
+                    {
+                        server.conn_count += 1;
+                        onclose(function ()
+                        {
+                            server.conn_count -= 1;
+                        });
+                    });
+                }
+            });
+
+            it('should be able to count active connections', function (done)
+            {
+                function wait(n, cb)
+                {
+                    if (server.conn_count === n)
+                    {
+                        return cb();
+                    }
+
+                    setTimeout(function ()
+                    {
+                        wait(n, cb);
+                    }, 100);
+                }
+
+                wait(2, function ()
+                {
+                    clients[0].mux.carrier.end();
+                    wait(1, function ()
+                    {
+                        clients[1].mux.carrier.end();
+                        wait(0, function ()
+                        {
+                            server.removeAllListeners('authz_start');
+                            delete server.conn_count;
+                            done();
+                        });
+                    });
+                });
+            });
+        });
+
+        describe('limit connections', function ()
+        {
+            setup(2,
+            {
+                access_control: {
+                    publish: {
+                        allow: ['foo'],
+                        disallow: []
+                    },
+                    subscribe: {
+                        allow: ['foo'],
+                        disallow: []
+                    }
+                },
+
+                before_connect_function: function ()
+                {
+                    var conn_count = 0;
+
+                    server.on('authz_start', function (cancel, onclose)
+                    {
+                        conn_count += 1;
+
+                        onclose(function ()
+                        {
+                            conn_count -= 1;
+                        });
+
+                        if (conn_count > 1)
+                        {
+                            return setImmediate(cancel);
+                        }
+                    });
+                },
+
+                client_function: client_function,
+                skip_ready: 1,
+                series: true
+            });
+
+            it('should be able to limit number of active connections',
+               expect_error('cancelled', true, 401, 1, function (done)
+               {
+                   server.removeAllListeners('authz_start');
                    done();
                }));
         });
@@ -3954,9 +4074,9 @@ module.exports = function (config, connect, options)
 
                 it('should cancel authorization', function (done)
                 {
-                    server.on('authz_start', function (obj, cb)
+                    server.on('authz_start', function (cancel)
                     {
-                        cb(new Error('dummy'));
+                        cancel(new Error('dummy'));
                     });
 
                     server.on('authz_end', function (obj, err)
