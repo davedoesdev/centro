@@ -986,7 +986,7 @@ module.exports = function (config, connect, options)
                     this.joins = new Set();
                     return this.subscribe('join.*', function (s, info)
                     {
-                        if (presence_topics.has(info.topic)) { return; }
+                        if (presence_topics.has(info.topic)) { return read_all(s); }
                         expect(info.single).to.equal(single);
                         if (ttl)
                         {
@@ -1074,7 +1074,7 @@ module.exports = function (config, connect, options)
 
                     clients[0].subscribe('ready.all.*', function (s, info)
                     {
-                        if (presence_topics.has(info.topic)) { return; }
+                        if (presence_topics.has(info.topic)) { return read_all(s); }
 
                         if (!options.relay)
                         {
@@ -1092,7 +1092,7 @@ module.exports = function (config, connect, options)
                         if (err) { return done(err); }
                         clients[1].subscribe('leave.*', function (s, info)
                         {
-                            if (presence_topics.has(info.topic)) { return; }
+                            if (presence_topics.has(info.topic)) { return read_all(s); }
 
                             if (!options.relay)
                             {
@@ -1111,7 +1111,7 @@ module.exports = function (config, connect, options)
                             if (err) { return done(err); }
                             clients[1].subscribe('ready.all.*', function (s, info)
                             {
-                                if (presence_topics.has(info.topic)) { return; }
+                                if (presence_topics.has(info.topic)) { return read_all(s); }
 
                                 if (!options.relay)
                                 {
@@ -1233,17 +1233,23 @@ module.exports = function (config, connect, options)
                 {
                     clients[0].on('error', function (err)
                     {
-                        expect(err.message).to.equal('carrier stream finished before duplex finished');
+                        expect(err.message).to.be.oneOf([
+                            'carrier stream finished before duplex finished',
+                            'peer error'
+                        ]);
                     });
 
                     clients[1].on('error', function (err)
                     {
-                        expect(err.message).to.equal('carrier stream finished before duplex finished');
+                        expect(err.message).to.be.oneOf([
+                            'carrier stream finished before duplex finished',
+                            'peer error'
+                        ]);
                     });
 
                     clients[0].subscribe('ready.all.*', function (s, info)
                     {
-                        if (presence_topics.has(info.topic)) { return; }
+                        if (presence_topics.has(info.topic)) { return read_all(s); }
 
                         if (!options.relay)
                         {
@@ -1261,7 +1267,7 @@ module.exports = function (config, connect, options)
                         if (err) { return done(err); }
                         clients[1].subscribe('leave.*', function (s, info)
                         {
-                            if (presence_topics.has(info.topic)) { return; }
+                            if (presence_topics.has(info.topic)) { return read_all(s); }
 
                             if (!options.relay)
                             {
@@ -1281,7 +1287,7 @@ module.exports = function (config, connect, options)
                             if (err) { return done(err); }
                             clients[1].subscribe('ready.all.*', function (s, info)
                             {
-                                if (presence_topics.has(info.topic)) { return; }
+                                if (presence_topics.has(info.topic)) { return read_all(s); }
 
                                 if (!options.relay)
                                 {
@@ -1362,7 +1368,7 @@ module.exports = function (config, connect, options)
 
                     clients[0].subscribe('ready.all.*', function (s, info)
                     {
-                        if (presence_topics.has(info.topic)) { return; }
+                        if (presence_topics.has(info.topic)) { return read_all(s); }
 
                         if (!options.relay)
                         {
@@ -1380,7 +1386,7 @@ module.exports = function (config, connect, options)
                         if (err) { return done(err); }
                         clients[1].subscribe('leave.*', function (s, info, ack)
                         {
-                            if (presence_topics.has(info.topic)) { return; }
+                            if (presence_topics.has(info.topic)) { return read_all(s); }
 
                             if (!options.relay)
                             {
@@ -1401,7 +1407,7 @@ module.exports = function (config, connect, options)
                             if (err) { return done(err); }
                             clients[1].subscribe('ready.all.*', function (s, info)
                             {
-                                if (presence_topics.has(info.topic)) { return; }
+                                if (presence_topics.has(info.topic)) { return read_all(s); }
 
                                 if (!options.relay)
                                 {
@@ -1476,7 +1482,7 @@ module.exports = function (config, connect, options)
 
                     clients[0].subscribe('ready.all.*', function (s, info)
                     {
-                        if (presence_topics.has(info.topic)) { return; }
+                        if (presence_topics.has(info.topic)) { return read_all(s); }
 
                         if (!options.relay)
                         {
@@ -1494,7 +1500,7 @@ module.exports = function (config, connect, options)
                         if (err) { return done(err); }
                         clients[1].subscribe('leave.*', function (s, info)
                         {
-                            if (presence_topics.has(info.topic)) { return; }
+                            if (presence_topics.has(info.topic)) { return read_all(s); }
 
                             if (!options.relay)
                             {
@@ -1513,7 +1519,7 @@ module.exports = function (config, connect, options)
                             if (err) { return done(err); }
                             clients[1].subscribe('ready.all.*', function (s, info)
                             {
-                                if (presence_topics.has(info.topic)) { return; }
+                                if (presence_topics.has(info.topic)) { return read_all(s); }
 
                                 if (!options.relay)
                                 {
@@ -3925,7 +3931,7 @@ module.exports = function (config, connect, options)
                         cancel();
                     });
 
-                    server.on('authz_end', function (obj, err)
+                    server.on('authz_end', function (err)
                     {
                         expect(err.message).to.equal('cancelled');
                     });
@@ -4074,12 +4080,18 @@ module.exports = function (config, connect, options)
 
                 it('should cancel authorization', function (done)
                 {
-                    server.on('authz_start', function (cancel)
+                    var closed = 0;
+
+                    server.on('authz_start', function (cancel, onclose)
                     {
+                        onclose(function ()
+                        {
+                            closed += 1;
+                        });
                         cancel(new Error('dummy'));
                     });
 
-                    server.on('authz_end', function (obj, err)
+                    server.on('authz_end', function (err)
                     {
                         expect(err.message).to.equal('dummy');
                     });
@@ -4092,10 +4104,55 @@ module.exports = function (config, connect, options)
                         expect(err.message).to.equal('dummy');
                         clients[0].publish('foo', function (err)
                         {
-                            expect(err.message).to.equal('dummy');
-                            server.removeAllListeners('authz_start');
-                            server.removeAllListeners('authz_end');
-                            done();
+                            setTimeout(function ()
+                            {
+                                expect(err.message).to.equal('dummy');
+                                expect(closed).to.equal(2);
+                                server.removeAllListeners('authz_start');
+                                server.removeAllListeners('authz_end');
+                                done();
+                            }, 500);
+                        }).end('bar');
+                    })
+                });
+
+                it('should cancel authorization (before onclose)', function (done)
+                {
+                    var closed = 0;
+
+                    server.on('authz_start', function (cancel, onclose)
+                    {
+                        cancel(new Error('dummy'));
+                        setTimeout(function ()
+                        {
+                            onclose(function ()
+                            {
+                                closed += 1;
+                            });
+                        }, 500);
+                    });
+
+                    server.on('authz_end', function (err)
+                    {
+                        expect(err.message).to.equal('dummy');
+                    });
+
+                    clients[0].subscribe('foo', function ()
+                    {
+                        done(new Error('should not be called'));
+                    }, function (err)
+                    {
+                        expect(err.message).to.equal('dummy');
+                        clients[0].publish('foo', function (err)
+                        {
+                            setTimeout(function ()
+                            {
+                                expect(err.message).to.equal('dummy');
+                                expect(closed).to.equal(2);
+                                server.removeAllListeners('authz_start');
+                                server.removeAllListeners('authz_end');
+                                done();
+                            }, 2000);
                         }).end('bar');
                     })
                 });
