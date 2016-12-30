@@ -103,6 +103,8 @@ module.exports = function (config, connect, options)
 
         function on_before(cb)
         {
+            var ths = this;
+
             function start2()
             {
                 server = new centro.CentroServer(config);
@@ -120,10 +122,23 @@ module.exports = function (config, connect, options)
                     connections.delete(mqserver);
                 });
 
+                if (config.transport_ready)
+                {
+                    server.on('transport_ready', function (config, obj)
+                    {
+                        config.transport_ready.call(this, config, obj, ths);
+                    });
+                }
+
                 server.on('ready', function ()
                 {
                     if (options.anon)
                     {
+                        if (ths && ths.test_should_skip)
+                        {
+                            return ths.skip();
+                        }
+
                         return cb();
                     }
 
@@ -150,6 +165,11 @@ module.exports = function (config, connect, options)
                             
                             issuer_id2 = the_issuer_id;
                             rev2 = the_rev;
+
+                            if (ths && ths.test_should_skip)
+                            {
+                                return ths.skip();
+                            }
 
                             cb();
                         });
@@ -4593,6 +4613,88 @@ module.exports = function (config, connect, options)
                 },
 
                 max_publish_data_length: 1000
+            }, config));
+        });
+
+        describe('transport ready event', function ()
+        {
+            run.call(this, Object.assign(
+            {
+                only: options.relay ? function (get_info)
+                {
+                    get_info().setup(1,
+                    {
+                        access_control: {
+                            publish: {
+                                allow: ['foo'],
+                                disallow: []
+                            },
+                            subscribe: {
+                                allow: ['foo'],
+                                disallow: []
+                            }
+                        }
+                    });
+
+                    it('maxConnections', function (done)
+                    {
+                        get_info().clients[0].subscribe('foo', function ()
+                        {
+                            done(new Error('should not be called'));
+                        }, function (err)
+                        {
+                            if (err) { return done(err); }
+                            var s = get_info().clients[0].publish('foo');
+                            s.on('error', function (err)
+                            {
+                                expect(err.message).to.equal('socket hang up');
+                                done();
+                            });
+                            s.end('bar');
+                        });
+                    });
+                } : function (get_info)
+                {
+                    get_info().setup(2,
+                    {
+                        access_control: {
+                            publish: {
+                                allow: ['foo'],
+                                disallow: []
+                            },
+                            subscribe: {
+                                allow: ['foo'],
+                                disallow: []
+                            }
+                        },
+
+                        client_function: get_info().client_function,
+                        skip_ready: 1,
+                        series: true
+                    });
+
+                    it('maxConnections', get_info().expect_error(
+                       undefined, true, undefined, 1));
+                },
+
+                transport_ready: function (config, ops, ths)
+                {
+                    if (ops.server)
+                    {
+                        if (ops.server.server)
+                        {
+                            ops.server.server.maxConnections = 1;
+                        }
+                        else
+                        {
+                            ops.server.maxConnections = 1;
+                        }
+                    }
+                    else
+                    {
+                        ths.test_should_skip = !options.relay;
+                    }
+                }
             }, config));
         });
     });
