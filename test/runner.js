@@ -4133,7 +4133,7 @@ module.exports = function (config, connect, options)
                                 done();
                             }, 500);
                         }).end('bar');
-                    })
+                    });
                 });
 
                 it('should cancel authorization (before onclose)', function (done)
@@ -4174,7 +4174,7 @@ module.exports = function (config, connect, options)
                                 done();
                             }, 2000);
                         }).end('bar');
-                    })
+                    });
                 });
             });
         }
@@ -4653,6 +4653,19 @@ module.exports = function (config, connect, options)
                             s.end('bar');
                         });
                     });
+
+                    it('request timeout', function (done)
+                    {
+                        var now = new Date(),
+                            s = get_info().clients[0].publish('foo');
+                        s.on('error', function (err)
+                        {
+                            expect(new Date().getTime() - now.getTime()).to.be.at.least(2000);
+                            expect(err.message).to.equal('socket hang up');
+                            done();
+                        });
+                        s.write('a');
+                    });
                 } : function (get_info)
                 {
                     get_info().setup(2,
@@ -4688,6 +4701,20 @@ module.exports = function (config, connect, options)
                         else
                         {
                             ops.server.maxConnections = 1;
+                        }
+
+                        if (options.relay)
+                        {
+                            ops.server.on('request', function (req, res)
+                            {
+                                if (require('url').parse(req.url).pathname === ops.pub_pathname)
+                                {
+                                    req.setTimeout(2000, function ()
+                                    {
+                                        req.destroy();
+                                    });
+                                }
+                            });
                         }
                     }
                     else
