@@ -22,22 +22,22 @@
       <div class='fl pad1y space-right2'>
         <span class="strong">100% </span>
         <span class="quiet">Statements</span>
-        <span class='fraction'>404/404</span>
+        <span class='fraction'>416/416</span>
       </div>
       <div class='fl pad1y space-right2'>
         <span class="strong">100% </span>
         <span class="quiet">Branches</span>
-        <span class='fraction'>194/194</span>
+        <span class='fraction'>198/198</span>
       </div>
       <div class='fl pad1y space-right2'>
         <span class="strong">100% </span>
         <span class="quiet">Functions</span>
-        <span class='fraction'>63/63</span>
+        <span class='fraction'>64/64</span>
       </div>
       <div class='fl pad1y space-right2'>
         <span class="strong">100% </span>
         <span class="quiet">Lines</span>
-        <span class='fraction'>404/404</span>
+        <span class='fraction'>416/416</span>
       </div>
       <div class='fl pad1y'>
         <span class="strong">1 branch</span>
@@ -1214,8 +1214,33 @@
 1165
 1166
 1167
-1168</td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+1168
+1169
+1170
+1171
+1172
+1173
+1174
+1175
+1176
+1177
+1178
+1179
+1180
+1181
+1182
+1183
+1184
+1185
+1186
+1187
+1188
+1189
+1190
+1191
+1192
+1193
+1194</td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1512,7 +1537,7 @@
 <span class="cline-any cline-yes">1×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">5805×</span>
+<span class="cline-any cline-yes">5852×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">2×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1569,6 +1594,33 @@
 <span class="cline-any cline-yes">1×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1953×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1953×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">132×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">132×</span>
+<span class="cline-any cline-yes">132×</span>
+<span class="cline-any cline-yes">132×</span>
+<span class="cline-any cline-yes">132×</span>
+<span class="cline-any cline-yes">132×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">132×</span>
+<span class="cline-any cline-yes">132×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">132×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">264×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">132×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1953×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -2382,8 +2434,7 @@
 <span class="cline-any cline-yes">1×</span>
 <span class="cline-any cline-yes">1×</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">// TODO:
-// should non-http transports write error code to client?
-// config should have some defaults for max values like frame maxSize, max header size etc? or at least list everything which can be set
+// config should have some defaults for max values like frame maxSize, max header size etc? or at least list everything which can be set - inc where have done tests to do using events/hooks etc
 // docs!
 &nbsp;
 "use strict";
@@ -2736,6 +2787,33 @@ function CentroServer(config)
                 function cb(err, handshakes, tokens)
                 {
                     warning(err);
+&nbsp;
+                    if (err &amp;&amp; !obj.url)
+                    {
+                        var hsdata = new Buffer(JSON.stringify(
+                        {
+                            error: err.message,
+                            version: exports.version
+                        }));
+&nbsp;
+                        // bpmux _send_handshake
+                        var buf = new Buffer(1 + 4 + 4 + hsdata.length);
+                        buf.writeUInt8(1, 0, true);
+                        buf.writeUInt32BE(0, 1, true);
+                        buf.writeUInt32BE(0, 5, true);
+                        hsdata.copy(buf, 9);
+&nbsp;
+                        // write frame
+                        var out_stream = frame.encode(config);
+                        out_stream._pushFrameData = function (bufs)
+                        {
+                            for (let buf of bufs)
+                            {
+                                obj.write(buf);
+                            }
+                        };
+                        out_stream.end(buf);
+                    }
 &nbsp;
                     if (!authz_ended)
                     {
@@ -3554,7 +3632,7 @@ exports.CentroServer = CentroServer;
 </div><!-- /wrapper -->
 <div class='footer quiet pad2 space-top1 center small'>
   Code coverage
-  generated by <a href="http://istanbul-js.org/" target="_blank">istanbul</a> at Sat Dec 31 2016 08:32:01 GMT+0000 (GMT)
+  generated by <a href="http://istanbul-js.org/" target="_blank">istanbul</a> at Sun Jan 01 2017 20:35:43 GMT+0000 (GMT)
 </div>
 </div>
 <script src="../../prettify.js"></script>

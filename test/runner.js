@@ -180,7 +180,8 @@ module.exports = function (config, connect, options)
                 {
                     console.warn(err);
 
-                    if (err.message !== 'carrier stream ended before end message received')
+                    if ((err.message !== 'carrier stream ended before end message received') &&
+                        (err.message !== 'This socket has been ended by the other party'))
                     {
                         this.last_warning = err;
                     }
@@ -2271,13 +2272,21 @@ module.exports = function (config, connect, options)
                             return false;
                         }
 
-                        expect(errors[0].message).to.be.oneOf(
-                        [
-                            'socket hang up',
-                            'write EPIPE',
-                            'carrier stream ended before end message received',
-                            'carrier stream finished before duplex finished',
-                        ]);
+                        if ((typeof ignore_server !== 'number') &&
+                            !is_transport('primus'))
+                        {
+                            expect(errors[0].message).to.equal(msg);
+                        }
+                        else
+                        {
+                            expect(errors[0].message).to.be.oneOf(
+                            [
+                                'socket hang up',
+                                'write EPIPE',
+                                'carrier stream ended before end message received',
+                                'carrier stream finished before duplex finished',
+                            ]);
+                        }
 
                         if (is_transport('primus') && (code !== 0))
                         {
@@ -2745,7 +2754,7 @@ module.exports = function (config, connect, options)
             });
 
             it("should close connections while they're being authorised",
-                expect_error('closed', true, 503, 0, function (done)
+                expect_error('closed', 1, 503, 0, function (done)
                 {
                     on_before(done);
                 }));
@@ -2802,7 +2811,7 @@ module.exports = function (config, connect, options)
             });
 
             it("should close connections while they're being authorised",
-                expect_error('closed', true, 503, 0, function (done)
+                expect_error('closed', 1, 503, 0, function (done)
                 {
                     on_before(done);
                 }));
@@ -2837,7 +2846,7 @@ module.exports = function (config, connect, options)
             });
 
             it('should callback if already ended',
-               expect_error('foo', true, 0));
+               expect_error('foo', 1, 0));
         });
 
         describe('ended before onclose (2)', function ()
@@ -2881,7 +2890,7 @@ module.exports = function (config, connect, options)
             });
 
             it('should callback if already ended',
-               expect_error('foo', true, 0));
+               expect_error('foo', 1, 0));
         });
 
         if (!options.anon)
@@ -3052,7 +3061,7 @@ module.exports = function (config, connect, options)
                     client_function: client_function
                 });
 
-                it('should warn on destroy if error occurs while checking revision', expect_error('dummy', false, 0));
+                it('should warn on destroy if error occurs while checking revision', expect_error('dummy', 0, 0));
             });
 
             describe('revision mismatch', function ()
@@ -3083,7 +3092,7 @@ module.exports = function (config, connect, options)
                     client_function: client_function
                 });
 
-                it('should warn on destroy if old revision', expect_error('uri revision has changed: ' + uri, false, 0));
+                it('should warn on destroy if old revision', expect_error('uri revision has changed: ' + uri, 0, 0));
             });
 
             describe('unknown uri on closed connection', function ()
@@ -3962,7 +3971,7 @@ module.exports = function (config, connect, options)
             });
 
             it('should cancel authorization',
-               expect_error('cancelled', true, 401, 0, function (done)
+               expect_error('cancelled', is_transport('tcp') ? 1 : true, 401, 0, function (done)
                {
                    server.removeAllListeners('authz_start');
                    server.removeAllListeners('authz_end');
@@ -4073,7 +4082,7 @@ module.exports = function (config, connect, options)
             });
 
             it('should be able to limit number of active connections',
-               expect_error('cancelled', true, 401, 1, function (done)
+               expect_error('cancelled', is_transport('tcp') ? 1 : true, 401, 1, function (done)
                {
                    server.removeAllListeners('authz_start');
                    done();
@@ -4687,7 +4696,7 @@ module.exports = function (config, connect, options)
                     });
 
                     it('maxConnections', get_info().expect_error(
-                       undefined, true, undefined, 1));
+                       undefined, 1, undefined, 1));
                 },
 
                 transport_ready: function (config, ops, ths)
