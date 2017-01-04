@@ -36,8 +36,8 @@
     "qlobber-fsq"
   ],
   "dependencies": {
-    "mqlobber": "~3.2.1",
-    "mqlobber-access-control": "~2.2.1",
+    "mqlobber": "~3.3.0",
+    "mqlobber-access-control": "~2.3.0",
     "qlobber-fsq": "~5.1.1",
     "qlobber": "~0.7.0",
     "authorize-jwt": "~2.0.1",
