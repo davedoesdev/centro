@@ -76,6 +76,7 @@ module.exports = function (config, connect, options)
     }
 
     config.authorize = require('authorize-jwt');
+    config.allowed_algs = ['PS256'];
     config.db_type = 'pouchdb';
     config.db_for_update = true;
     config.max_tokens = 2;
@@ -117,9 +118,9 @@ module.exports = function (config, connect, options)
                     connections.set(info.mqserver, info);
                 });
 
-                server.on('disconnect', function (mqserver)
+                server.on('disconnect', function (info)
                 {
-                    connections.delete(mqserver);
+                    connections.delete(info.mqserver);
                 });
 
                 if (config.transport_ready)
@@ -2944,9 +2945,9 @@ module.exports = function (config, connect, options)
                         }
                     }
 
-                    function disconnect(mqserver, info)
+                    function disconnect(info)
                     {
-                        expect(mqserver).to.equal(mqs);
+                        expect(info.mqserver).to.equal(mqs);
                         server_done += 1;
                         check();
                     }
@@ -3267,9 +3268,9 @@ module.exports = function (config, connect, options)
                     register();
                 }
 
-                server.once('disconnect', function (mqsrv)
+                server.once('disconnect', function (info)
                 {
-                    expect(mqsrv).to.equal(mqserver);
+                    expect(info.mqserver).to.equal(mqserver);
                     server_done = true;
                     if (client_done)
                     {
@@ -3370,9 +3371,9 @@ module.exports = function (config, connect, options)
                     clients[0].publish('foo', function (err)
                     {
                         if (err) { return done(err); }
-                        server.once('disconnect', function (mqsrv)
+                        server.once('disconnect', function (info)
                         {
-                            expect(mqsrv).to.equal(mqserver);
+                            expect(info.mqserver).to.equal(mqserver);
                             server_done = true;
                             if (client_done)
                             {
@@ -3434,9 +3435,9 @@ module.exports = function (config, connect, options)
                     register();
                 }
 
-                server.once('disconnect', function (mqsrv)
+                server.once('disconnect', function (info)
                 {
-                    expect(mqsrv).to.equal(mqserver);
+                    expect(info.mqserver).to.equal(mqserver);
                     server_done = true;
                     if (client_done)
                     {
@@ -3467,6 +3468,180 @@ module.exports = function (config, connect, options)
                     expect(err.message).to.equal('server error');
                     connections.values().next().value.destroy();
                 }).end(new Buffer(128 * 1024));
+            });
+
+            it('should be able to limit total data published', function (done)
+            {
+                var mqserver,
+                    client_done = false,
+                    server_done = false,
+                    count = 0;
+
+                function register()
+                {
+                    mqserver.on('publish_requested', function (topic, duplex, options, cb)
+                    {
+                        var p = new Transform(),
+                            d = this.fsq.publish(topic, options, cb);
+
+                        p.on('error', function (err)
+                        {
+                            d.emit('error', err);
+                        });
+
+                        p._transform = function (chunk, enc, cont)
+                        {
+                            count += chunk.length;
+
+                            if (count > 17000)
+                            {
+                                return cont(new Error('too much data'));
+                            }
+
+                            this.push(chunk);
+                            cont();
+                        };
+
+                        duplex.pipe(p).pipe(d);
+                    });
+                }
+
+                if (options.relay)
+                {
+                    server.once('connect', function (info)
+                    {
+                        mqserver = info.mqserver;
+                        register();
+                        server.once('connect', function (info)
+                        {
+                            mqserver = info.mqserver;
+                            register();
+                        });
+                    });
+                }
+                else
+                {
+                    mqserver = connections.keys().next().value;
+                    register();
+                }
+
+                server.once('disconnect', function (info)
+                {
+                    expect(info.mqserver).to.equal(mqserver);
+                    server_done = true;
+                    if (client_done)
+                    {
+                        done();
+                    }
+                });
+
+                if (is_transport('tcp'))
+                {
+                    clients[0].on('error', function (err)
+                    {
+                        expect(err.message).to.be.oneOf(
+                            ['write EPIPE', 'read ECONNRESET']);
+                    });
+                }
+
+                clients[0].mux.on('end', function ()
+                {
+                    client_done = true;
+                    if (server_done)
+                    {
+                        done();
+                    }
+                });
+
+                clients[0].publish('foo', function (err)
+                {
+                    if (err) { return done(err); }
+                    clients[0].publish('foo', function (err)
+                    {
+                        expect(err.message).to.equal('server error');
+                        connections.values().next().value.destroy();
+                    }).end('A');
+                }).end(new Buffer(17000));
+            });
+
+            it('should be able to limit total number of messages published', function (done)
+            {
+                var mqserver,
+                    client_done = false,
+                    server_done = false,
+                    count = 0;
+
+                function register()
+                {
+                    mqserver.on('publish_requested', function (topic, duplex, options, cb)
+                    {
+                        count += 1;
+
+                        if (count > 1)
+                        {
+                            return cb(new Error('too many messages'));
+                        }
+
+                        duplex.pipe(this.fsq.publish(topic, options, cb));
+                    });
+                }
+
+                if (options.relay)
+                {
+                    server.once('connect', function (info)
+                    {
+                        mqserver = info.mqserver;
+                        register();
+                        server.once('connect', function (info)
+                        {
+                            mqserver = info.mqserver;
+                            register();
+                        });
+                    });
+                }
+                else
+                {
+                    mqserver = connections.keys().next().value;
+                    register();
+                }
+
+                server.once('disconnect', function (info)
+                {
+                    expect(info.mqserver).to.equal(mqserver);
+                    server_done = true;
+                    if (client_done)
+                    {
+                        done();
+                    }
+                });
+
+                if (is_transport('tcp'))
+                {
+                    clients[0].on('error', function (err)
+                    {
+                        expect(err.message).to.be.oneOf(
+                            ['write EPIPE', 'read ECONNRESET']);
+                    });
+                }
+
+                clients[0].mux.on('end', function ()
+                {
+                    client_done = true;
+                    if (server_done)
+                    {
+                        done();
+                    }
+                });
+
+                clients[0].publish('foo', function (err)
+                {
+                    if (err) { return done(err); }
+                    clients[0].publish('foo', function (err)
+                    {
+                        expect(err.message).to.equal('server error');
+                        connections.values().next().value.destroy();
+                    }).end('B');
+                }).end('A');
             });
         });
 
