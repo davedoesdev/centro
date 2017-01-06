@@ -3645,6 +3645,143 @@ module.exports = function (config, connect, options)
             });
         });
 
+        describe('stream hooks (2 connections)', function (done)
+        {
+            setup(2,
+            {
+                access_control: {
+                    publish: {
+                        allow: ['*'],
+                        disallow: []
+                    },
+                    subscribe: {
+                        allow: ['*'],
+                        disallow: []
+                    }
+                }
+            });
+
+            it('should be able to limit total number of subscriptions across all connections', function (done)
+            {
+                var mqserver,
+                    client_done = false,
+                    server_done = false,
+                    count = 0;
+
+                function register()
+                {
+                    mqserver.on('subscribe_requested', function (topic, cb)
+                    {
+                        if ((count === 2) && !this.subs.has(topic))
+                        {
+                            return cb(new Error('too many subscribers'));
+                        }
+
+                        count += 1;
+                        this.subscribe(topic, cb);
+                    });
+
+                    mqserver.on('unsubscribe_requested', function (topic, cb)
+                    {
+                        var size = this.subs.size;
+                        this.unsubscribe(topic, cb);
+                        count -= size - this.subs.size;
+                    });
+                }
+
+                if (options.relay)
+                {
+                    server.once('connect', function (info)
+                    {
+                        mqserver = info.mqserver;
+                        register();
+                        server.once('connect', function (info)
+                        {
+                            mqserver = info.mqserver;
+                            register();
+                            server.once('connect', function (info)
+                            {
+                                mqserver = info.mqserver;
+                                register();
+                                server.once('connect', function (info)
+                                {
+                                    mqserver = info.mqserver;
+                                    register();
+                                });
+                            });
+                        });
+                    });
+                }
+                else
+                {
+                    for (mqserver of connections.keys())
+                    {
+                        register();
+                    }
+                }
+
+                server.once('disconnect', function (info)
+                {
+                    expect(info.mqserver).to.equal(mqserver);
+                    server_done = true;
+                    if (client_done)
+                    {
+                        done();
+                    }
+                });
+
+                if (is_transport('tcp'))
+                {
+                    clients[1].on('error', function (err)
+                    {
+                        expect(err.message).to.be.oneOf(
+                            ['write EPIPE', 'read ECONNRESET']);
+                    });
+                }
+
+                clients[1].mux.on('end', function ()
+                {
+                    client_done = true;
+                    if (server_done)
+                    {
+                        done();
+                    }
+                });
+
+                clients[0].subscribe('foo', function ()
+                {
+                }, function (err)
+                {
+                    if (err) { return done(err); }
+                    function sub()
+                    {
+                    }
+                    clients[0].subscribe('bar', sub, function (err)
+                    {
+                        if (err) { return done(err); }
+                        clients[0].unsubscribe('bar', sub, function ()
+                        {
+                            if (err) { return done(err); }
+                            clients[1].subscribe('test', function ()
+                            {
+                            }, function (err)
+                            {
+                                clients[1].subscribe('test2', function ()
+                                {
+                                }, function (err)
+                                {
+                                    expect(err.message).to.equal('server error');
+                                    var it = connections.values();
+                                    it.next();
+                                    it.next().value.destroy();
+                                });
+                            });
+                        });
+                    });
+                });
+            });
+        });
+
         describe('version check', function ()
         {
             setup(1,
