@@ -11,7 +11,6 @@ describe('server errors', function ()
     {
         var server = new CentroServer(
         {
-            authorize: require('authorize-jwt'),
             ANONYMOUS_MODE: true,
             transport: function (config, authorize, connected, ready, error, warning)
             {
@@ -30,9 +29,6 @@ describe('server errors', function ()
     {
         var server = new CentroServer(
         {
-            authorize: require('authorize-jwt'),
-            db_type: 'pouchdb',
-            db_for_update: true,
             transport: {
                 server: function (config, authorize, connected, ready, error, warning)
                 {
@@ -70,7 +66,6 @@ describe('server errors', function ()
     {
         var server = new CentroServer(
         {
-            authorize: require('authorize-jwt'),
             ANONYMOUS_MODE: true,
             transport: {
                 authorize_config: {

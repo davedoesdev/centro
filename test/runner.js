@@ -75,10 +75,7 @@ module.exports = function (config, connect, options)
         }
     }
 
-    config.authorize = require('authorize-jwt');
     config.allowed_algs = ['PS256'];
-    config.db_type = 'pouchdb';
-    config.db_for_update = true;
     config.max_tokens = 2;
     config.max_token_length = 16 * 1024;
     config.maxSize = config.max_token_length;

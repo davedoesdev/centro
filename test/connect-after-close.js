@@ -12,7 +12,6 @@ describe('connect after close', function ()
     {
         var server = new CentroServer(
         {
-            authorize: require('authorize-jwt'),
             ANONYMOUS_MODE: true,
             transport: function (config, authorize, connected, ready, error, warning)
             {

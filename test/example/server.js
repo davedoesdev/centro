@@ -5,9 +5,7 @@ var uri = 'http://davedoesdev.com',
     base_port = 8800;
 
 var config = {
-    authorize: require('authorize-jwt'),
     allowed_algs: ['PS256'],
-    db_type: 'pouchdb',
     transport: []
 };
 
