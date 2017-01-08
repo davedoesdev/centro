@@ -330,7 +330,7 @@ module.exports = function (config, connect, options)
 
                 var token = new jsjws.JWT().generateJWTByKey(
                 {
-                    alg: 'PS256'
+                    alg: opts.alg || 'PS256'
                 },
                 {
                     iss: issuer_id,
@@ -341,7 +341,7 @@ module.exports = function (config, connect, options)
 
                 var token2 = new jsjws.JWT().generateJWTByKey(
                 {
-                    alg: 'PS256'
+                    alg: opts.alg || 'PS256'
                 },
                 {
                     iss: opts.same_issuer ? issuer_id : issuer_id2,
@@ -4397,6 +4397,34 @@ module.exports = function (config, connect, options)
                    done();
                }));
         });
+
+        if (!options.anon)
+        {
+            describe('unsupported algorithm', function ()
+            {
+                setup(1,
+                {
+                    access_control: {
+                        publish: {
+                            allow: ['foo'],
+                            disallow: []
+                        },
+                        subscribe: {
+                            allow: ['foo'],
+                            disallow: []
+                        }
+                    },
+
+                    alg: 'RS256',
+
+                    client_function: client_function,
+                    skip_ready: true
+                });
+
+                it('should not accept token',
+                   expect_error('algorithm not allowed: RS256'));
+            });
+        }
 
         if (options.relay)
         {
