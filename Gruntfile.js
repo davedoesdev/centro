@@ -21,7 +21,7 @@ module.exports = function (grunt)
                    'test/http.js',
                    'test/in-mem-fsq.js',
                    'test/in-mem-anon.js',
-                   'test/server-error.js',
+                   'test/server-extra.js',
                    'test/read_frame-error.js',
                    'test/connect-after-close.js',
                    'test/example/example.js' ],
