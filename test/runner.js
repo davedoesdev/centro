@@ -82,6 +82,7 @@ module.exports = function (config, connect, options)
     config.send_expires = true;
     config.send_size = true;
     config.multi_ttl = 10 * 60 * 1000;
+    config.max_topic_length = undefined;
 
     function is_transport(n)
     {
@@ -179,6 +180,7 @@ module.exports = function (config, connect, options)
                     console.warn(err);
 
                     if ((err.message !== 'carrier stream ended before end message received') &&
+                        (err.message !== 'carrier stream finished before duplex finished') &&
                         (err.message !== 'This socket has been ended by the other party'))
                     {
                         this.last_warning = err;
@@ -1635,9 +1637,10 @@ module.exports = function (config, connect, options)
         
                 clients[0].publish('foo', function (err)
                 {
+                    expect(err.message).to.equal('server error');
                     expect(warned).to.equal(true);
                     server.removeListener('connect', connect);
-                    done(err);
+                    done();
                 }).end('bar');
             });
 
@@ -3639,6 +3642,13 @@ module.exports = function (config, connect, options)
                         connections.values().next().value.destroy();
                     }).end('B');
                 }).end('A');
+
+                clients[0].on('error', function (err)
+                {
+                    expect(err.message).to.be.oneOf(is_transport('tcp') ?
+                            ['write EPIPE', 'read ECONNRESET'] :
+                            ['write after end']);
+                });
             });
         });
 
@@ -4784,7 +4794,7 @@ module.exports = function (config, connect, options)
 
         describe('max topic length in subscriptions (server-enforced)', function ()
         {
-            run.call(this, Object.assign(
+            run.call(this, Object.assign({}, config,
             {
                 only: function (get_info)
                 {
@@ -4825,12 +4835,12 @@ module.exports = function (config, connect, options)
                 },
 
                 max_topic_length: 3
-            }, config));
+            }));
         });
 
         describe('max topic length when subscribing', function ()
         {
-            run.call(this, Object.assign(
+            run.call(this, Object.assign({}, config,
             {
                 only: function (get_info)
                 {
@@ -4870,7 +4880,7 @@ module.exports = function (config, connect, options)
                 },
 
                 max_topic_length: 3
-            }, config));
+            }));
         });
 
         if (!options.relay)
