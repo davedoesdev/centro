@@ -177,12 +177,12 @@ module.exports = function (config, connect, options)
 
                 server.on('warning', function (err)
                 {
-                    console.warn(err);
-
                     if ((err.message !== 'carrier stream ended before end message received') &&
                         (err.message !== 'carrier stream finished before duplex finished') &&
-                        (err.message !== 'This socket has been ended by the other party'))
+                        (err.message !== 'This socket has been ended by the other party') &&
+                        (err.message !== 'write after end'))
                     {
+                        console.warn(err);
                         this.last_warning = err;
                     }
                 });
@@ -364,7 +364,8 @@ module.exports = function (config, connect, options)
                                i % 2 === 0 || (options.anon && !opts.separate_tokens) ? token :
                                opts.separate_tokens ? token2 : [token, token2],
                         handshake_data: new Buffer([i]),
-                        max_topic_length: opts.max_topic_length
+                        max_topic_length: opts.max_topic_length,
+                        max_open: opts.max_open
                     }, server, function (err, c)
                     {
                         if (err)
@@ -4535,6 +4536,93 @@ module.exports = function (config, connect, options)
             });
         }
 
+        if (!options.relay)
+        {
+            describe('full event', function ()
+            {
+                setup(1,
+                {
+                    access_control: {
+                        publish: {
+                            allow: ['foo'],
+                            disallow: []
+                        },
+                        subscribe: {
+                            allow: ['foo'],
+                            disallow: []
+                        }
+                    },
+
+                    max_open: 1001
+                });
+
+                it('should emit full event, warning and error', function (done)
+                {
+                    var client_full = false,
+                        server_full = false,
+                        server_warning = false;
+
+                    function check()
+                    {
+                        if (client_full && server_full && server_warning)
+                        {
+                            done();
+                        }
+                    }
+
+                    function reg(mqserver)
+                    {
+                        mqserver.mux.on('full', function ()
+                        {
+                            server_full = true;
+                            check();
+                        });
+                    }
+
+                    for (var mqserver of connections.keys())
+                    {
+                        reg(mqserver);
+                    }
+
+                    server.once('warning', function (err, mqserver)
+                    {
+                        expect(err.message).to.equal('full');
+                        expect(connections.get(mqserver)).not.to.equal(undefined);
+                        server_warning = true;
+                        check();
+                    });
+
+                    clients[0].on('warning', function (err)
+                    {
+                        expect(err.message).to.equal('carrier stream ended before end message received');
+                    });
+
+                    // give chance for initial handshake duplex to close
+                    setTimeout(function ()
+                    {
+                        for (var i = 0; i < 1001; i += 1)
+                        {
+                            clients[0].publish('foo', function (err)
+                            {
+                                expect(err.message).to.equal('carrier stream finished before duplex finished');
+                            }).write('bar');
+                        }
+
+                        expect(function ()
+                        {
+                            clients[0].publish('foo', function ()
+                            {
+                                done(new Error('should not be called'));
+                            }).write('bar');
+                        }).to.throw('full');
+
+                        client_full = true;
+                        check();
+                    }, 500);
+                });
+            });
+        }
+
         if (options.extra)
         {
             describe('extra', function ()
@@ -5080,5 +5168,116 @@ module.exports = function (config, connect, options)
                 }
             }, config));
         });
+
+        if (!options.relay)
+        {
+            describe('backoff event', function ()
+            {
+                run.call(this, Object.assign(
+                {
+                    only: function (get_info)
+                    {
+                        get_info().setup(1,
+                        {
+                            access_control: {
+                                publish: {
+                                    allow: ['foo'],
+                                    disallow: []
+                                },
+                                subscribe: {
+                                    allow: ['foo'],
+                                    disallow: []
+                                }
+                            }
+                        });
+
+                        it('should emit a backoff warning', function (done)
+                        {
+                            this.timeout(60000);
+
+                            var server_backoff = false,
+                                server_warning = false;
+
+                            function check()
+                            {
+                                if (server_backoff && server_warning)
+                                {
+                                    for (var mqserver of get_info().connections.keys())
+                                    {
+                                        var carrier = mqserver.mux.carrier;
+
+                                        carrier._write = carrier.orig_write;
+                                        carrier._write(carrier.the_chunk, carrier.the_encoding, carrier.the_callback);
+                                    }
+
+                                    done();
+                                }
+                            }
+
+                            function reg(mqserver)
+                            {
+                                mqserver.on('backoff', function ()
+                                {
+                                    server_backoff = true;
+                                    check();
+                                });
+
+                                mqserver.on('publish_requested', function (topic, stream, options, cb)
+                                {
+                                    cb();
+                                });
+
+                                mqserver.mux.carrier.orig_write = mqserver.mux.carrier._write;
+                                mqserver.mux.carrier._write = function (chunk, encoding, callback)
+                                {
+                                    mqserver.mux.carrier.the_chunk = chunk;
+                                    mqserver.mux.carrier.the_encoding = encoding;
+                                    mqserver.mux.carrier.the_callback = callback;
+                                };
+                            }
+
+                            for (var mqserver of get_info().connections.keys())
+                            {
+                                reg(mqserver);
+                            }
+
+                            get_info().server.once('warning', function (err, mqserver)
+                            {
+                                expect(err.message).to.equal('backoff');
+                                expect(get_info().connections.get(mqserver)).not.to.equal(undefined);
+                                server_warning = true;
+                                check();
+                            });
+
+                            get_info().clients[0].on('warning', function (err)
+                            {
+                                expect(err.message).to.be.oneOf([
+                                    'write after end',
+                                    'carrier stream ended before end message received'
+                                ]);
+                            });
+
+                            get_info().clients[0].on('error', function (err, obj)
+                            {
+                                expect(err.message).to.equal('write after end');
+                            });
+
+                            for (var i=0; i < 3981; i += 1)
+                            {
+                                get_info().clients[0].publish('foo', function (err)
+                                {
+                                    if (err)
+                                    {
+                                        expect(err.message).to.equal('carrier stream finished before duplex finished');
+                                    }
+                                }).end('bar');
+                            }
+                        });
+                    },
+
+                    max_open: undefined
+                }, config));
+            });
+        }
     });
 };
