@@ -66,7 +66,6 @@ module.exports = function (grunt)
     grunt.loadNpmTasks('grunt-contrib-jshint');
     grunt.loadNpmTasks('grunt-mocha-test');
     grunt.loadNpmTasks('grunt-shell');
-    grunt.loadNpmTasks('grunt-apidox');
 
     grunt.registerTask('lint', 'jshint');
     grunt.registerTask('keys', 'shell:keys');

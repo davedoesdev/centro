@@ -83,6 +83,7 @@ module.exports = function (config, connect, options)
     config.send_size = true;
     config.multi_ttl = 10 * 60 * 1000;
     config.max_topic_length = undefined;
+    config.max_publications = undefined;
 
     function is_transport(n)
     {
@@ -4600,12 +4601,14 @@ module.exports = function (config, connect, options)
                     // give chance for initial handshake duplex to close
                     setTimeout(function ()
                     {
+                        function expect_err(err)
+                        {
+                            expect(err.message).to.equal('carrier stream finished before duplex finished');
+                        }
+
                         for (var i = 0; i < 1001; i += 1)
                         {
-                            clients[0].publish('foo', function (err)
-                            {
-                                expect(err.message).to.equal('carrier stream finished before duplex finished');
-                            }).write('bar');
+                            clients[0].publish('foo', expect_err).write('bar');
                         }
 
                         expect(function ()
@@ -5013,6 +5016,74 @@ module.exports = function (config, connect, options)
                     max_subscriptions: 1
                 }, config));
             });
+
+            describe('max publications', function ()
+            {
+                run.call(this, Object.assign(
+                {
+                    only: function (get_info)
+                    {
+                        get_info().setup(1,
+                        {
+                            access_control: {
+                                publish: {
+                                    allow: ['*'],
+                                    disallow: []
+                                },
+                                subscribe: {
+                                    allow: ['*'],
+                                    disallow: []
+                                }
+                            }
+                        });
+
+                        it('should limit publications', function (done)
+                        {
+                            get_info().clients[0].subscribe('foo2', function (s, info)
+                            {
+                                expect(info.topic).to.equal('foo2');
+                                read_all(s, function (v)
+                                {
+                                    expect(v.toString()).to.equal('foo2');
+                                    // check that bar message doesn't arrive
+                                    setTimeout(done, 500);
+                                });
+                            }, function (err)
+                            {
+                                if (err) { return done(err); }
+                                get_info().clients[0].subscribe('foo', function (s, info)
+                                {
+                                    expect(info.topic).to.equal('foo');
+                                    read_all(s, function (v)
+                                    {
+                                        expect(v.toString()).to.equal('bar');
+                                        get_info().clients[0].publish('foo2', function (err)
+                                        {
+                                            if (err) { done(err); }
+                                        }).end('foo2');
+                                    });
+                                }, function (err)
+                                {
+                                    if (err) { return done(err); }
+
+                                    var s = get_info().clients[0].publish('foo', function (err)
+                                    {
+                                        if (err) { done(err); }
+                                    });
+
+                                    s.write('bar');
+
+                                    get_info().clients[0].publish('bar', function (err)
+                                    {
+                                        expect(err.message).to.equal('server error');
+                                        s.end();
+                                    }).end('bar2');
+                                });
+                            });
+                        });
+                    }
+                }, config, { max_publications: 1 }));
+            });
         }
 
         describe('max publish data', function ()
@@ -5262,15 +5333,17 @@ module.exports = function (config, connect, options)
                                 expect(err.message).to.equal('write after end');
                             });
 
+                            function onpub(err)
+                            {
+                                if (err)
+                                {
+                                    expect(err.message).to.equal('carrier stream finished before duplex finished');
+                                }
+                            }
+
                             for (var i=0; i < 3981; i += 1)
                             {
-                                get_info().clients[0].publish('foo', function (err)
-                                {
-                                    if (err)
-                                    {
-                                        expect(err.message).to.equal('carrier stream finished before duplex finished');
-                                    }
-                                }).end('bar');
+                                get_info().clients[0].publish('foo', onpub).end('bar');
                             }
                         });
                     },
