@@ -3386,7 +3386,7 @@ module.exports = function (config, connect, options)
                 });
             });
 
-            it('should be able to limit data published', function (done)
+            it('should be able to limit data published per message', function (done)
             {
                 var mqserver,
                     client_done = false,
@@ -3472,12 +3472,13 @@ module.exports = function (config, connect, options)
                 }).end(new Buffer(128 * 1024));
             });
 
-            it('should be able to limit total data published', function (done)
+            it('should be able to limit total data published per connection', function (done)
             {
                 var mqserver,
                     client_done = false,
                     server_done = false,
-                    count = 0;
+                    count = 0,
+                    got_message = false;
 
                 function register()
                 {
@@ -3518,6 +3519,11 @@ module.exports = function (config, connect, options)
                         {
                             mqserver = info.mqserver;
                             register();
+                            server.once('connect', function (info)
+                            {
+                                mqserver = info.mqserver;
+                                register();
+                            });
                         });
                     });
                 }
@@ -3555,23 +3561,39 @@ module.exports = function (config, connect, options)
                     }
                 });
 
-                clients[0].publish('foo', function (err)
+                clients[0].subscribe('foo', function (s, info)
+                {
+                    expect(got_message).to.equal(false);
+                    got_message = true;
+
+                    expect(info.topic).to.equal('foo');
+
+                    read_all(s, function (v)
+                    {
+                        expect(v.length).to.equal(17000);
+                        clients[0].publish('foo', function (err)
+                        {
+                            expect(err.message).to.equal('server error');
+                            connections.values().next().value.destroy();
+                        }).end('A');
+                    });
+                }, function (err)
                 {
                     if (err) { return done(err); }
                     clients[0].publish('foo', function (err)
                     {
-                        expect(err.message).to.equal('server error');
-                        connections.values().next().value.destroy();
-                    }).end('A');
-                }).end(new Buffer(17000));
+                        if (err) { done(err); }
+                    }).end(new Buffer(17000));
+                });
             });
 
-            it('should be able to limit total number of messages published', function (done)
+            it('should be able to limit total number of messages published per connection', function (done)
             {
                 var mqserver,
                     client_done = false,
                     server_done = false,
-                    count = 0;
+                    count = 0,
+                    got_message = false;
 
                 function register()
                 {
@@ -3598,6 +3620,11 @@ module.exports = function (config, connect, options)
                         {
                             mqserver = info.mqserver;
                             register();
+                            server.once('connect', function (info)
+                            {
+                                mqserver = info.mqserver;
+                                register();
+                            });
                         });
                     });
                 }
@@ -3635,21 +3662,36 @@ module.exports = function (config, connect, options)
                     }
                 });
 
-                clients[0].publish('foo', function (err)
-                {
-                    if (err) { return done(err); }
-                    clients[0].publish('foo', function (err)
-                    {
-                        expect(err.message).to.equal('server error');
-                        connections.values().next().value.destroy();
-                    }).end('B');
-                }).end('A');
-
                 clients[0].on('error', function (err)
                 {
                     expect(err.message).to.be.oneOf(is_transport('tcp') ?
                             ['write EPIPE', 'read ECONNRESET'] :
                             ['write after end']);
+                });
+
+                clients[0].subscribe('foo', function (s, info)
+                {
+                    expect(got_message).to.equal(false);
+                    got_message = true;
+
+                    expect(info.topic).to.equal('foo');
+
+                    read_all(s, function (v)
+                    {
+                        expect(v.toString()).to.equal('A');
+                        clients[0].publish('foo', function (err)
+                        {
+                            expect(err.message).to.equal('server error');
+                            connections.values().next().value.destroy();
+                        }).end('B');
+                    });
+                }, function (err)
+                {
+                    if (err) { done(err); }
+                    clients[0].publish('foo', function (err)
+                    {
+                        if (err) { done(err); }
+                    }).end('A');
                 });
             });
         });
@@ -3786,6 +3828,120 @@ module.exports = function (config, connect, options)
                                 });
                             });
                         });
+                    });
+                });
+            });
+
+            it('should be able to limit total number of publications across all connections', function (done)
+            {
+                var mqserver,
+                    client_done = false,
+                    server_done = false,
+                    count = 0;
+
+                function register()
+                {
+                    mqserver.on('publish_requested', function (topic, stream, options, cb)
+                    {
+                        if (count === 1)
+                        {
+                            return cb(new Error('too many publications'));
+                        }
+
+                        count += 1;
+
+                        var decrement = function (err, data)
+                        {
+                            count -= 1;
+                            cb(err, data);
+                        };
+
+                        function cb2(err, data)
+                        {
+                            var dec = decrement;
+                            decrement = cb; // only decrement once
+                            dec(err, data);
+                        }
+
+                        stream.pipe(this.fsq.publish(topic, options, cb2));
+                    });
+                }
+
+                if (options.relay)
+                {
+                    server.once('connect', function (info)
+                    {
+                        mqserver = info.mqserver;
+                        register();
+                        server.once('connect', function (info)
+                        {
+                            mqserver = info.mqserver;
+                            register();
+                            server.once('connect', function (info)
+                            {
+                                mqserver = info.mqserver;
+                                register();
+                                server.once('connect', function (info)
+                                {
+                                    mqserver = info.mqserver;
+                                    register();
+                                    server.once('connect', function (info)
+                                    {
+                                        mqserver = info.mqserver;
+                                        register();
+                                    });
+                                });
+                            });
+                        });
+                    });
+                }
+                else
+                {
+                    for (mqserver of connections.keys())
+                    {
+                        register();
+                    }
+                }
+
+                clients[0].subscribe('foo2', function (s, info)
+                {
+                    expect(info.topic).to.equal('foo2');
+                    read_all(s, function (v)
+                    {
+                        expect(v.toString()).to.equal('foo2');
+                        // check that bar message doesn't arrive
+                        setTimeout(done, 500);
+                    });
+                }, function (err)
+                {
+                    if (err) { return done(err); }
+                    clients[0].subscribe('foo', function (s, info)
+                    {
+                        expect(info.topic).to.equal('foo');
+                        read_all(s, function (v)
+                        {
+                            expect(v.toString()).to.equal('bar');
+                            clients[0].publish('foo2', function (err)
+                            {
+                                if (err) { done(err); }
+                            }).end('foo2');
+                        });
+                    }, function (err)
+                    {
+                        if (err) { return done(err); }
+
+                        var s = clients[0].publish('foo', function (err)
+                        {
+                            if (err) { done(err); }
+                        });
+
+                        s.write('bar');
+
+                        clients[1].publish('bar', function (err)
+                        {
+                            expect(err.message).to.equal('server error');
+                            s.end();
+                        }).end('bar2');
                     });
                 });
             });
@@ -4300,6 +4456,105 @@ module.exports = function (config, connect, options)
                }));
         });
 
+        if (options.relay)
+        {
+            describe('cancel publish and subscribe authorization', function ()
+            {
+                setup(1,
+                {
+                    access_control: {
+                        publish: {
+                            allow: ['foo'],
+                            disallow: []
+                        },
+                        subscribe: {
+                            allow: ['foo'],
+                            disallow: []
+                        }
+                    }
+                });
+
+                it('should cancel authorization', function (done)
+                {
+                    var closed = 0;
+
+                    server.on('authz_start', function (cancel, onclose)
+                    {
+                        onclose(function ()
+                        {
+                            closed += 1;
+                        });
+                        cancel(new Error('dummy'));
+                    });
+
+                    server.on('authz_end', function (err)
+                    {
+                        expect(err.message).to.equal('dummy');
+                    });
+
+                    clients[0].subscribe('foo', function ()
+                    {
+                        done(new Error('should not be called'));
+                    }, function (err)
+                    {
+                        expect(err.message).to.equal('dummy');
+                        clients[0].publish('foo', function (err)
+                        {
+                            setTimeout(function ()
+                            {
+                                expect(err.message).to.equal('dummy');
+                                expect(closed).to.equal(2);
+                                server.removeAllListeners('authz_start');
+                                server.removeAllListeners('authz_end');
+                                done();
+                            }, 500);
+                        }).end('bar');
+                    });
+                });
+
+                it('should cancel authorization (before onclose)', function (done)
+                {
+                    var closed = 0;
+
+                    server.on('authz_start', function (cancel, onclose)
+                    {
+                        cancel(new Error('dummy'));
+                        setTimeout(function ()
+                        {
+                            onclose(function ()
+                            {
+                                closed += 1;
+                            });
+                        }, 500);
+                    });
+
+                    server.on('authz_end', function (err)
+                    {
+                        expect(err.message).to.equal('dummy');
+                    });
+
+                    clients[0].subscribe('foo', function ()
+                    {
+                        done(new Error('should not be called'));
+                    }, function (err)
+                    {
+                        expect(err.message).to.equal('dummy');
+                        clients[0].publish('foo', function (err)
+                        {
+                            setTimeout(function ()
+                            {
+                                expect(err.message).to.equal('dummy');
+                                expect(closed).to.equal(2);
+                                server.removeAllListeners('authz_start');
+                                server.removeAllListeners('authz_end');
+                                done();
+                            }, 2000);
+                        }).end('bar');
+                    });
+                });
+            });
+        }
+
         describe('track connections', function ()
         {
             setup(2,
@@ -4435,105 +4690,6 @@ module.exports = function (config, connect, options)
 
                 it('should not accept token',
                    expect_error('algorithm not allowed: RS256'));
-            });
-        }
-
-        if (options.relay)
-        {
-            describe('cancel publish and subscribe authorization', function ()
-            {
-                setup(1,
-                {
-                    access_control: {
-                        publish: {
-                            allow: ['foo'],
-                            disallow: []
-                        },
-                        subscribe: {
-                            allow: ['foo'],
-                            disallow: []
-                        }
-                    }
-                });
-
-                it('should cancel authorization', function (done)
-                {
-                    var closed = 0;
-
-                    server.on('authz_start', function (cancel, onclose)
-                    {
-                        onclose(function ()
-                        {
-                            closed += 1;
-                        });
-                        cancel(new Error('dummy'));
-                    });
-
-                    server.on('authz_end', function (err)
-                    {
-                        expect(err.message).to.equal('dummy');
-                    });
-
-                    clients[0].subscribe('foo', function ()
-                    {
-                        done(new Error('should not be called'));
-                    }, function (err)
-                    {
-                        expect(err.message).to.equal('dummy');
-                        clients[0].publish('foo', function (err)
-                        {
-                            setTimeout(function ()
-                            {
-                                expect(err.message).to.equal('dummy');
-                                expect(closed).to.equal(2);
-                                server.removeAllListeners('authz_start');
-                                server.removeAllListeners('authz_end');
-                                done();
-                            }, 500);
-                        }).end('bar');
-                    });
-                });
-
-                it('should cancel authorization (before onclose)', function (done)
-                {
-                    var closed = 0;
-
-                    server.on('authz_start', function (cancel, onclose)
-                    {
-                        cancel(new Error('dummy'));
-                        setTimeout(function ()
-                        {
-                            onclose(function ()
-                            {
-                                closed += 1;
-                            });
-                        }, 500);
-                    });
-
-                    server.on('authz_end', function (err)
-                    {
-                        expect(err.message).to.equal('dummy');
-                    });
-
-                    clients[0].subscribe('foo', function ()
-                    {
-                        done(new Error('should not be called'));
-                    }, function (err)
-                    {
-                        expect(err.message).to.equal('dummy');
-                        clients[0].publish('foo', function (err)
-                        {
-                            setTimeout(function ()
-                            {
-                                expect(err.message).to.equal('dummy');
-                                expect(closed).to.equal(2);
-                                server.removeAllListeners('authz_start');
-                                server.removeAllListeners('authz_end');
-                                done();
-                            }, 2000);
-                        }).end('bar');
-                    });
-                });
             });
         }
 
