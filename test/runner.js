@@ -9,7 +9,6 @@ var centro = require('..'),
     jsjws = require('jsjws'),
     expect = require('chai').expect,
     async = require('async'),
-    Throttle = require('stream-throttle').Throttle,
     Transform = require('stream').Transform,
     Writable = require('stream').Writable,
     FastestWritable = require('fastest-writable').FastestWritable,
@@ -3135,17 +3134,40 @@ module.exports = function (config, connect, options)
             });
         }
 
+        function attach_extension(ext)
+        {
+            for (var info of connections.values())
+            {
+                if (ext.pre_connect)
+                {
+                    ext.pre_connect.call(server, info);
+                }
+
+                if (ext.connect)
+                {
+                    ext.connect.call(server, info);
+                }
+            }
+
+            return server.attach_extension(ext);
+        }
+
+        function detach_extension(ext)
+        {
+            return server.detach_extension(ext);
+        }
+
         describe('stream hooks', function (done)
         {
             setup(1,
             {
                 access_control: {
                     publish: {
-                        allow: ['foo'],
+                        allow: ['foo', 'foo90'],
                         disallow: []
                     },
                     subscribe: {
-                        allow: ['foo'],
+                        allow: ['foo', 'foo90'],
                         disallow: []
                     }
                 }
@@ -3155,53 +3177,14 @@ module.exports = function (config, connect, options)
             {
                 this.timeout(8000);
 
-                var mqserver = connections.keys().next().value,
-                    date_before_publish,
-                    date_before_deliver;
+                var throttle = require('../lib/server_extensions/throttle'),
+                    tps = throttle.throttle_publish_streams({ rate: 10 }),
+                    tms = throttle.throttle_message_streams({ rate: 10 });
 
-                function reg(mqs)
-                {
-                    mqs.on('publish_requested', function (topic, duplex, options, cb)
-                    {
-                        var t = new Throttle({rate: 10}),
-                            d = this.fsq.publish(topic, options, function (err)
-                            {
-                                if (err) { return done(err); }
-                                expect(new Date() - date_before_publish).to.be.at.least(2000);
-                                cb();
-                            });
+                attach_extension(tps);
+                attach_extension(tms);
 
-                        t.on('error', function (err)
-                        {
-                            d.emit('error', err);
-                        });
-
-                        duplex.pipe(t).pipe(d);
-                    });
-
-                    mqs.on('message', function (stream, info, multiplex)
-                    {
-                        var t = new Throttle({rate: 10}),
-                            d = multiplex();
-
-                        t.on('error', function (err)
-                        {
-                            d.emit('error', err);
-                        });
-
-                        date_before_deliver = new Date();
-                        stream.pipe(t).pipe(d);
-                    });
-                }
-
-                reg(mqserver);
-                if (options.relay)
-                {
-                    server.once('pre_connect', function (info)
-                    {
-                        reg(info.mqserver);
-                    });
-                }
+                var date_before_publish;
 
                 clients[0].subscribe('foo', function (s, info)
                 {
@@ -3210,21 +3193,17 @@ module.exports = function (config, connect, options)
 
                     read_all(s, function (v)
                     {
-                        expect(new Date() - date_before_deliver).to.be.at.least(2000);
+                        expect(new Date() - date_before_publish).to.be.at.least(4000);
                         expect(v.toString()).to.equal('012345678901234567890');
+
+                        detach_extension(tps);
+                        detach_extension(tms);
+
                         done();
                     });
                 }, function (err)
                 {
                     if (err) { return done(err); }
-
-                    if (options.relay)
-                    {
-                        server.once('pre_connect', function (info)
-                        {
-                            reg(info.mqserver);
-                        });
-                    }
 
                     date_before_publish = new Date();
                     clients[0].publish('foo').end('012345678901234567890');
@@ -3233,156 +3212,73 @@ module.exports = function (config, connect, options)
 
             it('should be able to time-out publish streams', function (done)
             {
-                var mqserver,
-                    client_done = false,
-                    server_done = false;
+                this.timeout(8000);
 
-                function register()
-                {
-                    mqserver.on('publish_requested', function (topic, duplex, options, cb)
-                    {
-                        var d = this.fsq.publish(topic, options, function (err)
-                        {
-                            expect(err.message).to.equal('dummy');
-                            cb(err);
-                        });
+                var timeout = require('../lib/server_extensions/timeout'),
+                    tps = timeout.timeout_publish_streams({ timeout: 3000 });
 
-                        setTimeout(function ()
-                        {
-                            d.emit('error', new Error('dummy'));
-                        }, 1000);
+                attach_extension(tps);
 
-                        duplex.pipe(d);
-                    });
-                }
-
-                if (options.relay)
-                {
-                    server.once('connect', function (info)
-                    {
-                        mqserver = info.mqserver;
-                        register();
-                    });
-                }
-                else
-                {
-                    mqserver = connections.keys().next().value;
-                    register();
-                }
-
-                server.once('disconnect', function (info)
-                {
-                    expect(info.mqserver).to.equal(mqserver);
-                    server_done = true;
-                    if (client_done)
-                    {
-                        done();
-                    }
-                });
+                var date_before_publish = new Date();
 
                 clients[0].publish('foo', function (err)
                 {
                     expect(err.message).to.equal('server error');
-                    clients[0].mux.on('end', function ()
-                    {
-                        client_done = true;
-                        if (server_done)
-                        {
-                            done();
-                        }
-                    });
-                    connections.values().next().value.destroy();
+                    expect(new Date() - date_before_publish).to.be.at.least(3000);
+                    detach_extension(tps);
+                    done();
                 }).write('A');
             });
 
             it('should be able to time-out message streams', function (done)
             {
-                var mqserver = connections.keys().next().value,
-                    client_done = false,
-                    server_done = false;
+                this.timeout(8000);
 
-                clients[0].on('error', function (err)
-                {
-                    expect(err.message).to.be.oneOf(
-                    [
-                        'carrier stream finished before duplex finished',
-                        'carrier stream ended before end message received'
-                    ]);
-                });
+                var timeout = require('../lib/server_extensions/timeout'),
+                    tms = timeout.timeout_message_streams({ timeout: 3000 });
 
-                function reg(mqs)
+                attach_extension(tms);
+
+                var size = (options.relay ? 16 : 1)*1024*1024;
+
+                clients[0].subscribe('foo90', function (s, info)
                 {
-                    mqs.on('message', function (stream, info, multiplex)
+                    expect(info.topic).to.equal('foo90');
+                    expect(info.single).to.equal(false);
+                    setTimeout(function ()
                     {
-                        var ended = false;
+                        var client_errored = false,
+                            s_errored = false;
 
-                        stream.on('end', function ()
+                        clients[0].on('error', function (err, obj)
                         {
-                            ended = true;
+                            expect(err.message).to.equal('peer error');
+                            expect(obj).to.equal(s);
+                            client_errored = true;
                         });
 
-                        var d = multiplex();
-                        stream.pipe(d);
-
-                        setTimeout(function ()
+                        s.on('error', function (err)
                         {
-                            expect(ended).to.equal(false);
-                            stream.on('error', function (err)
-                            {
-                                expect(err.message).to.equal('dummy');
-                            });
-                            stream.on('end', function ()
-                            {
-                                connections.get(mqserver).destroy();
-                            });
-                            stream.on('readable', function ()
-                            {
-                                this.read();
-                            });
-                            d.emit('error', new Error('dummy'));
-                        }, 1000);
-                    });
-                }
+                            expect(err.message).to.equal('peer error');
+                            s_errored = true;
+                        });
 
-                reg(mqserver);
-                if (options.relay)
-                {
-                    server.once('pre_connect', function (info)
-                    {
-                        reg(info.mqserver);
-                    });
-                }
-
-                clients[0].mux.on('end', function ()
-                {
-                    client_done = true;
-                    if (server_done)
-                    {
-                        done();
-                    }
-                });
-
-                clients[0].subscribe('foo', function (s, info)
-                {
-                    expect(info.topic).to.equal('foo');
-                    expect(info.single).to.equal(false);
+                        read_all(s, function (v)
+                        {
+                            expect(client_errored).to.equal(true);
+                            expect(s_errored).to.equal(true);
+                            expect(v.length).to.be.below(size);
+                            detach_extension(tms);
+                            done();
+                        });
+                    }, 3000);
                 }, function (err)
                 {
                     if (err) { return done(err); }
-
-                    clients[0].publish('foo', function (err)
+                    clients[0].publish('foo90', function (err)
                     {
                         if (err) { return done(err); }
-                        server.once('disconnect', function (info)
-                        {
-                            expect(info.mqserver).to.equal(mqserver);
-                            server_done = true;
-                            if (client_done)
-                            {
-                                done();
-                            }
-                        });
-                    }).end(new Buffer((options.relay ? 16 : 1)*1024*1024));
+                    }).end(new Buffer(size));
                 });
             });
 
