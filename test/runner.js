@@ -3134,8 +3134,10 @@ module.exports = function (config, connect, options)
             });
         }
 
-        function attach_extension(ext)
+        function attach_extension(ext, config)
         {
+            ext = server.attach_extension(ext, config);
+
             for (var info of connections.values())
             {
                 if (ext.pre_connect)
@@ -3149,7 +3151,7 @@ module.exports = function (config, connect, options)
                 }
             }
 
-            return server.attach_extension(ext);
+            return ext;
         }
 
         function detach_extension(ext)
@@ -3178,11 +3180,10 @@ module.exports = function (config, connect, options)
                 this.timeout(8000);
 
                 var throttle = require('../lib/server_extensions/throttle'),
-                    tps = throttle.throttle_publish_streams({ rate: 10 }),
-                    tms = throttle.throttle_message_streams({ rate: 10 });
-
-                attach_extension(tps);
-                attach_extension(tms);
+                    tps = attach_extension(throttle.throttle_publish_streams,
+                                           { rate: 10 }),
+                    tms = attach_extension(throttle.throttle_message_streams,
+                                           { rate: 10 });
 
                 var date_before_publish;
 
@@ -3215,9 +3216,8 @@ module.exports = function (config, connect, options)
                 this.timeout(8000);
 
                 var timeout = require('../lib/server_extensions/timeout'),
-                    tps = timeout.timeout_publish_streams({ timeout: 3000 });
-
-                attach_extension(tps);
+                    tps = attach_extension(timeout.timeout_publish_streams,
+                                           { timeout: 3000 });
 
                 var date_before_publish = new Date();
 
@@ -3235,9 +3235,8 @@ module.exports = function (config, connect, options)
                 this.timeout(8000);
 
                 var timeout = require('../lib/server_extensions/timeout'),
-                    tms = timeout.timeout_message_streams({ timeout: 3000 });
-
-                attach_extension(tms);
+                    tms = attach_extension(timeout.timeout_message_streams,
+                                           { timeout: 3000 });
 
                 var size = (options.relay ? 16 : 1)*1024*1024;
 
@@ -3610,90 +3609,9 @@ module.exports = function (config, connect, options)
 
             it('should be able to limit total number of subscriptions across all connections', function (done)
             {
-                var mqserver,
-                    client_done = false,
-                    server_done = false,
-                    count = 0;
-
-                function register()
-                {
-                    mqserver.on('subscribe_requested', function (topic, cb)
-                    {
-                        if ((count === 2) && !this.subs.has(topic))
-                        {
-                            return cb(new Error('too many subscribers'));
-                        }
-
-                        count += 1;
-                        this.subscribe(topic, cb);
-                    });
-
-                    mqserver.on('unsubscribe_requested', function (topic, cb)
-                    {
-                        var size = this.subs.size;
-                        this.unsubscribe(topic, cb);
-                        count -= size - this.subs.size;
-                    });
-                }
-
-                if (options.relay)
-                {
-                    server.once('connect', function (info)
-                    {
-                        mqserver = info.mqserver;
-                        register();
-                        server.once('connect', function (info)
-                        {
-                            mqserver = info.mqserver;
-                            register();
-                            server.once('connect', function (info)
-                            {
-                                mqserver = info.mqserver;
-                                register();
-                                server.once('connect', function (info)
-                                {
-                                    mqserver = info.mqserver;
-                                    register();
-                                });
-                            });
-                        });
-                    });
-                }
-                else
-                {
-                    for (mqserver of connections.keys())
-                    {
-                        register();
-                    }
-                }
-
-                server.once('disconnect', function (info)
-                {
-                    expect(info.mqserver).to.equal(mqserver);
-                    server_done = true;
-                    if (client_done)
-                    {
-                        done();
-                    }
-                });
-
-                if (is_transport('tcp'))
-                {
-                    clients[1].on('error', function (err)
-                    {
-                        expect(err.message).to.be.oneOf(
-                            ['write EPIPE', 'read ECONNRESET']);
-                    });
-                }
-
-                clients[1].mux.on('end', function ()
-                {
-                    client_done = true;
-                    if (server_done)
-                    {
-                        done();
-                    }
-                });
+                var limit = require('../lib/server_extensions/limit_active'),
+                    las = attach_extension(limit.limit_active_subscriptions,
+                                           { max_subscriptions: 2 });
 
                 clients[0].subscribe('foo', function ()
                 {
@@ -3713,14 +3631,14 @@ module.exports = function (config, connect, options)
                             {
                             }, function (err)
                             {
+                                if (err) { return done(err); }
                                 clients[1].subscribe('test2', function ()
                                 {
                                 }, function (err)
                                 {
                                     expect(err.message).to.equal('server error');
-                                    var it = connections.values();
-                                    it.next();
-                                    it.next().value.destroy();
+                                    detach_extension(las);
+                                    done();
                                 });
                             });
                         });
@@ -3730,74 +3648,9 @@ module.exports = function (config, connect, options)
 
             it('should be able to limit total number of publications across all connections', function (done)
             {
-                var mqserver,
-                    client_done = false,
-                    server_done = false,
-                    count = 0;
-
-                function register()
-                {
-                    mqserver.on('publish_requested', function (topic, stream, options, cb)
-                    {
-                        if (count === 1)
-                        {
-                            return cb(new Error('too many publications'));
-                        }
-
-                        count += 1;
-
-                        var decrement = function (err, data)
-                        {
-                            count -= 1;
-                            cb(err, data);
-                        };
-
-                        function cb2(err, data)
-                        {
-                            var dec = decrement;
-                            decrement = cb; // only decrement once
-                            dec(err, data);
-                        }
-
-                        stream.pipe(this.fsq.publish(topic, options, cb2));
-                    });
-                }
-
-                if (options.relay)
-                {
-                    server.once('connect', function (info)
-                    {
-                        mqserver = info.mqserver;
-                        register();
-                        server.once('connect', function (info)
-                        {
-                            mqserver = info.mqserver;
-                            register();
-                            server.once('connect', function (info)
-                            {
-                                mqserver = info.mqserver;
-                                register();
-                                server.once('connect', function (info)
-                                {
-                                    mqserver = info.mqserver;
-                                    register();
-                                    server.once('connect', function (info)
-                                    {
-                                        mqserver = info.mqserver;
-                                        register();
-                                    });
-                                });
-                            });
-                        });
-                    });
-                }
-                else
-                {
-                    for (mqserver of connections.keys())
-                    {
-                        register();
-                    }
-                }
+                var limit = require('../lib/server_extensions/limit_active'),
+                    las = attach_extension(limit.limit_active_publications,
+                                           { max_publications: 1 });
 
                 clients[0].subscribe('foo2', function (s, info)
                 {
@@ -3806,7 +3659,11 @@ module.exports = function (config, connect, options)
                     {
                         expect(v.toString()).to.equal('foo2');
                         // check that bar message doesn't arrive
-                        setTimeout(done, 500);
+                        setTimeout(function ()
+                        {
+                            detach_extension(las);
+                            done();
+                        }, 500);
                     });
                 }, function (err)
                 {

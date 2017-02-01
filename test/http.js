@@ -136,6 +136,22 @@ function connect(config, server, cb)
 
                     var nsubs = [];
 
+                    function destroy_responses(n, topic, handlers)
+                    {
+                        for (var handler of handlers)
+                        {
+                            if (handler.centro_test_responses &&
+                                handler.centro_test_responses[n])
+                            {
+                                var res = handler.centro_test_responses[n].get(topic);
+                                if (res)
+                                {
+                                    res.destroy();
+                                }
+                            }
+                        }
+                    }
+
                     this.subscribe = function (n, topic, handler, cb)
                     {
                         if (typeof n === 'string')
@@ -222,6 +238,16 @@ function connect(config, server, cb)
                                     }
                                 });
                             }
+
+                            if (!handler.centro_test_responses)
+                            {
+                                handler.centro_test_responses = [];
+                            }
+                            if (!handler.centro_test_responses[n])
+                            {
+                                handler.centro_test_responses[n] = new Map();
+                            }
+                            handler.centro_test_responses[n].set(topic, res);
 
                             var rl = readline.createInterface(
                             {
@@ -335,6 +361,10 @@ function connect(config, server, cb)
 
                         if (topic === undefined)
                         {
+                            for (var topic_handlers of subs)
+                            {
+                                destroy_responses(n, topic_handlers[0], topic_handlers[1]);
+                            }
                             subs.clear();
                         }
                         else
@@ -344,16 +374,19 @@ function connect(config, server, cb)
                             {
                                 if (handler === undefined)
                                 {
+                                    destroy_responses(n, topic, handlers);
                                     handlers.clear();
                                 }
                                 else
                                 {
+                                    destroy_responses(n, topic, [handler]);
                                     handlers.delete(handler);
                                 }
                             }
                         }
 
-                        cb();
+                        // give time for server to close
+                        setTimeout(cb, 500);
                     };
                 });
             }

@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
-    <title>Code coverage report for centro/lib/transports/primus.js</title>
+    <title>Code coverage report for centro/lib/server_extensions/limit_active.js</title>
     <meta charset="utf-8" />
     <link rel="stylesheet" href="../../../prettify.css" />
     <link rel="stylesheet" href="../../../base.css" />
@@ -16,28 +16,28 @@
 <div class='wrapper'>
   <div class='pad1'>
     <h1>
-      <a href="../../../index.html">all files</a> / <a href="index.html">centro/lib/transports/</a> primus.js
+      <a href="../../../index.html">all files</a> / <a href="index.html">centro/lib/server_extensions/</a> limit_active.js
     </h1>
     <div class='clearfix'>
       <div class='fl pad1y space-right2'>
         <span class="strong">100% </span>
         <span class="quiet">Statements</span>
-        <span class='fraction'>34/34</span>
+        <span class='fraction'>32/32</span>
       </div>
       <div class='fl pad1y space-right2'>
         <span class="strong">100% </span>
         <span class="quiet">Branches</span>
-        <span class='fraction'>12/12</span>
+        <span class='fraction'>6/6</span>
       </div>
       <div class='fl pad1y space-right2'>
         <span class="strong">100% </span>
         <span class="quiet">Functions</span>
-        <span class='fraction'>11/11</span>
+        <span class='fraction'>13/13</span>
       </div>
       <div class='fl pad1y space-right2'>
         <span class="strong">100% </span>
         <span class="quiet">Lines</span>
-        <span class='fraction'>34/34</span>
+        <span class='fraction'>32/32</span>
       </div>
     </div>
   </div>
@@ -130,213 +130,180 @@
 85
 86
 87
-88
-89
-90
-91
-92
-93
-94
-95
-96
-97
-98
-99</td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1×</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+88</td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">80×</span>
+<span class="cline-any cline-yes">15×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">80×</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">15×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">46×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">60×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1×</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">372×</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">8×</span>
+<span class="cline-any cline-yes">15×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">364×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">45×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">45×</span>
+<span class="cline-any cline-yes">45×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">80×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">408×</span>
+<span class="cline-any cline-yes">46×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">8×</span>
+<span class="cline-any cline-yes">11×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">16×</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">400×</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">44×</span>
+<span class="cline-any cline-yes">11×</span>
+<span class="cline-any cline-yes">11×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">356×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">356×</span>
+<span class="cline-any cline-yes">46×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">46×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">46×</span>
+<span class="cline-any cline-yes">46×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">356×</span>
+<span class="cline-any cline-yes">15×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">15×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">50×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">45×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">15×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">30×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">30×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">30×</span>
+<span class="cline-any cline-yes">30×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">76×</span>
-<span class="cline-any cline-yes">76×</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">356×</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">80×</span>
-<span class="cline-any cline-yes">80×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">80×</span>
+<span class="cline-any cline-yes">30×</span>
+<span class="cline-any cline-yes">30×</span>
+<span class="cline-any cline-yes">30×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">80×</span>
-<span class="cline-any cline-yes">80×</span>
-<span class="cline-any cline-yes">80×</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">80×</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">40×</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">40×</span>
+<span class="cline-any cline-yes">30×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">80×</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">40×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">40×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">&nbsp;
-var centro = require('../..'),
-    Primus = require('primus'),
-    PrimusDuplex = require('primus-backpressure').PrimusDuplex;
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">"use strict";
 &nbsp;
-module.exports = function (config, authorize, connected, ready, error, warning)
+exports.limit_active_subscriptions = function (config)
 {
-    config = config.primus || config;
-&nbsp;
-    var server = config.server || Primus.createServer(
-                        Object.assign(
-                        {
-                            pathname: '/centro/v' + centro.version + '/primus',
-                            maxLength: 1 * 1024 * 1024
-                        }, config, { transport: undefined }));
-&nbsp;
-    function onclose(req, cb)
-    {
-        if (req.socket.destroyed)
+    var count = 0;
+    
+    return {
+        pre_connect: function (info)
         {
-            return cb();
-        }
-&nbsp;
-        req.socket.on('close', cb);
-    }
-&nbsp;
-    server.authorize(function (req, cb)
-    {
-        authorize(req, function ()
-        {
-            cb({ statusCode: 503, message: 'closed' });
-        }, function (cb)
-        {
-            onclose(req, cb);
-        }, function (err, handshakes)
-        {
-            if (err)
+            info.mqserver.on('subscribe_requested', function (topic, cb)
             {
-                return cb(err);
-            }
-&nbsp;
-            req.handshakes = handshakes;
-&nbsp;
-            cb();
-        });
-    });
-&nbsp;
-    function connection(spark)
-    {
-        connected(spark.request.handshakes,
-                  new PrimusDuplex(spark, Object.assign(
-                  {
-                      allowHalfOpen: false
-                  }, config)),
-                  function ()
-                  {
-                      spark.request.socket.destroy();
-                      spark.end();
-                  },
-                  function (cb)
-                  {
-                      onclose(spark.request, cb);
-                  });
-    }
-&nbsp;
-    server.on('connection', connection);
-    server.on('error', error);
-&nbsp;
-    function initialised()
-    {
-        ready(null,
-        {
-            close: function (cb)
-            {
-                server.auth = null;
-                server.removeListener('connection', connection);
-                server.removeListener('error', error);
-&nbsp;
-                if (config.server)
+                if ((count &gt;= config.max_subscriptions) &amp;&amp;
+                    !this.subs.has(topic))
                 {
-                    return cb();
+                    return cb(new Error('subscription limit ' + config.max_subscriptions +
+                                        ' already reached: ' + topic));
                 }
 &nbsp;
-                server.destroy(config, cb);
-            },
+                this.subscribe(topic, function (err, n)
+                {
+                    count += n;
+                    cb(err);
+                });
+            });
 &nbsp;
-            server: server
-        });
-    }
+            info.mqserver.on('unsubscribe_requested', function (topic, cb)
+            {
+                this.unsubscribe(topic, function (err, n)
+                {
+                    count -= n;
+                    cb(err);
+                });
+            });
 &nbsp;
-    if (config.server)
-    {
-        return initialised();
-    }
-&nbsp;
-    server.on('initialised', initialised);
+            info.mqserver.on('unsubscribe_all_requested', function (cb)
+            {
+                this.unsubscribe(function (err, n)
+                {
+                    count -= n;
+                    cb(err);
+                });
+            });
+        }
+    };
 };
 &nbsp;
+exports.limit_active_publications = function (config)
+{
+    var count = 0;
+&nbsp;
+    return {
+        pre_connect: function (info)
+        {
+            info.mqserver.on('publish_requested', function (topic, stream, options, cb)
+            {
+                if (count &gt;= config.max_publications)
+                {
+                    return cb(new Error('publication limit ' + config.max_publications +
+                                        ' already reached: ' + topic));
+                }
+&nbsp;
+                count += 1;
+&nbsp;
+                var decrement = function (err, data)
+                {
+                    count -= 1;
+                    cb(err, data);
+                };
+&nbsp;
+                function cb2(err, data)
+                {
+                    var dec = decrement;
+                    decrement = cb; // only decrement once
+                    dec(err, data);
+                }
+&nbsp;
+                stream.pipe(this.fsq.publish(topic, options, cb2));
+            });
+        }
+    };
+};
+&nbsp;
+/*exports.limit_active_connections = function (config)
+{
+&nbsp;
+&nbsp;
+};*/
 &nbsp;</pre></td></tr>
 </table></pre>
 <div class='push'></div><!-- for sticky footer -->
