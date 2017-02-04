@@ -3381,6 +3381,10 @@ module.exports = function (config, connect, options)
 
             if (!options.relay)
             {
+            function limit_conn(close_conn)
+            {
+            describe('limit_conn (close_conn=' + close_conn + ')', function()
+            {
                 it('should be able to limit total data published per connection', function (done)
                 {
                     var got_message = false,
@@ -3389,11 +3393,13 @@ module.exports = function (config, connect, options)
                         server_done = false,
                         limit = require('../lib/server_extensions/limit_conn'),
                         lcpd = attach_extension(limit.limit_conn_published_data,
-                                                { max_conn_published_data_length: 17000 });
+                                                { max_conn_published_data_length: 17000,
+                                                  close_conn: close_conn });
 
                     function check()
                     {
-                        if (got_error && client_done && server_done)
+                        if (got_error &&
+                            (!close_conn || (client_done && server_done)))
                         {
                             detach_extension(lcpd);
                             done();
@@ -3405,17 +3411,20 @@ module.exports = function (config, connect, options)
                         expect(err.message).to.equal('write after end');
                     });
 
-                    clients[0].mux.on('end', function ()
+                    if (close_conn)
                     {
-                        client_done = true;
-                        check();
-                    });
+                        clients[0].mux.on('end', function ()
+                        {
+                            client_done = true;
+                            check();
+                        });
 
-                    server.once('disconnect', function (info)
-                    {
-                        server_done = true;
-                        check();
-                    });
+                        server.once('disconnect', function (info)
+                        {
+                            server_done = true;
+                            check();
+                        });
+                    }
 
                     clients[0].subscribe('foo', function (s, info)
                     {
@@ -3430,6 +3439,7 @@ module.exports = function (config, connect, options)
                             clients[0].publish('foo', function (err)
                             {
                                 expect(err.message).to.be.oneOf([
+                                    'server error',
                                     'write after end',
                                     'carrier stream ended before end message received'
                                 ]);
@@ -3455,11 +3465,13 @@ module.exports = function (config, connect, options)
                         server_done = false,
                         limit = require('../lib/server_extensions/limit_conn'),
                         lcpm = attach_extension(limit.limit_conn_published_messages,
-                                                { max_conn_published_messages: 1 });
+                                                { max_conn_published_messages: 1,
+                                                  close_conn: close_conn });
 
                     function check()
                     {
-                        if (got_error && client_done && server_done)
+                        if (got_error &&
+                            (!close_conn || (client_done && server_done)))
                         {
                             detach_extension(lcpm);
                             done();
@@ -3468,20 +3480,27 @@ module.exports = function (config, connect, options)
 
                     clients[0].on('error', function (err)
                     {
-                        expect(err.message).to.equal('write after end');
+                        expect(err.message).to.be.oneOf([
+                            'carrier stream finished before duplex finished',
+                            'write EPIPE',
+                            'write after end'
+                        ]);
                     });
 
-                    clients[0].mux.on('end', function ()
+                    if (close_conn)
                     {
-                        client_done = true;
-                        check();
-                    });
+                        clients[0].mux.on('end', function ()
+                        {
+                            client_done = true;
+                            check();
+                        });
 
-                    server.once('disconnect', function (info)
-                    {
-                        server_done = true;
-                        check();
-                    });
+                        server.once('disconnect', function (info)
+                        {
+                            server_done = true;
+                            check();
+                        });
+                    }
 
                     clients[0].subscribe('foo', function (s, info)
                     {
@@ -3496,8 +3515,7 @@ module.exports = function (config, connect, options)
                             clients[0].publish('foo', function (err)
                             {
                                 expect(err.message).to.be.oneOf([
-                                    'write after end',
-                                    'carrier stream ended before end message received',
+                                    'server error',
                                     'carrier stream finished before duplex finished'
                                 ]);
                                 got_error = true;
@@ -3513,6 +3531,10 @@ module.exports = function (config, connect, options)
                         }).end('A');
                     });
                 });
+            });
+            }
+            limit_conn(true);
+            limit_conn(false);
             }
         });
 
