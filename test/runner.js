@@ -121,12 +121,9 @@ module.exports = function (config, connect, options)
                     connections.delete(info.mqserver);
                 });
 
-                if (config.transport_ready)
+                if (config.before_server_ready)
                 {
-                    server.on('transport_ready', function (config, obj)
-                    {
-                        config.transport_ready.call(this, config, obj, ths);
-                    });
+                    config.before_server_ready.call(ths, get_info);
                 }
 
                 server.on('ready', function ()
@@ -327,7 +324,7 @@ module.exports = function (config, connect, options)
 
                 if (opts.before_connect_function)
                 {
-                    opts.before_connect_function();
+                    opts.before_connect_function.call(this);
                 }
 
                 var token = new jsjws.JWT().generateJWTByKey(
@@ -486,7 +483,9 @@ module.exports = function (config, connect, options)
                 connections: connections,
                 setup: setup,
                 client_function: client_function,
-                expect_error: expect_error
+                expect_error: expect_error,
+                attach_extension: attach_extension,
+                detach_extension: detach_extension
             };
         }
 
@@ -2254,6 +2253,8 @@ module.exports = function (config, connect, options)
 
             return function (done)
             {
+                var ths = this;
+
                 function check_errors()
                 {
                     if (!ignore_server)
@@ -2344,7 +2345,7 @@ module.exports = function (config, connect, options)
 
                     if (cb)
                     {
-                        cb(done);
+                        cb.call(ths, done);
                     }
                     else
                     {
@@ -3154,9 +3155,20 @@ module.exports = function (config, connect, options)
             return ext;
         }
 
+        // Only for testing; apps can't normally detach extensions once they're
+        // attached to a server (what about already-active connections etc?).
+        // In the tests, we (a) close all connections and (b) where server-wide
+        // state is modified, we create a new server.
         function detach_extension(ext)
         {
-            return server.detach_extension(ext);
+			for (var ev in ext)
+			{
+				/* istanbul ignore else */
+				if (ext.hasOwnProperty(ev))
+				{
+					server.removeListener(ev, ext[ev]);
+				}
+			}
         }
 
         describe('stream hooks', function (done)
@@ -3367,228 +3379,141 @@ module.exports = function (config, connect, options)
                 }).end(new Buffer(128 * 1024));
             });
 
-            it('should be able to limit total data published per connection', function (done)
+            if (!options.relay)
             {
-                var mqserver,
-                    client_done = false,
-                    server_done = false,
-                    count = 0,
-                    got_message = false;
-
-                function register()
+                it('should be able to limit total data published per connection', function (done)
                 {
-                    mqserver.on('publish_requested', function (topic, duplex, options, cb)
+                    var got_message = false,
+                        got_error = false,
+                        client_done = false,
+                        server_done = false,
+                        limit = require('../lib/server_extensions/limit_conn'),
+                        lcpd = attach_extension(limit.limit_conn_published_data,
+                                                { max_conn_published_data_length: 17000 });
+
+                    function check()
                     {
-                        var p = new Transform(),
-                            d = this.fsq.publish(topic, options, cb);
-
-                        p.on('error', function (err)
+                        if (got_error && client_done && server_done)
                         {
-                            d.emit('error', err);
-                        });
-
-                        p._transform = function (chunk, enc, cont)
-                        {
-                            count += chunk.length;
-
-                            if (count > 17000)
-                            {
-                                return cont(new Error('too much data'));
-                            }
-
-                            this.push(chunk);
-                            cont();
-                        };
-
-                        duplex.pipe(p).pipe(d);
-                    });
-                }
-
-                if (options.relay)
-                {
-                    server.once('connect', function (info)
-                    {
-                        mqserver = info.mqserver;
-                        register();
-                        server.once('connect', function (info)
-                        {
-                            mqserver = info.mqserver;
-                            register();
-                            server.once('connect', function (info)
-                            {
-                                mqserver = info.mqserver;
-                                register();
-                            });
-                        });
-                    });
-                }
-                else
-                {
-                    mqserver = connections.keys().next().value;
-                    register();
-                }
-
-                server.once('disconnect', function (info)
-                {
-                    expect(info.mqserver).to.equal(mqserver);
-                    server_done = true;
-                    if (client_done)
-                    {
-                        done();
+                            detach_extension(lcpd);
+                            done();
+                        }
                     }
-                });
 
-                if (is_transport('tcp'))
-                {
                     clients[0].on('error', function (err)
                     {
-                        expect(err.message).to.be.oneOf(
-                            ['write EPIPE', 'read ECONNRESET']);
+                        expect(err.message).to.equal('write after end');
                     });
-                }
 
-                clients[0].mux.on('end', function ()
-                {
-                    client_done = true;
-                    if (server_done)
+                    clients[0].mux.on('end', function ()
                     {
-                        done();
-                    }
-                });
+                        client_done = true;
+                        check();
+                    });
 
-                clients[0].subscribe('foo', function (s, info)
-                {
-                    expect(got_message).to.equal(false);
-                    got_message = true;
-
-                    expect(info.topic).to.equal('foo');
-
-                    read_all(s, function (v)
+                    server.once('disconnect', function (info)
                     {
-                        expect(v.length).to.equal(17000);
+                        server_done = true;
+                        check();
+                    });
+
+                    clients[0].subscribe('foo', function (s, info)
+                    {
+                        expect(got_message).to.equal(false);
+                        got_message = true;
+
+                        expect(info.topic).to.equal('foo');
+
+                        read_all(s, function (v)
+                        {
+                            expect(v.length).to.equal(17000);
+                            clients[0].publish('foo', function (err)
+                            {
+                                expect(err.message).to.be.oneOf([
+                                    'write after end',
+                                    'carrier stream ended before end message received'
+                                ]);
+                                got_error = true;
+                                check();
+                            }).end('A');
+                        });
+                    }, function (err)
+                    {
+                        if (err) { return done(err); }
                         clients[0].publish('foo', function (err)
                         {
-                            expect(err.message).to.equal('server error');
-                            connections.values().next().value.destroy();
+                            if (err) { done(err); }
+                        }).end(new Buffer(17000));
+                    });
+                });
+
+                it('should be able to limit total number of messages published per connection', function (done)
+                {
+                    var got_message = false,
+                        got_error = false,
+                        client_done = false,
+                        server_done = false,
+                        limit = require('../lib/server_extensions/limit_conn'),
+                        lcpm = attach_extension(limit.limit_conn_published_messages,
+                                                { max_conn_published_messages: 1 });
+
+                    function check()
+                    {
+                        if (got_error && client_done && server_done)
+                        {
+                            detach_extension(lcpm);
+                            done();
+                        }
+                    }
+
+                    clients[0].on('error', function (err)
+                    {
+                        expect(err.message).to.equal('write after end');
+                    });
+
+                    clients[0].mux.on('end', function ()
+                    {
+                        client_done = true;
+                        check();
+                    });
+
+                    server.once('disconnect', function (info)
+                    {
+                        server_done = true;
+                        check();
+                    });
+
+                    clients[0].subscribe('foo', function (s, info)
+                    {
+                        expect(got_message).to.equal(false);
+                        got_message = true;
+
+                        expect(info.topic).to.equal('foo');
+
+                        read_all(s, function (v)
+                        {
+                            expect(v.length).to.equal(1);
+                            clients[0].publish('foo', function (err)
+                            {
+                                expect(err.message).to.be.oneOf([
+                                    'write after end',
+                                    'carrier stream ended before end message received',
+                                    'carrier stream finished before duplex finished'
+                                ]);
+                                got_error = true;
+                                check();
+                            }).end('B');
+                        });
+                    }, function (err)
+                    {
+                        if (err) { return done(err); }
+                        clients[0].publish('foo', function (err)
+                        {
+                            if (err) { done(err); }
                         }).end('A');
                     });
-                }, function (err)
-                {
-                    if (err) { return done(err); }
-                    clients[0].publish('foo', function (err)
-                    {
-                        if (err) { done(err); }
-                    }).end(new Buffer(17000));
                 });
-            });
-
-            it('should be able to limit total number of messages published per connection', function (done)
-            {
-                var mqserver,
-                    client_done = false,
-                    server_done = false,
-                    count = 0,
-                    got_message = false;
-
-                function register()
-                {
-                    mqserver.on('publish_requested', function (topic, duplex, options, cb)
-                    {
-                        count += 1;
-
-                        if (count > 1)
-                        {
-                            return cb(new Error('too many messages'));
-                        }
-
-                        duplex.pipe(this.fsq.publish(topic, options, cb));
-                    });
-                }
-
-                if (options.relay)
-                {
-                    server.once('connect', function (info)
-                    {
-                        mqserver = info.mqserver;
-                        register();
-                        server.once('connect', function (info)
-                        {
-                            mqserver = info.mqserver;
-                            register();
-                            server.once('connect', function (info)
-                            {
-                                mqserver = info.mqserver;
-                                register();
-                            });
-                        });
-                    });
-                }
-                else
-                {
-                    mqserver = connections.keys().next().value;
-                    register();
-                }
-
-                server.once('disconnect', function (info)
-                {
-                    expect(info.mqserver).to.equal(mqserver);
-                    server_done = true;
-                    if (client_done)
-                    {
-                        done();
-                    }
-                });
-
-                if (is_transport('tcp'))
-                {
-                    clients[0].on('error', function (err)
-                    {
-                        expect(err.message).to.be.oneOf(
-                            ['write EPIPE', 'read ECONNRESET']);
-                    });
-                }
-
-                clients[0].mux.on('end', function ()
-                {
-                    client_done = true;
-                    if (server_done)
-                    {
-                        done();
-                    }
-                });
-
-                clients[0].on('error', function (err)
-                {
-                    expect(err.message).to.be.oneOf(is_transport('tcp') ?
-                            ['write EPIPE', 'read ECONNRESET'] :
-                            ['write after end']);
-                });
-
-                clients[0].subscribe('foo', function (s, info)
-                {
-                    expect(got_message).to.equal(false);
-                    got_message = true;
-
-                    expect(info.topic).to.equal('foo');
-
-                    read_all(s, function (v)
-                    {
-                        expect(v.toString()).to.equal('A');
-                        clients[0].publish('foo', function (err)
-                        {
-                            expect(err.message).to.equal('server error');
-                            connections.values().next().value.destroy();
-                        }).end('B');
-                    });
-                }, function (err)
-                {
-                    if (err) { done(err); }
-                    clients[0].publish('foo', function (err)
-                    {
-                        if (err) { done(err); }
-                    }).end('A');
-                });
-            });
+            }
         });
 
         describe('stream hooks (2 connections)', function (done)
@@ -4387,22 +4312,10 @@ module.exports = function (config, connect, options)
 
                 before_connect_function: function ()
                 {
-                    var conn_count = 0;
-
-                    server.on('authz_start', function (cancel, onclose)
-                    {
-                        conn_count += 1;
-
-                        onclose(function ()
-                        {
-                            conn_count -= 1;
-                        });
-
-                        if (conn_count > 1)
-                        {
-                            return setImmediate(cancel);
-                        }
-                    });
+                    var limit = require('../lib/server_extensions/limit_active');
+                    this.centro_test_lac = attach_extension(
+                            limit.limit_active_connections,
+                            { max_connections: 1 });
                 },
 
                 client_function: client_function,
@@ -4411,9 +4324,9 @@ module.exports = function (config, connect, options)
             });
 
             it('should be able to limit number of active connections',
-               expect_error('cancelled', is_transport('tcp') ? 1 : true, 401, 1, function (done)
+               expect_error('connection limit 1 exceeded', is_transport('tcp') ? 1 : true, 401, 1, function (done)
                {
-                   server.removeAllListeners('authz_start');
+                   detach_extension(this.centro_test_lac);
                    done();
                }));
         });
@@ -5062,6 +4975,7 @@ module.exports = function (config, connect, options)
 
                     it('maxConnections', function (done)
                     {
+                        var ths = this;
                         get_info().clients[0].subscribe('foo', function ()
                         {
                             done(new Error('should not be called'));
@@ -5072,6 +4986,7 @@ module.exports = function (config, connect, options)
                             s.on('error', function (err)
                             {
                                 expect(err.message).to.equal('socket hang up');
+                                get_info().detach_extension(ths.centro_test_ltc);
                                 done();
                             });
                             s.end('bar');
@@ -5080,12 +4995,14 @@ module.exports = function (config, connect, options)
 
                     it('request timeout', function (done)
                     {
-                        var now = new Date(),
+                        var ths = this,
+                            now = new Date(),
                             s = get_info().clients[0].publish('foo');
                         s.on('error', function (err)
                         {
                             expect(new Date().getTime() - now.getTime()).to.be.at.least(2000);
                             expect(err.message).to.equal('socket hang up');
+                            get_info().detach_extension(ths.centro_test_thpr);
                             done();
                         });
                         s.write('a');
@@ -5111,39 +5028,38 @@ module.exports = function (config, connect, options)
                     });
 
                     it('maxConnections', get_info().expect_error(
-                       undefined, 1, undefined, 1));
+                       undefined, 1, undefined, 1, function (done)
+                       {
+                           get_info().detach_extension(this.centro_test_ltc); 
+                           done();
+                       }));
                 },
 
-                transport_ready: function (config, ops, ths)
+                before_server_ready: function (get_info)
                 {
-                    if (ops.server)
-                    {
-                        if (ops.server.server)
-                        {
-                            ops.server.server.maxConnections = 1;
-                        }
-                        else
-                        {
-                            ops.server.maxConnections = 1;
-                        }
+                    var ths = this,
+                        limit = require('../lib/server_extensions/limit_transport');
 
-                        if (options.relay)
-                        {
-                            ops.server.on('request', function (req, res)
-                            {
-                                if (require('url').parse(req.url).pathname === ops.pub_pathname)
-                                {
-                                    req.setTimeout(2000, function ()
-                                    {
-                                        req.destroy();
-                                    });
-                                }
-                            });
-                        }
-                    }
-                    else
+                    this.centro_test_ltc = get_info().attach_extension(
+                            limit.limit_transport_connections,
+                            { max_transport_connections: 1 });
+
+                    get_info().server.on('transport_ready', function (tconfig, ops)
                     {
-                        ths.test_should_skip = !options.relay;
+                        if (!ops.server)
+                        {
+                            ths.test_should_skip = !options.relay;
+                            get_info().detach_extension(ths.centro_test_ltc); 
+                        }
+                    });
+
+                    if (options.relay)
+                    {
+                        var timeout = require('../lib/server_extensions/timeout');
+
+                        this.centro_test_thpr = get_info().attach_extension(
+                            timeout.timeout_http_publish_requests,
+                            { http_publish_timeout: 2000 });
                     }
                 }
             }, config));
