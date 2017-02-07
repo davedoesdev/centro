@@ -3381,7 +3381,7 @@ module.exports = function (config, connect, options)
 
             if (!options.relay)
             {
-            function limit_conn(close_conn)
+            var limit_conn = function (close_conn)
             {
             describe('limit_conn (close_conn=' + close_conn + ')', function()
             {
@@ -3532,7 +3532,7 @@ module.exports = function (config, connect, options)
                     });
                 });
             });
-            }
+            };
             limit_conn(true);
             limit_conn(false);
             }

@@ -36,15 +36,15 @@
     "qlobber-fsq"
   ],
   "dependencies": {
-    "mqlobber": "~4.1.0",
-    "mqlobber-access-control": "~3.1.0",
+    "mqlobber": "~4.2.0",
+    "mqlobber-access-control": "~3.2.0",
     "qlobber-fsq": "~6.1.0",
     "authorize-jwt": "~2.0.1",
     "primus": "~6.0.5",
     "primus-backpressure": "~1.0.1",
     "frame-stream": "~1.1.1",
     "ajv": "~4.8.2",
-    "async": "~2.1.2",
+    "async": "~2.1.4",
     "access-control": "~1.0.0",
     "stream-throttle": "~0.1.3"
   },

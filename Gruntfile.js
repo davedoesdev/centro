@@ -24,6 +24,7 @@ module.exports = function (grunt)
                    'test/server-extra.js',
                    'test/read_frame-error.js',
                    'test/connect-after-close.js',
+                   'test/pipeline.js',
                    'test/example/example.js' ],
             options: {
                 bail: true
