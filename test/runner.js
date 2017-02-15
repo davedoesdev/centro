@@ -4496,11 +4496,11 @@ module.exports = function (config, connect, options)
                     {
                         access_control: {
                             publish: {
-                                allow: ['foo', 'bar'],
+                                allow: ['foo.*'],
                                 disallow: []
                             },
                             subscribe: {
-                                allow: ['foo', 'bar'],
+                                allow: ['foo.*'],
                                 disallow: []
                             }
                         }
@@ -4508,74 +4508,85 @@ module.exports = function (config, connect, options)
 
                     it('should be able to filter handlers', function (done)
                     {
-                        if (config.fsq) { return done(); }
-
-                        // delay message until all streams are under high-water mark
-
-                        get_info().clients[0].subscribe('bar', function (s)
+                        if ((is_transport('tcp') && !config.noDelay) || config.fsq)
                         {
-                            var mqserver = get_info().connections.keys().next().value;
-                            mqserver.bar_s = s;
-                            // don't read so server is backed up
-                            this.publish('foo', function (err)
+                            return this.skip();
+                        }
+
+                        this.timeout(20000);
+
+                        // test filter on handler without .mqlobber_server
+                        get_info().server.fsq.subscribe(get_info().connections.values().next().value.prefixes[0] + 'foo.foo', function ()
+                        {
+                        });
+
+                        var got_foo = false,
+                            count = 0;
+
+                        // two filters, first is mqlobber-access-control
+                        expect(get_info().server.fsq.filters.length).to.equal(2);
+
+                        get_info().server.fsq.filters.unshift(function (info, handlers, cb)
+                        {
+                            count += 1;
+                            cb(null, true, handlers);
+                        });
+
+                        get_info().clients[0].subscribe('foo.*', function (s, info, ack)
+                        {
+                            if (info.topic === 'foo.bar')
                             {
-                                if (err) { return done(err); }
-                            }).end('hello');
+                                expect(count).to.equal(1);
+
+                                this.publish('foo.foo', function (err)
+                                {
+                                    if (err) { return done(err); }
+                                }).end('hello');
+
+                                return setTimeout(function ()
+                                {
+                                    expect(got_foo).to.equal(false);
+                                    // 1 for each message but then foo.foo
+                                    // should be tried again at least once
+                                    expect(count).to.be.above(2);
+                                    setTimeout(function ()
+                                    {
+                                        expect(got_foo).to.equal(true);
+                                        ack();
+                                        done();
+                                    }, 3000);
+                                    read_all(s);
+                                }, 3000);
+                            }
+
+                            expect(info.topic).to.equal('foo.foo');
+
+                            read_all(s, function (v)
+                            {
+                                expect(v.toString()).to.equal('hello');
+                                got_foo = true;
+                            });
                         }, function (err)
                         {
                             if (err) { return done(err); }
-                            get_info().clients[0].subscribe('foo', function (s)
+                            get_info().clients[0].publish('foo.bar',
                             {
-                                read_all(s, function (v)
-                                {
-                                    expect(v.toString()).to.equal('hello');
-                                    done();
-                                });
+                                single: true
                             }, function (err)
                             {
                                 if (err) { return done(err); }
-                                get_info().clients[0].publish('bar', function (err)
-                                {
-                                    if (err) { return done(err); }
-                                }).end(new Buffer(128 * 1024));
-                            });
+                            }).end(new Buffer(8 * 1024 * 1024));
                         });
                     });
                 },
 
-                handler_concurrency: 1,
+                handler_concurrency: 2,
 
-                filter: function (info, handlers, cb)
+                before_server_ready: function (get_info)
                 {
-                    if (info.topic === 'bar')
-                    {
-                        return cb(null, true, handlers);
-                    }
-
-                    for (var h of handlers)
-                    {
-                        if (h.mqlobber_server)
-                        {
-                            for (var d of h.mqlobber_server.mux.duplexes.values())
-                            {
-                                if (d._writableState.length >=
-                                    d._writableState.highWaterMark)
-                                {
-                                    // drain 'bar' stream on client
-                                    var bar_s = h.mqlobber_server.bar_s;
-                                    if (bar_s)
-                                    {
-                                        read_all(bar_s);
-                                        h.mqlobber_server.bar_s = null;
-                                    }
-
-                                    return cb(null, false);
-                                }
-                            }
-                        }
-                    }
-
-                    cb(null, true, handlers);
+                    var filter = require('../lib/server_extensions/filter');
+                    this.centro_test_dmuasuh = get_info().attach_extension(
+                        filter.delay_message_until_all_streams_under_hwm);
                 }
             }, config));
         });

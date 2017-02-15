@@ -8,6 +8,7 @@ function connect(config, server, cb)
 {
     net.createConnection(8700, function ()
     {
+        this.setNoDelay(true);
         cb(null, centro.stream_auth(this, config));
     });
 }
@@ -15,7 +16,8 @@ function connect(config, server, cb)
 runner(
 {
     transport: 'tcp',
-    port: 8700
+    port: 8700,
+    noDelay: true
 }, connect);
 
 runner(

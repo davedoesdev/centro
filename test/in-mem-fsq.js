@@ -25,7 +25,7 @@ runner(
     {
         if (!config.fsq)
         {
-            config.fsq = new QlobberFSQ();
+            config.fsq = new QlobberFSQ(config);
         }
 
         cb();
