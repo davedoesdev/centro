@@ -2,6 +2,7 @@
 "use strict";
 
 var centro = require('..'),
+    pipeline = centro.pipeline,
     CentroServer = centro.CentroServer,
     util = require('util'),
     crypto = require('crypto'),
@@ -11,7 +12,6 @@ var centro = require('..'),
     async = require('async'),
     Transform = require('stream').Transform,
     Writable = require('stream').Writable,
-    FastestWritable = require('fastest-writable').FastestWritable,
     read_all = require('./read_all'),
     uri = 'mailto:dave@davedoesdev.com',
     uri2 = 'mailto:david@davedoesdev.com';
@@ -4585,7 +4585,7 @@ module.exports = function (config, connect, options)
                 before_server_ready: function (get_info)
                 {
                     var filter = require('../lib/server_extensions/filter');
-                    this.centro_test_dmuasuh = get_info().attach_extension(
+                    get_info().attach_extension(
                         filter.delay_message_until_all_streams_under_hwm);
                 }
             }, config));
@@ -4613,7 +4613,12 @@ module.exports = function (config, connect, options)
 
                     it('should support setting custom data on message info and stream', function (done)
                     {
-                        if (config.fsq) { return done(); }
+                        get_info().server.fsq.filters.unshift(function (info, handlers, cb)
+                        {
+                            info.num_handlers = handlers.size;
+                            info.count = 0;
+                            cb(null, true, handlers);
+                        });
 
                         var message0_called = false,
                             message1_called = false,
@@ -4625,68 +4630,67 @@ module.exports = function (config, connect, options)
 
                         buf.fill('a');
 
-                        function check(msg_stream, info, duplex)
+                        function check(msg_stream, info)
                         {
                             expect(info.topic).to.equal(prefixes[0][0] + 'foo');
-                            expect(msg_stream.fastest_writable === undefined).to.equal(info.count === 0 ? true : false);
                             info.count += 1;
-
-                            if (!msg_stream.fastest_writable)
-                            {
-                                msg_stream.fastest_writable = new FastestWritable(
-                                {
-                                    emit_laggard: true
-                                });
-                                msg_stream.pipe(msg_stream.fastest_writable);
-                            }
-
-                            msg_stream.fastest_writable.add_peer(duplex);
 
                             if (info.count === info.num_handlers)
                             {
-                                // make fastest_writable enter waiting state
-                                msg_stream.fastest_writable.write(buf);
+                                process.nextTick(function ()
+                                {
+                                    // make fastest_writable enter waiting state
+                                    msg_stream.centro_server_extension_filter_fastest_writable.write(buf);
+                                });
                             }
                         }
 
-                        function message0(msg_stream, info, multiplex)
+                        function message0(msg_stream, info, multiplex, cb, next)
                         {
                             expect(message0_called).to.equal(false);
                             message0_called = true;
-                            var duplex = multiplex();
-                            check(msg_stream, info, duplex);
-                            duplex.on('laggard', function ()
+                            next(msg_stream, info, function (on_error)
                             {
-                                laggard0_called = true;
-                            });
+                                var duplex = multiplex(on_error);
+                                duplex.on('laggard', function ()
+                                {
+                                    laggard0_called = true;
+                                });
+                                check(msg_stream, info);
+                                return duplex;
+                            }, cb);
                         }
                         
-                        function message1(msg_stream, info, multiplex)
+                        function message1(msg_stream, info, multiplex, cb, next)
                         {
                             expect(message1_called).to.equal(false);
                             message1_called = true;
-                            var null_stream = new NullStream();
-                            null_stream.on('laggard', function ()
+                            next(msg_stream, info, function (on_error)
                             {
-                                laggard1_called = true;
-                            });
-                            check(msg_stream, info, null_stream);
+                                var null_stream = new NullStream();
+                                null_stream.on('laggard', function ()
+                                {
+                                    laggard1_called = true;
+                                });
+                                check(msg_stream, info);
+                                return null_stream;
+                            }, cb);
                         }
 
                         if (options.relay)
                         {
-                            get_info().server.once('connect', function (info)
-                            {
-                                mqservers[0] = info.mqserver;
-                                prefixes[0] = info.prefixes;
-                                info.mqserver.on('message', message0);
+                            var pccount = 0;
 
-                                this.once('connect', function (info)
+                            get_info().server.on('pre_connect', function preconnect(info)
+                            {
+                                mqservers[pccount] = info.mqserver;
+                                prefixes[pccount] = info.prefixes;
+                                pipeline(info.mqserver, 'message', pccount === 0 ? message0 : message1);
+                                pccount += 1;
+                                if (pccount === 2)
                                 {
-                                    mqservers[1] = info.mqserver;
-                                    prefixes[1] = info.prefixes;
-                                    info.mqserver.on('message', message1);
-                                });
+                                    this.removeListener('pre_connect', preconnect);
+                                }
                             });
                         }
                         else
@@ -4697,9 +4701,13 @@ module.exports = function (config, connect, options)
                                 prefixes[info.hsdata[0]] = info.prefixes;
                             }
 
-                            mqservers[0].on('message', message0);
-                            mqservers[1].on('message', message1);
+                            pipeline(mqservers[0], 'message', message0);
+                            pipeline(mqservers[1], 'message', message1);
                         }
+
+                        var filter = require('../lib/server_extensions/filter');
+                        get_info().attach_extension(
+                            filter.fastest_writable, { emit_laggard: true });
 
                         get_info().clients[0].subscribe('foo', function (s, info)
                         {
@@ -4727,13 +4735,6 @@ module.exports = function (config, connect, options)
                             });
                         });
                     });
-                },
-
-                filter: function (info, handlers, cb)
-                {
-                    info.num_handlers = handlers.size;
-                    info.count = 0;
-                    cb(null, true, handlers);
                 }
             }, config));
         });
