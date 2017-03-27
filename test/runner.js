@@ -10,6 +10,8 @@ var centro = require('..'),
     jsjws = require('jsjws'),
     expect = require('chai').expect,
     async = require('async'),
+    path = require('path'),
+    rimraf = require('rimraf'),
     Transform = require('stream').Transform,
     Writable = require('stream').Writable,
     read_all = require('./read_all'),
@@ -92,7 +94,8 @@ module.exports = function (config, connect, options)
     function run(config)
     {
         /* jshint validthis: true */
-        this.timeout(5000);
+        this.timeout((config.test_timeout || 20000) *
+                     (is_transport('primus') ? 10 : 1));
 
         var server, clients,
             priv_key, priv_key2,
@@ -103,6 +106,9 @@ module.exports = function (config, connect, options)
         function on_before(cb)
         {
             var ths = this;
+
+            presence_topics.clear();
+            pending_presence_topics.clear();
 
             function start2()
             {
@@ -177,7 +183,9 @@ module.exports = function (config, connect, options)
                     if ((err.message !== 'carrier stream ended before end message received') &&
                         (err.message !== 'carrier stream finished before duplex finished') &&
                         (err.message !== 'This socket has been ended by the other party') &&
-                        (err.message !== 'write after end'))
+                        (err.message !== 'write after end') &&
+                        (err.message !== 'backoff') &&
+                        (err.message !== 'This socket is closed.'))
                     {
                         console.warn(err);
                         this.last_warning = err;
@@ -204,6 +212,12 @@ module.exports = function (config, connect, options)
 
             start();
         }
+
+        before(function (cb)
+        {
+            var fsq_dir = path.join(path.dirname(require.resolve('qlobber-fsq')), 'fsq');
+            rimraf(fsq_dir, cb);
+        });
         
         before(on_before);
 
@@ -2288,6 +2302,8 @@ module.exports = function (config, connect, options)
                                 'write EPIPE',
                                 'carrier stream ended before end message received',
                                 'carrier stream finished before duplex finished',
+                                'stream.push() after EOF',
+                                'unexpected response'
                             ]);
                         }
 
@@ -2320,11 +2336,13 @@ module.exports = function (config, connect, options)
                                     return false;
                                 }
 
-                                expect(errors[1].message).to.equal('unexpected response');
-                                expect(errors[1].statusCode).to.equal(code);
-                                expect(errors[1].authenticate).to.equal(
+                                var ur_index = errors[0].message === 'unexpected response' ? 0 : 1;
+
+                                expect(errors[ur_index].message).to.equal('unexpected response');
+                                expect(errors[ur_index].statusCode).to.equal(code);
+                                expect(errors[ur_index].authenticate).to.equal(
                                     code == 401 ? 'Basic realm="centro"' : undefined);
-                                expect(errors[1].data).to.equal('{"error":"' + msg + '"}');
+                                expect(errors[ur_index].data).to.equal('{"error":"' + msg + '"}');
                             }
                         }
                         else if (errors.length > 2)
@@ -3441,7 +3459,8 @@ module.exports = function (config, connect, options)
                                 expect(err.message).to.be.oneOf([
                                     'server error',
                                     'write after end',
-                                    'carrier stream ended before end message received'
+                                    'carrier stream ended before end message received',
+                                    'carrier stream finished before duplex finished'
                                 ]);
                                 got_error = true;
                                 check();
@@ -3742,7 +3761,10 @@ module.exports = function (config, connect, options)
                     if (clients[0].last_error && server.last_warning)
                     {
                         expect(server.last_warning.message).to.equal('short handshake');
-                        expect(clients[0].last_error.message).to.equal('Unexpected end of input');
+                        expect(clients[0].last_error.message).to.be.oneOf([
+                            'Unexpected end of input',
+                            'Unexpected end of JSON input'
+                        ]);
 
                         var client = require('../lib/client');
                         client.version_buffer = client.version_buffer_save;
@@ -4488,6 +4510,8 @@ module.exports = function (config, connect, options)
 
         describe('filter', function ()
         {
+            var on_delay;
+
             run.call(this, Object.assign(
             {
                 only: function (get_info)
@@ -4520,7 +4544,8 @@ module.exports = function (config, connect, options)
                         {
                         });
 
-                        var got_foo = false,
+                        var ack_bar,
+                            got_foo = false,
                             count = 0;
 
                         // two filters, first is mqlobber-access-control
@@ -4538,33 +4563,41 @@ module.exports = function (config, connect, options)
                             {
                                 expect(count).to.equal(1);
 
-                                this.publish('foo.foo', function (err)
+                                on_delay = function (info)
+                                {
+                                    var prefix = get_info().connections.values().next().value.prefixes[0];
+                                    expect(info.topic).to.be.oneOf([
+                                        prefix + 'foo.foo',
+                                        prefix + 'foo.bar' // we don't read immediately so qlobber-fsq will try again (but find it locked)
+                                    ]);
+
+                                    expect(got_foo).to.equal(false);
+
+                                    // 1 for each message but then foo.foo
+                                    // should be tried again at least once
+                                    if (count <= 2)
+                                    {
+                                        return;
+                                    }
+
+                                    ack_bar = ack;
+                                    read_all(s);
+                                };
+
+                                return this.publish('foo.foo', function (err)
                                 {
                                     if (err) { return done(err); }
                                 }).end('hello');
-
-                                return setTimeout(function ()
-                                {
-                                    expect(got_foo).to.equal(false);
-                                    // 1 for each message but then foo.foo
-                                    // should be tried again at least once
-                                    expect(count).to.be.above(2);
-                                    setTimeout(function ()
-                                    {
-                                        expect(got_foo).to.equal(true);
-                                        ack();
-                                        done();
-                                    }, 3000);
-                                    read_all(s);
-                                }, 3000);
                             }
 
                             expect(info.topic).to.equal('foo.foo');
+                            got_foo = true;
 
                             read_all(s, function (v)
                             {
                                 expect(v.toString()).to.equal('hello');
-                                got_foo = true;
+                                ack_bar();
+                                done();
                             });
                         }, function (err)
                         {
@@ -4586,7 +4619,13 @@ module.exports = function (config, connect, options)
                 {
                     var filter = require('../lib/server_extensions/filter');
                     get_info().attach_extension(
-                        filter.delay_message_until_all_streams_under_hwm);
+                        filter.delay_message_until_all_streams_under_hwm,
+                        {
+                            on_delay: function (info)
+                            {
+                                on_delay(info);
+                            }
+                        });
                 }
             }, config));
         });
@@ -4649,9 +4688,9 @@ module.exports = function (config, connect, options)
                         {
                             expect(message0_called).to.equal(false);
                             message0_called = true;
-                            next(msg_stream, info, function (on_error)
+                            next(msg_stream, info, function ()
                             {
-                                var duplex = multiplex(on_error);
+                                var duplex = multiplex.apply(this, arguments);
                                 duplex.on('laggard', function ()
                                 {
                                     laggard0_called = true;
@@ -4665,7 +4704,7 @@ module.exports = function (config, connect, options)
                         {
                             expect(message1_called).to.equal(false);
                             message1_called = true;
-                            next(msg_stream, info, function (on_error)
+                            next(msg_stream, info, function ()
                             {
                                 var null_stream = new NullStream();
                                 null_stream.on('laggard', function ()
@@ -5099,116 +5138,479 @@ module.exports = function (config, connect, options)
             }, config));
         });
 
+        function backoff_event(f, before_server_ready)
+        {
+            /*jshint validthis: true */
+            run.call(this, Object.assign(
+            {
+                test_timeout: 60000,
+
+                only: function (get_info)
+                {
+                    get_info().setup(1,
+                    {
+                        access_control: {
+                            publish: {
+                                allow: ['foo', 'foo2'],
+                                disallow: []
+                            },
+                            subscribe: {
+                                allow: ['foo', 'foo2', 'bar'],
+                                disallow: []
+                            }
+                        }
+                    });
+
+                    function restore()
+                    {
+                        for (var mqserver of get_info().connections.keys())
+                        {
+                            var carrier = mqserver.mux.carrier;
+
+                            carrier._write = carrier.orig_write;
+                            carrier._write(carrier.the_chunk, carrier.the_encoding, carrier.the_callback);
+                        }
+                    }
+
+                    function check(state)
+                    {
+                        if (state.server_backoff && state.server_warning)
+                        {
+                            if (!state.no_restore && !state.restore_called)
+                            {
+                                state.restore_called = true;
+                                restore();
+                            }
+
+                            if (state.done && !state.done_called)
+                            {
+                                state.done_called = true;
+                                state.done();
+                            }
+                        }
+                    }
+
+                    function reg(mqserver, state)
+                    {
+                        mqserver.on('backoff', function ()
+                        {
+                            state.server_backoff = true;
+                            check(state);
+                        });
+
+                        if (state.maxListeners !== undefined)
+                        {
+                            mqserver.setMaxListeners(state.maxListeners);
+                        }
+
+                        if (state.dummy_publish)
+                        {
+                            mqserver.on('publish_requested', function (topic, stream, options, cb)
+                            {
+                                cb();
+                            });
+                        }
+
+                        mqserver.mux.carrier.orig_write = mqserver.mux.carrier._write;
+                        mqserver.mux.carrier._write = function (chunk, encoding, callback)
+                        {
+                            mqserver.mux.carrier.the_chunk = chunk;
+                            mqserver.mux.carrier.the_encoding = encoding;
+                            mqserver.mux.carrier.the_callback = callback;
+                        };
+                    }
+
+                    function doit(state)
+                    {
+                        for (var mqserver of get_info().connections.keys())
+                        {
+                            reg(mqserver, state);
+                        }
+
+                        get_info().server.once('warning', function (err, mqserver)
+                        {
+                            expect(err.message).to.equal('backoff');
+                            expect(get_info().connections.get(mqserver)).not.to.equal(undefined);
+                            state.server_warning = true;
+                            check(state);
+                        });
+
+                        get_info().server.on('warning', function (err)
+                        {
+                            if (err.message === 'backoff')
+                            {
+                                if (state.warnings === undefined)
+                                {
+                                    state.warnings = 0;
+                                }
+                                state.warnings += 1;
+                            }
+                        });
+
+                        get_info().clients[0].on('warning', function (err)
+                        {
+                            expect(err.message).to.be.oneOf([
+                                'write after end',
+                                'carrier stream ended before end message received',
+                                'carrier stream finished before duplex finished',
+                                'no handlers' // even after we unsubscribe there may be some messages left in server buffer
+                            ]);
+                        });
+
+                        get_info().clients[0].on('error', function (err, obj)
+                        {
+                            expect(err.message).to.be.oneOf([
+                                'write after end',
+                                'read ECONNRESET',
+                                'carrier stream finished before duplex finished',
+                                'carrier stream ended before end message received'
+                            ]);
+                        });
+
+                        function onpub(err)
+                        {
+                            if (err)
+                            {
+                                expect(err.message).to.be.oneOf([
+                                    'carrier stream ended before end message received',
+                                    'carrier stream finished before duplex finished',
+                                    'write after end',
+                                    'read ECONNRESET'
+                                ]);
+                            }
+                            else
+                            {
+                                if (state.published === undefined)
+                                {
+                                    state.published = 0;
+                                }
+                                state.published += 1;
+
+                                if (state.onpub)
+                                {
+                                    state.onpub();
+                                }
+                            }
+                        }
+
+                        for (var i=0; i < 3981; i += 1)
+                        {
+                            get_info().clients[0].publish('foo', onpub).end();
+                        }
+                    }
+
+                    f(get_info, doit, restore);
+                },
+
+                max_open: undefined,
+
+                before_server_ready: before_server_ready
+            }, config));
+        }
+
         if (!options.relay)
         {
             describe('backoff event', function ()
             {
-                run.call(this, Object.assign(
+                backoff_event.call(this, function (get_info, doit, restore)
                 {
-                    only: function (get_info)
+                    it('should emit a backoff warning', function (done)
                     {
-                        get_info().setup(1,
+                        doit({ done: done, dummy_publish: true });
+                    });
+
+                    it('should support closing connection on backoff', function (done)
+                    {
+                        var backoff = require('../lib/server_extensions/backoff'),
+                            bo = get_info().attach_extension(
+                                backoff.backoff,
+                                { close_conn: true }),
+                            state = { dummy_publish: true };
+
+                        get_info().clients[0].mux.on('end', function ()
                         {
-                            access_control: {
-                                publish: {
-                                    allow: ['foo'],
-                                    disallow: []
-                                },
-                                subscribe: {
-                                    allow: ['foo'],
-                                    disallow: []
-                                }
-                            }
+                            expect(state.server_backoff).to.equal(true);
+                            expect(state.server_warning).to.equal(true);
+                            get_info().detach_extension(bo);
+                            done();
                         });
 
-                        it('should emit a backoff warning', function (done)
+                        doit(state);
+                    });
+
+                    it('should support delaying responses on backoff', function (done)
+                    {
+                        var backoff = require('../lib/server_extensions/backoff'),
+                            bo = get_info().attach_extension(
+                                backoff.backoff,
+                                { delay_responses: true }),
+                            state = {
+                                no_restore: true,
+                                maxListeners: 0,
+                                done: backedoff
+                            },
+                            subscribed = false,
+                            unsubscribed = false,
+                            published = false,
+                            unsubscribed_all = false;
+
+                        function gotmsg(s, info)
                         {
-                            this.timeout(60000);
+                            // fsq may pick up some messages before it processes
+                            // unsubscribe requests
+                            expect(info.topic).to.equal('foo');
+                        }
 
-                            var server_backoff = false,
-                                server_warning = false;
+                        function check(err)
+                        {
+                            if (err) { return done(err); }
 
-                            function check()
+                            if (subscribed &&
+                                unsubscribed &&
+                                published &&
+                                unsubscribed_all)
                             {
-                                if (server_backoff && server_warning)
+                                if (state.published === 3981)
                                 {
-                                    for (var mqserver of get_info().connections.keys())
-                                    {
-                                        var carrier = mqserver.mux.carrier;
-
-                                        carrier._write = carrier.orig_write;
-                                        carrier._write(carrier.the_chunk, carrier.the_encoding, carrier.the_callback);
-                                    }
-
+                                    get_info().detach_extension(bo);
+                                    console.log("DONE");
                                     done();
                                 }
-                            }
-
-                            function reg(mqserver)
-                            {
-                                mqserver.on('backoff', function ()
+                                else if (state.published > 3981)
                                 {
-                                    server_backoff = true;
-                                    check();
-                                });
-
-                                mqserver.on('publish_requested', function (topic, stream, options, cb)
-                                {
-                                    cb();
-                                });
-
-                                mqserver.mux.carrier.orig_write = mqserver.mux.carrier._write;
-                                mqserver.mux.carrier._write = function (chunk, encoding, callback)
-                                {
-                                    mqserver.mux.carrier.the_chunk = chunk;
-                                    mqserver.mux.carrier.the_encoding = encoding;
-                                    mqserver.mux.carrier.the_callback = callback;
-                                };
-                            }
-
-                            for (var mqserver of get_info().connections.keys())
-                            {
-                                reg(mqserver);
-                            }
-
-                            get_info().server.once('warning', function (err, mqserver)
-                            {
-                                expect(err.message).to.equal('backoff');
-                                expect(get_info().connections.get(mqserver)).not.to.equal(undefined);
-                                server_warning = true;
-                                check();
-                            });
-
-                            get_info().clients[0].on('warning', function (err)
-                            {
-                                expect(err.message).to.be.oneOf([
-                                    'write after end',
-                                    'carrier stream ended before end message received'
-                                ]);
-                            });
-
-                            get_info().clients[0].on('error', function (err, obj)
-                            {
-                                expect(err.message).to.equal('write after end');
-                            });
-
-                            function onpub(err)
-                            {
-                                if (err)
-                                {
-                                    expect(err.message).to.equal('carrier stream finished before duplex finished');
+                                    done(new Error('too many published'));
                                 }
                             }
+                        }
 
-                            for (var i=0; i < 3981; i += 1)
+                        function backedoff()
+                        {
+                            expect(state.warnings).to.equal(1);
+
+                            get_info().server.on('warning', function warn(err)
                             {
-                                get_info().clients[0].publish('foo', onpub).end('bar');
+                                expect(err.message).to.equal('backoff');
+
+                                // 1 for foo publish which caused backoff then
+                                // 1 each for sub, unsub, pub(foo2), unsub_all
+                                if (state.warnings !== 5)
+                                {
+                                    return;
+                                }
+
+                                get_info().server.removeListener('warning', warn);
+
+                                expect(subscribed).to.equal(false);
+                                expect(unsubscribed).to.equal(false);
+                                expect(published).to.equal(false);
+                                expect(unsubscribed_all).to.equal(false);
+                                expect(state.published).to.equal(undefined);
+
+                                state.onpub = check;
+                                
+                                restore();
+                            });
+
+                            get_info().clients[0].subscribe('bar', gotmsg, function (err)
+                            {
+                                subscribed = true;
+                                check(err);
+                            });
+
+                            get_info().clients[0].unsubscribe('foo', gotmsg, function (err)
+                            {
+                                unsubscribed = true;
+                                check(err);
+                            });
+
+                            get_info().clients[0].unsubscribe(function (err)
+                            {
+                                unsubscribed_all = true;
+                                check(err);
+                            });
+
+                            get_info().clients[0].publish('foo2', function (err)
+                            {
+                                published = true;
+                                check(err);
+                            }).end('bar2');
+                        }
+
+                        get_info().clients[0].subscribe('foo', gotmsg, function (err)
+                        {
+                            if (err) { return done(err); }
+                            get_info().clients[0].subscribe('foo2', gotmsg, function (err)
+                            {
+                                if (err) { return done(err); }
+                                doit(state);
+                            });
+                        });
+                    });
+                });
+            });
+
+            describe('backoff event (skip message)', function ()
+            {
+                var skipped = 0, on_skip;
+
+                backoff_event.call(this, function (get_info, doit, restore)
+                {
+                    it('should support skipping messages on backoff', function (done)
+                    {
+                        var state = {
+                                no_restore: true,
+                                done: backedoff
+                            };
+
+                        function gotmsg(s, info)
+                        {
+                            done(new Error('unexpected message'));
+                        }
+
+                        function check(err)
+                        {
+                            if (err) { return done(err); }
+
+                            if (state.published === 3981)
+                            {
+                                done();
+                            }
+                            else if (state.puiblished > 3981)
+                            {
+                                done(new Error('too many published'));
+                            }
+                        }
+
+                        function backedoff()
+                        {
+                            expect(state.warnings).to.equal(1);
+
+                            on_skip = function ()
+                            {
+                                if (skipped === 3981)
+                                {
+                                    expect(state.published).to.equal(undefined);
+
+                                    state.onpub = check;
+
+                                    restore();
+                                }
+                                else if (skipped > 3981)
+                                {
+                                    done(new Error('too many skipped'));
+                                }
+                            };
+                            on_skip();
+                        }
+
+                        get_info().clients[0].subscribe('foo', gotmsg, function (err)
+                        {
+                            if (err) { return done(err); }
+                            doit(state);
+                        });
+                    });
+                }, function (get_info)
+                {
+                    var backoff = require('../lib/server_extensions/backoff');
+                    get_info().attach_extension(
+                        backoff.backoff,
+                        {
+                            skip_message: true,
+                            on_skip: function (info)
+                            {
+                                skipped += 1;
+                                if (on_skip)
+                                {
+                                    on_skip();
+                                }
                             }
                         });
-                    },
+                });
+            });
 
-                    max_open: undefined
-                }, config));
+            describe('backoff event (delay message)', function ()
+            {
+                var delayed = 0, on_delay;
+
+                backoff_event.call(this, function (get_info, doit, restore)
+                {
+                    it('should support delaying messages on backoff', function (done)
+                    {
+                        var state = {
+                                no_restore: true,
+                                done: backedoff
+                            },
+                            messaged = 0;
+
+                        function gotmsg(s, info)
+                        {
+                            messaged += 1;
+                            read_all(s, function ()
+                            {
+                                check();
+                            });
+                        }
+
+                        function check(err)
+                        {
+                            if (err) { return done(err); }
+
+                            if ((messaged === 3981) && (state.published === 3981))
+                            {
+                                done();
+                            }
+                            else if (messaged > 3981)
+                            {
+                                done(new Error('too many messages'));
+                            }
+                            else if (state.puiblished > 3981)
+                            {
+                                done(new Error('too many published'));
+                            }
+                        }
+
+                        function backedoff()
+                        {
+                            expect(state.warnings).to.equal(1);
+
+                            on_delay = function ()
+                            {
+                                if (delayed === 3981)
+                                {
+                                    expect(messaged).to.equal(0);
+                                    expect(state.published).to.equal(undefined);
+
+                                    state.onpub = check;
+
+                                    restore();
+                                }
+                            };
+                            on_delay();
+                        }
+
+                        get_info().clients[0].subscribe('foo', gotmsg, function (err)
+                        {
+                            if (err) { return done(err); }
+                            doit(state);
+                        });
+                    });
+                }, function (get_info)
+                {
+                    var backoff = require('../lib/server_extensions/backoff');
+                    get_info().attach_extension(
+                        backoff.backoff,
+                        {
+                            delay_message: true,
+                            on_delay: function (info)
+                            {
+                                delayed += 1;
+                                if (on_delay)
+                                {
+                                    on_delay();
+                                }
+                            }
+                        });
+                });
             });
         }
     });
