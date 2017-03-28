@@ -213,12 +213,6 @@ module.exports = function (config, connect, options)
             start();
         }
 
-        before(function (cb)
-        {
-            var fsq_dir = path.join(path.dirname(require.resolve('qlobber-fsq')), 'fsq');
-            rimraf(fsq_dir, cb);
-        });
-        
         before(on_before);
 
         function on_after(cb2)
@@ -273,6 +267,12 @@ module.exports = function (config, connect, options)
                 });
             });
         }
+
+        after(function (cb)
+        {
+            var fsq_dir = path.join(path.dirname(require.resolve('qlobber-fsq')), 'fsq');
+            rimraf(fsq_dir, cb);
+        });
 
         after(on_after);
 
@@ -5373,7 +5373,6 @@ module.exports = function (config, connect, options)
                                 if (state.published === 3981)
                                 {
                                     get_info().detach_extension(bo);
-                                    console.log("DONE");
                                     done();
                                 }
                                 else if (state.published > 3981)
@@ -5460,24 +5459,32 @@ module.exports = function (config, connect, options)
                         var state = {
                                 no_restore: true,
                                 done: backedoff
-                            };
+                            },
+                            messages = 0;
 
                         function gotmsg(s, info)
                         {
-                            done(new Error('unexpected message'));
+                            expect(info.topic).to.equal('foo');
+                            messages += 1;
+                            check();
                         }
 
                         function check(err)
                         {
                             if (err) { return done(err); }
 
-                            if (state.published === 3981)
+                            if ((state.published === 3981) &&
+                                ((skipped + messages) === 3981))
                             {
                                 done();
                             }
-                            else if (state.puiblished > 3981)
+                            else if (state.published > 3981)
                             {
                                 done(new Error('too many published'));
+                            }
+                            else if ((skipped + messages) > 3981)
+                            {
+                                done(new Error('too many skipped + messages'));
                             }
                         }
 
@@ -5487,17 +5494,15 @@ module.exports = function (config, connect, options)
 
                             on_skip = function ()
                             {
-                                if (skipped === 3981)
+                                if (skipped === 1)
                                 {
                                     expect(state.published).to.equal(undefined);
-
                                     state.onpub = check;
-
                                     restore();
                                 }
-                                else if (skipped > 3981)
+                                else
                                 {
-                                    done(new Error('too many skipped'));
+                                    check();
                                 }
                             };
                             on_skip();
@@ -5563,7 +5568,7 @@ module.exports = function (config, connect, options)
                             {
                                 done(new Error('too many messages'));
                             }
-                            else if (state.puiblished > 3981)
+                            else if (state.published > 3981)
                             {
                                 done(new Error('too many published'));
                             }
