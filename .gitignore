@@ -6,3 +6,4 @@
 /test/ca.srl
 /test/server.key
 /test/server.pem
+/.nyc_output
