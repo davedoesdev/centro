@@ -215,8 +215,23 @@ module.exports = function (config, connect, options)
 
         before(on_before);
 
-        function on_after(cb2)
+        function on_after(cb3)
         {
+            function cb2(err)
+            {
+                if (err)
+                {
+                    return cb3(err);
+                }
+
+                if (options.on_after)
+                {
+                    return options.on_after(config, cb3);
+                }
+
+                cb3();
+            }
+
             function cb(err)
             {
                 if (err)
@@ -224,12 +239,19 @@ module.exports = function (config, connect, options)
                     return cb2(err);
                 }
 
-                if (options.on_after)
+                server.close(function ()
                 {
-                    return options.on_after(config, cb2);
-                }
-
-                cb2();
+                    if (config.fsq)
+                    {
+                        expect(server.fsq._stopped).to.equal(false);
+                        config.fsq.stop_watching(cb2);
+                    }
+                    else
+                    {
+                        expect(server.fsq._stopped).to.equal(true);
+                        cb2();
+                    }
+                });
             }
 
             if (options.anon)
@@ -244,37 +266,17 @@ module.exports = function (config, connect, options)
                     return cb(err);
                 }
 
-                server.authz.keystore.remove_pub_key(uri2, function (err)
-                {
-                    if (err)
-                    {
-                        return cb(err);
-                    }
-
-                    server.close(function ()
-                    {
-                        if (config.fsq)
-                        {
-                            expect(server.fsq._stopped).to.equal(false);
-                            config.fsq.stop_watching(cb);
-                        }
-                        else
-                        {
-                            expect(server.fsq._stopped).to.equal(true);
-                            cb();
-                        }
-                    });
-                });
+                server.authz.keystore.remove_pub_key(uri2, cb);
             });
         }
+
+        after(on_after);
 
         after(function (cb)
         {
             var fsq_dir = path.join(path.dirname(require.resolve('qlobber-fsq')), 'fsq');
             rimraf(fsq_dir, cb);
         });
-
-        after(on_after);
 
         function setup(n, opts)
         {
@@ -4426,12 +4428,15 @@ module.exports = function (config, connect, options)
                 it('should emit full event, warning and error', function (done)
                 {
                     var client_full = false,
-                        server_full = false,
+                        server_full = 0,
                         server_warning = false;
 
                     function check()
                     {
-                        if (client_full && server_full && server_warning)
+                        if (client_full &&
+                            (server_full == 2) && // one when reaches 1000
+                                                  // another for msg 1001
+                            server_warning)
                         {
                             done();
                         }
@@ -4441,7 +4446,7 @@ module.exports = function (config, connect, options)
                     {
                         mqserver.mux.on('full', function ()
                         {
-                            server_full = true;
+                            server_full += 1;
                             check();
                         });
                     }
@@ -4664,8 +4669,8 @@ module.exports = function (config, connect, options)
                             laggard0_called = false,
                             laggard1_called = false,
                             buf = new Buffer(100 * 1024),
-                            mqservers = {},
-                            prefixes = {};
+                            mqservers = [],
+                            prefixes = [];
 
                         buf.fill('a');
 
@@ -4746,7 +4751,16 @@ module.exports = function (config, connect, options)
 
                         var filter = require('../lib/server_extensions/filter');
                         get_info().attach_extension(
-                            filter.fastest_writable, { emit_laggard: true });
+                            filter.fastest_writable,
+                            {
+                                emit_laggard: true,
+                                on_fw: function (fw, mqserver, s, info)
+                                {
+                                    expect(fw).to.be.an.instanceOf(require('fastest-writable').FastestWritable);
+                                    expect(mqserver).to.be.oneOf(mqservers);
+                                    expect(info.topic).to.equal(prefixes[0][0] + 'foo');
+                                }
+                            });
 
                         get_info().clients[0].subscribe('foo', function (s, info)
                         {
@@ -5275,7 +5289,8 @@ module.exports = function (config, connect, options)
                                     'carrier stream ended before end message received',
                                     'carrier stream finished before duplex finished',
                                     'write after end',
-                                    'read ECONNRESET'
+                                    'read ECONNRESET',
+                                    'write EPIPE'
                                 ]);
                             }
                             else
@@ -5308,13 +5323,160 @@ module.exports = function (config, connect, options)
             }, config));
         }
 
+        function full_event(f, before_server_ready)
+        {
+            /*jshint validthis: true */
+            run.call(this, Object.assign(
+            {
+                test_timeout: 60000,
+
+                only: function (get_info)
+                {
+                    get_info().setup(1,
+                    {
+                        access_control: {
+                            publish: {
+                                allow: ['foo'],
+                                disallow: []
+                            },
+                            subscribe: {
+                                allow: ['foo'],
+                                disallow: []
+                            }
+                        }
+                    });
+
+                    function check(state)
+                    {
+                        if (state.server_full && state.server_warning)
+                        {
+                            if (state.done && !state.done_called)
+                            {
+                                state.done_called = true;
+                                state.done();
+                            }
+                        }
+                    }
+
+                    function reg(mqserver, state)
+                    {
+                        mqserver.on('full', function ()
+                        {
+                            state.server_full = true;
+                            check(state);
+                        });
+                    }
+
+                    function doit(state)
+                    {
+                        for (var mqserver of get_info().connections.keys())
+                        {
+                            reg(mqserver, state)
+                        }
+
+                        get_info().server.once('warning', function (err, mqserver)
+                        {
+                            expect(err.message).to.equal('full');
+                            expect(get_info().connections.get(mqserver)).not.to.equal(undefined);
+                            state.server_warning = true;
+                            check(state);
+                        });
+                        
+                        get_info().server.on('warning', function (err)
+                        {
+                            if (err.message === 'full')
+                            {
+                                if (state.warnings === undefined)
+                                {
+                                    state.warnings = 0;
+                                }
+                                state.warnings += 1;
+                            }
+                        });
+
+                        get_info().clients[0].on('warning', function (err)
+                        {
+                            expect(err.message).to.be.oneOf([
+                                'write after end',
+                                'carrier stream ended before end message received',
+                                'carrier stream finished before duplex finished'
+
+                            ]);
+                        });
+
+                        get_info().clients[0].on('error', function (err, obj)
+                        {
+                            expect(err.message).to.be.oneOf([
+                                'write after end',
+                                'read ECONNRESET',
+                                'carrier stream finished before duplex finished',
+                                'carrier stream ended before end message received',
+                                'write EPIPE'
+                            ]);
+                        });
+
+                        function onpub(err)
+                        {
+                            if (err)
+                            {
+                                expect(err.message).to.be.oneOf([
+                                    'carrier stream ended before end message received',
+                                    'carrier stream finished before duplex finished',
+                                    'write after end',
+                                    'read ECONNRESET',
+                                    'write EPIPE'
+                                ]);
+                            }
+                            else
+                            {
+                                if (state.published === undefined)
+                                {
+                                    state.published = 0;
+                                }
+                                state.published += 1;
+
+                                if (state.onpub)
+                                {
+                                    state.onpub();
+                                }
+                            }
+                        }
+
+                        get_info().clients[0].subscribe('foo', function ()
+                        {
+                            if (state.onmsg)
+                            {
+                                state.onmsg.apply(this, arguments);
+                            }
+                        }, function (err)
+                        {
+                            if (err) { return done(err); }
+
+                            state.pub_streams = [];
+
+                            for (var i = 0; i < 1000; i += 1)
+                            {
+                                var s = get_info().clients[0].publish('foo', onpub);
+                                state.pub_streams.push(s);
+                                s.write('bar');
+                            }
+                        });
+                    }
+
+                    f(get_info, doit);
+                },
+
+                before_server_ready: before_server_ready
+            }, config));
+        }
+
         if (!options.relay)
         {
             describe('backoff event', function ()
             {
                 backoff_event.call(this, function (get_info, doit, restore)
                 {
-                    it('should emit a backoff warning', function (done)
+                    it('should emit a backoff event', function (done)
                     {
                         doit({ done: done, dummy_publish: true });
                     });
@@ -5604,6 +5766,212 @@ module.exports = function (config, connect, options)
                     var backoff = require('../lib/server_extensions/backoff');
                     get_info().attach_extension(
                         backoff.backoff,
+                        {
+                            delay_message: true,
+                            on_delay: function (info)
+                            {
+                                delayed += 1;
+                                if (on_delay)
+                                {
+                                    on_delay();
+                                }
+                            }
+                        });
+                });
+            });
+
+            describe('full event (2)', function ()
+            {
+                full_event.call(this, function (get_info, doit)
+                {
+                    it('should emit a full event', function (done)
+                    {
+                        doit({ done: done });
+                    });
+
+                    it('should support closing connection on full', function (done)
+                    {
+                        var full = require('../lib/server_extensions/full'),
+                            fl = get_info().attach_extension(
+                                full.full,
+                                { close_conn: true }),
+                            state = {};
+
+                        get_info().clients[0].mux.on('end', function ()
+                        {
+                            expect(state.server_full).to.equal(true);
+                            expect(state.server_warning).to.equal(true);
+                            get_info().detach_extension(fl);
+                            done();
+                        });
+
+                        doit(state);
+                    });
+                });
+            });
+
+            describe('full event (skip message)', function ()
+            {
+                var skipped = 0, on_skip;
+
+                full_event.call(this, function (get_info, doit)
+                {
+                    it('should support skipping messages on full', function (done)
+                    {
+                        var state = {
+                                done: full,
+                                onmsg: gotmsg
+                            },
+                            messages = 0;
+
+                        function gotmsg(s, info)
+                        {
+                            expect(info.topic).to.equal('foo');
+                            read_all(s, function (v)
+                            {
+                                expect(v.toString()).to.equal('bar');
+                                messages += 1;
+                                check();
+                            });
+                        }
+
+                        function check(err)
+                        {
+                            if (err) { return done(err); }
+
+                            if ((state.published === 1000) &&
+                                ((skipped + messages) === 1001))
+                            {
+                                done();
+                            }
+                            else if (state.published > 1000)
+                            {
+                                done(new Error('too many published'));
+                            }
+                            else if ((skipped + messages) > 1001)
+                            {
+                                done(new Error('too many skipped + messages'));
+                            }
+                        }
+
+                        function full()
+                        {
+                            expect(state.warnings).to.equal(1);
+
+                            on_skip = function ()
+                            {
+                                if (skipped === 1)
+                                {
+                                    expect(state.published).to.equal(undefined);
+                                    state.onpub = check;
+                                    for (var s of state.pub_streams)
+                                    {
+                                        s.end();
+                                    }
+                                }
+                                else
+                                {
+                                    check();
+                                }
+                            };
+                            on_skip();
+
+                            get_info().server.fsq.publish(get_info().connections.values().next().value.prefixes[0] + 'foo').end('bar');
+                        }
+
+                        doit(state);
+                    });
+                }, function (get_info)
+                {
+                    var full = require('../lib/server_extensions/full');
+                    get_info().attach_extension(
+                        full.full,
+                        {
+                            skip_message: true,
+                            on_skip: function (info)
+                            {
+                                skipped += 1;
+                                if (on_skip)
+                                {
+                                    on_skip();
+                                }
+                            }
+                        });
+                });
+            });
+
+            describe('full event (delay message)', function ()
+            {
+                var delayed = 0, on_delay;
+
+                full_event.call(this, function (get_info, doit)
+                {
+                    it('should support delaying messages on full', function (done)
+                    {
+                        var state = {
+                                done: full,
+                                onmsg: gotmsg
+                            },
+                            messages = 0;
+
+                        function gotmsg(s, info)
+                        {
+                            expect(info.topic).to.equal('foo');
+                            read_all(s, function (v)
+                            {
+                                expect(v.toString()).to.equal('bar');
+                                messages += 1;
+                                check();
+                            });
+                        }
+
+                        function check(err)
+                        {
+                            if (err) { return done(err); }
+
+                            if ((state.published === 1000) &&
+                                (messages === 1001))
+                            {
+                                done();
+                            }
+                            else if (state.published > 1000)
+                            {
+                                done(new Error('too many published'));
+                            }
+                            else if (messages > 1001)
+                            {
+                                done(new Error('too many messages'));
+                            }
+                        }
+
+                        function full()
+                        {
+                            expect(state.warnings).to.equal(1);
+
+                            on_delay = function ()
+                            {
+                                if (delayed === 1)
+                                {
+                                    expect(state.published).to.equal(undefined);
+                                    state.onpub = check;
+                                    for (var s of state.pub_streams)
+                                    {
+                                        s.end();
+                                    }
+                                }
+                            };
+                            on_delay();
+
+                            get_info().server.fsq.publish(get_info().connections.values().next().value.prefixes[0] + 'foo').end('bar');
+                        }
+
+                        doit(state);
+                    });
+                }, function (get_info)
+                {
+                    var full = require('../lib/server_extensions/full');
+                    get_info().attach_extension(
+                        full.full,
                         {
                             delay_message: true,
                             on_delay: function (info)

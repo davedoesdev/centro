@@ -38,43 +38,55 @@ module.exports = function (grunt)
             extraHeadingLevels: 1
         },
 
-        shell: {
+        bgShell: {
             cover: {
-                command: './node_modules/.bin/istanbul cover -x Gruntfile.js ./node_modules/.bin/grunt -- test',
+                cmd: "./node_modules/.bin/nyc -x Gruntfile.js -x 'test/**' ./node_modules/.bin/grunt -- test",
+                fail: true,
                 execOptions: {
-                    maxBuffer: 10000 * 1024
+                    maxBuffer: 0
                 }
             },
 
-            check_cover: {
-                command: './node_modules/.bin/istanbul check-coverage --statement 100 --branch 100 --function 100 --line 100'
+            cover_report: {
+                cmd: "./node_modules/.bin/nyc report -r html -r lcov",
+                fail: true
+            },
+
+            cover_check: {
+                cmd: './node_modules/.bin/nyc check-coverage --statements 100 --branches 100 --functions 100 --lines 100',
+                fail: true
             },
 
             coveralls: {
-                command: 'cat coverage/lcov.info | coveralls'
+                command: 'cat coverage/lcov.info | coveralls',
+                fail: true
             },
 
             webpack: {
-                command: './node_modules/.bin/webpack'
+                command: './node_modules/.bin/webpack',
+                fail: true
             },
 
             keys: {
-                command: './test/keys.sh'
+                command: './test/keys.sh',
+                fail: true
             }
         }
     });
 
     grunt.loadNpmTasks('grunt-contrib-jshint');
     grunt.loadNpmTasks('grunt-mocha-test');
-    grunt.loadNpmTasks('grunt-shell');
+    grunt.loadNpmTasks('grunt-bg-shell');
 
     grunt.registerTask('lint', 'jshint');
-    grunt.registerTask('keys', 'shell:keys');
+    grunt.registerTask('keys', 'bgShell:keys');
     grunt.registerTask('test', 'mochaTest');
     grunt.registerTask('docs', 'apidox');
-    grunt.registerTask('dist', 'shell:webpack');
-    grunt.registerTask('coverage', ['shell:cover', 'shell:check_cover']);
-    grunt.registerTask('coveralls', 'shell:coveralls');
+    grunt.registerTask('dist', 'bgShell:webpack');
+    grunt.registerTask('coverage', ['bgShell:cover',
+                                    'bgShell:cover_report',
+                                    'bgShell:cover_check']);
+    grunt.registerTask('coveralls', 'bgShell:coveralls');
     grunt.registerTask('default', ['lint', 'test']);
 };
 
