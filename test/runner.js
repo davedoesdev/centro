@@ -2244,6 +2244,7 @@ module.exports = function (config, connect, options)
                     res.on('end', function ()
                     {
                         c.emit('error', err);
+                        ths.finalize(true); // otherwise Primus closes after a timeout
                     });
 
                     res.on('readable', function ()
@@ -4497,6 +4498,40 @@ module.exports = function (config, connect, options)
             });
         }
 
+        describe('close on error', function ()
+        {
+            setup(1,
+            {
+                access_control: {
+                    publish: {
+                        allow: ['foo'],
+                        disallow: []
+                    },
+                    subscribe: {
+                        allow: ['foo'],
+                        disallow: []
+                    }
+                }
+            });
+
+            it('should close connection if it errors', function (done)
+            {
+                var ccoe = require('../lib/server_extensions/close_conn_on_error'),
+                    ext = attach_extension(ccoe.close_conn_on_error);
+
+                server.once('disconnect', function ()
+                {
+                    detach_extension(ext);
+                    done();
+                });
+
+                for (var mqserver of connections.keys())
+                {
+                    mqserver.mux.emit('error', new Error('foo'));
+                }
+            });
+        });
+
         if (options.extra)
         {
             describe('extra', function ()
@@ -5986,5 +6021,49 @@ module.exports = function (config, connect, options)
                 });
             });
         }
+
+        describe('close connection on authorization error', function ()
+        {
+            run.call(this, Object.assign(
+            {
+                only: function (get_info)
+                {
+                    get_info().setup(1,
+                    {
+                        access_control: {
+                            publish: {
+                                allow: ['foo'],
+                                disallow: []
+                            },
+                            subscribe: {
+                                allow: ['foo'],
+                                disallow: []
+                            }
+                        },
+
+                        client_function: get_info().client_function,
+                        skip_ready: true
+                    });
+
+                    it('should close connection if error occurs on it during authorization', get_info().expect_error('foo', is_transport('tcp') ? 1 : true));
+                },
+
+                before_server_ready: function (get_info)
+                {
+                    var ccoe = require('../lib/server_extensions/close_conn_on_error');
+                    get_info().attach_extension(ccoe.close_conn_on_error);
+
+                    get_info().server.on('authz_start', function (cancel, onclose, obj)
+                    {
+                        obj.emit('error', new Error('foo'));
+                    });
+
+                    get_info().server.on('authz_end', function (err)
+                    {
+                        expect(err.message).to.equal('foo');
+                    });
+                }
+            }, config));
+        });
     });
 };

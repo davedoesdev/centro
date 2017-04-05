@@ -48,7 +48,7 @@ module.exports = function (grunt)
             },
 
             cover_report: {
-                cmd: "./node_modules/.bin/nyc report -r html -r lcov",
+                cmd: "./node_modules/.bin/nyc report -r lcov",
                 fail: true
             },
 

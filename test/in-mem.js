@@ -70,12 +70,14 @@ runner(
             left.emit('error', new Error('dummy'));
             left.right.emit('error', new Error('dummy2'));
 
-            expect(errors).to.eql(['right', 'dummy',
-                                   'left', 'dummy',
-                                   'left', 'dummy2',
-                                   'right', 'dummy2']);
-
-            done();
+            process.nextTick(function ()
+            {
+                expect(errors).to.eql(['left', 'dummy',
+                                       'right', 'dummy2',
+                                       'right', 'dummy',
+                                       'left', 'dummy2']);
+                done();
+            });
         });
     }
 });
