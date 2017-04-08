@@ -6065,5 +6065,60 @@ module.exports = function (config, connect, options)
                 }
             }, config));
         });
+
+        function allowed_algs(algs, errmsg)
+        {
+            run.call(this, Object.assign({}, config,
+            {
+                only: function (get_info)
+                {
+                    get_info().setup(1,
+                    {
+                        access_control: {
+                            publish: {
+                                allow: ['foo'],
+                                disallow: []
+                            },
+                            subscribe: {
+                                allow: ['foo'],
+                                disallow: []
+                            }
+                        },
+
+                        skip_ready: !(options.anon && !errmsg),
+                        client_function: (options.anon && !errmsg) ? undefined : get_info().client_function
+                    });
+
+                    if (options.anon && !errmsg)
+                    {
+                        it('should authorize', function (done)
+                        {
+                            done();
+                        });
+                    }
+                    else
+                    {
+                        it('should fail to authorize', get_info().expect_error(errmsg || 'algorithm not allowed: PS256'));
+                    }
+                },
+
+                allowed_algs: algs
+            }));
+        }
+
+        describe('no allowed algoriths', function ()
+        {
+            allowed_algs.call(this, []);
+        });
+
+        describe('null allowed algorithms', function ()
+        {
+            allowed_algs.call(this, null);
+        });
+
+        describe('undefined allowed algorithms', function ()
+        {
+            allowed_algs.call(this, undefined, 'Object prototype may only be an Object or null: undefined');
+        });
     });
 };
