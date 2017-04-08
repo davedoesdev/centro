@@ -81,7 +81,7 @@ module.exports = function (grunt)
     grunt.registerTask('lint', 'jshint');
     grunt.registerTask('keys', 'bgShell:keys');
     grunt.registerTask('test', 'mochaTest');
-    grunt.registerTask('docs', 'apidox');
+    grunt.registerTask('docs', 'bgShell:jsdoc');
     grunt.registerTask('dist', 'bgShell:webpack');
     grunt.registerTask('coverage', ['bgShell:cover',
                                     'bgShell:cover_report',

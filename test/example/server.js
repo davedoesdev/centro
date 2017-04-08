@@ -1,5 +1,5 @@
 var uri = 'http://davedoesdev.com',
-    CentroServer = require('centro').CentroServer,
+    CentroServer = require('centro-js').CentroServer,
     assert = require('assert'),
     jsjws = require('jsjws'),
     base_port = 8800;

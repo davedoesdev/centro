@@ -1,0 +1,37 @@
+= centro{nbsp}{nbsp}{nbsp}image:https://travis-ci.org/davedoesdev/centro-js.png[Build Status,link=https://travis-ci.org/davedoesdev/centro-js] image:https://coveralls.io/repos/davedoesdev/centro-js/badge.png?branch=master&service=github[Coverage Status,link=https://coveralls.io/r/davedoesdev/centro-js?branch=master] image:https://badge.fury.io/js/centro-js.png[NPM version,link=http://badge.fury.io/js/centro-js]
+
+Centro is a Node.js module for publishing and subscribing to messages over a
+network. It includes code for running a server and clients which connect to a
+server.
+
+Messages are published to topics which support wildcard matching (single- and
+multi-level).
+
+Each message has its own content stream, with full back-pressure support, and
+can be delivered to multiple interested clients or exactly one.
+
+All messages are stored in a directory on the server machine's filesystem so no
+external services are required. You can run multiple server instances on the
+same directory, for example one per CPU core.
+
+Clients can connect to the server using https://github.com/primus/primus[Primus]
+(Websockets), TCP, HTTP or in-memory streams.
+
+
+
+
+////
+Will use:
+
+  - [mqlobber](https://github.com/davedoesdev/mqlobber)
+  - [mqlobber-access-control](https://github.com/davedoesdev/mqlobber-access-control)
+  - [qlobber-fsq](https://github.com/davedoesdev/qlobber-fsq)
+  - [authorize-jwt](https://github.com/davedoesdev/authorize-jwt)
+  - [Primus](https://github.com/primus/primus)
+  - [primus-backpressure](https://github.com/davedoesdev/primus-backpressure)
+  - Timeout on messages to prevent consumers keeping files open
+  - [fastest-writable](https://github.com/davedoesdev/fastest-writable) to prevent slow consumers timing out a message
+  - [simple-crypt](https://github.com/davedoesdev/simple-crypt) with stream API addition for optional data encryption
+
+This is a work-in-progress!
+////

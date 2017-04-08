@@ -1,4 +1,4 @@
-var centro = require('centro'),
+var centro = require('centro-js'),
     net = require('net'),
     assert = require('assert');
 
