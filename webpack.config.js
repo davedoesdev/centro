@@ -11,10 +11,7 @@ module.exports = {
     },
     module: {
         loaders: [
-            { test: /\.json$/, loader: 'json' }
+            { test: /\.json$/, loader: 'json-loader' }
         ]
-    },
-    plugins: [
-        new webpack.IgnorePlugin(/regenerator|nodent|js-beautify/, /ajv/) 
-    ]
+    }
 };

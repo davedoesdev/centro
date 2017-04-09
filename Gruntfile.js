@@ -58,17 +58,17 @@ module.exports = function (grunt)
             },
 
             coveralls: {
-                command: 'cat coverage/lcov.info | coveralls',
+                cmd: 'cat coverage/lcov.info | coveralls',
                 fail: true
             },
 
             webpack: {
-                command: './node_modules/.bin/webpack',
+                cmd: './node_modules/.bin/webpack',
                 fail: true
             },
 
             keys: {
-                command: './test/keys.sh',
+                cmd: './test/keys.sh',
                 fail: true
             }
         }
