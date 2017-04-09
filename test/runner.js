@@ -5406,7 +5406,7 @@ module.exports = function (config, connect, options)
                     {
                         for (var mqserver of get_info().connections.keys())
                         {
-                            reg(mqserver, state)
+                            reg(mqserver, state);
                         }
 
                         get_info().server.once('warning', function (err, mqserver)
@@ -5485,7 +5485,7 @@ module.exports = function (config, connect, options)
                             }
                         }, function (err)
                         {
-                            if (err) { return done(err); }
+                            if (err) { throw err; }
 
                             state.pub_streams = [];
 
@@ -6068,6 +6068,7 @@ module.exports = function (config, connect, options)
 
         function allowed_algs(algs, errmsg)
         {
+            /*jshint validthis: true */
             run.call(this, Object.assign({}, config,
             {
                 only: function (get_info)
