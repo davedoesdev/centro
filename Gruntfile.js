@@ -42,7 +42,7 @@ module.exports = function (grunt)
             cover: {
                 cmd: "./node_modules/.bin/nyc -x Gruntfile.js -x 'test/**' ./node_modules/.bin/grunt -- test",
                 fail: true,
-                execOptions: {
+                execOpts: {
                     maxBuffer: 0
                 }
             },

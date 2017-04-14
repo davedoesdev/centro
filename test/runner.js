@@ -5409,12 +5409,15 @@ module.exports = function (config, connect, options)
                             reg(mqserver, state);
                         }
 
-                        get_info().server.once('warning', function (err, mqserver)
+                        get_info().server.on('warning', function warning(err, mqserver)
                         {
-                            expect(err.message).to.equal('full');
-                            expect(get_info().connections.get(mqserver)).not.to.equal(undefined);
-                            state.server_warning = true;
-                            check(state);
+                            if (err.message === 'full')
+                            {
+                                this.removeListener('warning', warning);
+                                expect(get_info().connections.get(mqserver)).not.to.equal(undefined);
+                                state.server_warning = true;
+                                check(state);
+                            }
                         });
                         
                         get_info().server.on('warning', function (err)
@@ -6107,7 +6110,7 @@ module.exports = function (config, connect, options)
             }));
         }
 
-        describe('no allowed algoriths', function ()
+        describe('no allowed algorithms', function ()
         {
             allowed_algs.call(this, []);
         });
