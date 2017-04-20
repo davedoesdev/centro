@@ -22,8 +22,10 @@ runner(
 
 runner(
 {
-    transport: 'tcp',
-    transport_name: 'tcp_passed_in_server'
+    transport: {
+        server: 'tcp',
+        name: 'tcp_passed_in_server'
+    }
 }, connect,
 {
     on_before: function (config, cb)

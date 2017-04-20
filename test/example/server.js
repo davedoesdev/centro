@@ -1,26 +1,44 @@
-var uri = 'http://davedoesdev.com',
-    CentroServer = require('centro-js').CentroServer,
+var centro = require('centro-js'),
     assert = require('assert'),
-    jsjws = require('jsjws'),
-    base_port = 8800;
+    jsjws = require('jsjws');
 
 var config = {
     allowed_algs: ['PS256'],
-    transport: []
+    transports: [{
+        server: 'tcp',
+        config: {
+            port: 8800
+        }
+    }, {
+        server: 'primus',
+        config: {
+            port: 8801
+        }
+    }, {
+        server: 'http',
+        config: {
+            port: 8802
+        }
+    }, {
+        server: 'in-mem',
+        authorize_config: {
+            ANONYMOUS_MODE: true
+        },
+    }]
 };
 
-for (var i = 2; i < process.argv.length; i += 1)
+new centro.CentroServer(config).on('ready', function ()
 {
-    config.transport.push(
+    this.transport_ops['in-mem'].connect(function (err, stream)
     {
-        server: CentroServer.load_transport(process.argv[i]),
-        config: {
-            port: base_port + i - 2
-        }
-    });
-}
+        assert.ifError(err);
 
-new CentroServer(config).on('ready', function ()
-{
-    console.log('READY.');
+        centro.stream_auth(stream).subscribe('#', function (s, info)
+        {
+            console.log('topic:', info.topic);
+            s.pipe(process.stdout);
+        }, assert.ifError);
+
+        console.log('READY.');
+    });
 });

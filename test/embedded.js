@@ -9,9 +9,9 @@ runner(
         server: 'in-mem',
         authorize_config: {
             ANONYMOUS_MODE: true
-        }
+        },
+        name: 'embedded'
     },
-    transport_name: 'embedded'
 }, function (config, server, cb)
 {
     server.transport_ops[0].connect(function (err, stream)

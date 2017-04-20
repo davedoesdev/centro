@@ -39,18 +39,18 @@ runner(
 {
     transport: {
         server: 'primus',
-        config: transport_config
+        config: transport_config,
+        name: 'primus_' + mod
     },
-    transport_name: 'primus_' + mod
 }, connect);
 
 runner(
 {
     transport: {
         server: 'primus',
-        config: transport_config
+        config: transport_config,
+        name: 'primus_' + mod + '_passed_in_server'
     },
-    transport_name: 'primus_' + mod + '_passed_in_server'
 }, connect,
 {
     on_before: function (config, cb)

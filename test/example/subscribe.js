@@ -11,6 +11,7 @@ net.createConnection(8800, function ()
     {
         this.subscribe(process.argv[2], function (s, info)
         {
+            console.log('topic:', info.topic);
             s.pipe(process.stdout);
         }, assert.ifError);
     });

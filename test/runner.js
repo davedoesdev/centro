@@ -41,23 +41,13 @@ module.exports = function (config, connect, options)
     if (typeof config.transport === 'string' ||
         typeof config.transport[Symbol.iterator] !== 'function')
     {
-        name = config.transport_name ||
+        name = config.transport.name ||
                config.transport.server ||
                config.transport;
-
-        if (config.transport.server)
-        {
-            config.transport.server = CentroServer.load_transport(
-                                          config.transport.server);
-        }
-        else
-        {
-            config.transport = CentroServer.load_transport(config.transport);
-        }
     }
     else
     {
-        name = config.transport_name ||
+        name = config.transport[0].name ||
                config.transport[0].server ||
                config.transport[0];
 
@@ -370,7 +360,7 @@ module.exports = function (config, connect, options)
                 {
                     connect(
                     {
-                        token: opts.no_token ? '' :
+                        token: opts.no_token ? (options.anon ? undefined : '') :
                                opts.too_many_tokens ? [token, token2, token] :
                                opts.long_token ? new Array(config.max_token_length + 2).join('A') :
                                opts.duplicate_tokens ? [token, token] :
@@ -2407,14 +2397,38 @@ module.exports = function (config, connect, options)
 
         describe('no tokens', function ()
         {
-            setup(1,
+            if (options.anon)
             {
-                no_token: true,
-                skip_ready: true,
-                client_function: client_function
-            });
+                setup(1, { no_token: true });
 
-            it('should fail to authorize', expect_error('no tokens'));
+                it('should publish and subscribe', function (done)
+                {
+                    clients[0].subscribe('foo', function (s, info)
+                    {
+                        expect(info.topic).to.equal('foo');
+                        read_all(s, function (v)
+                        {
+                            expect(v.toString()).to.equal('bar');
+                            done();
+                        });
+                    }, function (err)
+                    {
+                        if (err) { return done(err); }
+                        clients[0].publish('foo').end('bar');
+                    });
+                });
+            }
+            else
+            {
+                setup(1,
+                {
+                    no_token: true,
+                    skip_ready: true,
+                    client_function: client_function
+                });
+
+                it('should fail to authorize', expect_error('no tokens'));
+            }
         });
 
         describe('immediate eos', function ()

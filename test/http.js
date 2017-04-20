@@ -779,11 +779,9 @@ runner(
 {
     transport: [{
         server: 'http',
-        config: transport_config
-    }, {
-        server: 'in-mem'
-    }],
-    transport_name: mod
+        config: transport_config,
+        name: mod
+    }, 'in-mem'],
 }, connect,
 {
     relay: true,
@@ -797,11 +795,11 @@ runner(
         config: Object.assign(
         {
             sse_keep_alive_interval: 1
-        }, transport_config)
+        }, transport_config),
+        name: mod + '_passed_in_server'
     }, {
         server: 'in-mem'
     }],
-    transport_name: mod + '_passed_in_server'
 }, connect,
 {
     relay: true,

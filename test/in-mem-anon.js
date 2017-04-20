@@ -5,8 +5,10 @@ var runner = require('./runner'),
 
 runner(
 {
-    transport: 'in-mem',
-    transport_name: 'in-mem-anon',
+    transport: {
+        server: 'in-mem',
+        name: 'in-mem-anon'
+    },
     ANONYMOUS_MODE: true
 }, function (config, server, cb)
 {

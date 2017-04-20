@@ -6,8 +6,10 @@ var runner = require('./runner'),
 
 runner(
 {
-    transport: 'in-mem',
-    transport_name: 'in-mem-fsq',
+    transport: {
+        server: 'in-mem',
+        name: 'in-mem-fsq'
+    }
 }, function (config, server, cb)
 {
     server.transport_ops[0].connect(function (err, stream)

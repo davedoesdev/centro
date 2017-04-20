@@ -7,9 +7,9 @@ runner(
 {
     transport: {
         server: 'in-mem',
-        authorize_config: {}
+        authorize_config: {},
+        name: 'embedded-authz'
     },
-    transport_name: 'embedded-authz'
 }, function (config, server, cb)
 {
     server.transport_ops[0].connect(function (err, stream)
