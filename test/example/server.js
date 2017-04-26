@@ -1,33 +1,32 @@
-var centro = require('centro-js'),
-    assert = require('assert'),
-    jsjws = require('jsjws');
+var centro = require('centro-js');
 
 var config = {
     allowed_algs: ['PS256'],
     transports: [{
         server: 'tcp',
-        config: {
-            port: 8800
-        }
+        config: { port: 8800 }
     }, {
         server: 'primus',
-        config: {
-            port: 8801
-        }
+        config: { port: 8801 }
     }, {
         server: 'http',
-        config: {
-            port: 8802
-        }
+        config: { port: 8802 }
     }, {
         server: 'in-mem',
-        authorize_config: {
-            ANONYMOUS_MODE: true
-        },
+        authorize_config: { ANONYMOUS_MODE: true }
     }]
 };
 
-new centro.CentroServer(config).on('ready', function ()
+var server = new centro.CentroServer(config);
+
+server.on('ready', function ()
+{
+    console.log('READY.');
+});
+//----
+var assert = require('assert');
+
+server.on('ready', function ()
 {
     this.transport_ops['in-mem'].connect(function (err, stream)
     {
@@ -38,7 +37,5 @@ new centro.CentroServer(config).on('ready', function ()
             console.log('topic:', info.topic);
             s.pipe(process.stdout);
         }, assert.ifError);
-
-        console.log('READY.');
     });
 });

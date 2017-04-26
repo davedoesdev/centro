@@ -8,7 +8,7 @@ Messages are published to topics which support wildcard matching (single- and
 multi-level).
 
 Each message has its own content stream, with full back-pressure support, and
-can be delivered to multiple interested clients or exactly one.
+can be delivered to multiple interested clients or to exactly one.
 
 All messages are stored in a directory on the server machine's filesystem so no
 external services are required. You can run multiple server instances on the
@@ -17,7 +17,186 @@ same directory, for example one per CPU core.
 Clients can connect to the server using https://github.com/primus/primus[Primus]
 (Websockets), TCP, HTTP or in-memory streams.
 
+The API is described http://rawgit.davedoesdev.com/davedoesdev/centro/master/docs/index.html[here].
 
+== Example
+
+=== Server
+
+Here's a server which listens on all transports.
+
+[source,javascript]
+.server.js
+----
+var centro = require('centro-js');
+
+var config = {
+    allowed_algs: ['PS256'],
+    transports: [{
+        server: 'tcp',
+        config: { port: 8800 }
+    }, {
+        server: 'primus',
+        config: { port: 8801 }
+    }, {
+        server: 'http',
+        config: { port: 8802 }
+    }, {
+        server: 'in-mem',
+        authorize_config: { ANONYMOUS_MODE: true }
+    }]
+};
+
+var server = new centro.CentroServer(config);
+
+server.on('ready', function ()
+{
+    console.log('READY.');
+});
+----
+
+This is just an example -- you only need to list transports to which your
+applications will connect.
+
+=== Authorization tokens
+
+Transports not configured for `ANONYMOUS_MODE` expect clients to present an
+authorization token when they connect.
+
+Centro uses https://github.com/davedoesdev/authorize-jwt[authorize-jwt] to
+verify tokens. Your tokens must be http://self-issued.info/docs/draft-ietf-oauth-json-web-token.html[JSON Web Tokens]. You should generate a keypair, add the
+public key to ``authorize-jwt``'s keystore and sign your tokens with the private
+key.
+
+Here's a program which generates a keypair using https://github.com/quartzjer/ursa[ursa], adds the public key to Centro's keystore with the identifier
+`http://davedoesdev.com`, and writes the private key to `priv_key.pem`:
+
+[source,javascript]
+.add_key.js
+----
+var uri = 'http://davedoesdev.com',
+    authorize_jwt = require('centro-js').authorize_jwt,
+    assert = require('assert'),
+    path = require('path'),
+    fs = require('fs'),
+    ursa = require('ursa'),
+    priv_key = ursa.generatePrivateKey(2048, 65537),
+    pub_key = priv_key.toPublicPem('utf8');
+
+authorize_jwt(
+{
+    db_type: 'pouchdb',
+    db_for_update: true,
+    no_changes: true
+}, function (err, authz)
+{
+    assert.ifError(err);
+    authz.keystore.add_pub_key(uri, pub_key, function (err)
+    {
+        assert.ifError(err);
+        fs.writeFile(path.join(__dirname, 'priv_key.pem'),
+                     priv_key.toPrivatePem(),
+                     assert.ifError);
+        authz.keystore.deploy();
+    });
+});
+----
+
+Then you need to make a JWT, using the private key to sign it.
+
+The `iss` claim in the token should be the unique issuer ID associated with
+`http://davedoesdev.com` in Centro's keystore. You can use the
+https://github.com/davedoesdev/pub-keystore#pubkeystoreprototypeget_pub_key_by_uriuri-cb[`get_pub_key_by_uri`] method to retrieve the issuer ID.
+
+The `access_control` claim in the token should specify to which topics clients
+that present this token can publish and subscribe. Topics should be in
+amqp format: `.` delimits words, `*` matches exactly one word and `#` matches
+zero or more words.
+
+You can use any JWT module to generate your tokens. Here's an example using
+https://github.com/davedoesdev/node-jsjws[jsjws]:
+
+[source,javascript]
+.make_token.js
+----
+var uri = 'http://davedoesdev.com',
+    authorize_jwt = require('centro-js').authorize_jwt,
+    jsjws = require('jsjws'),
+    assert = require('assert'),
+    path = require('path'),
+    fs = require('fs'),
+    ursa = require('ursa');
+
+fs.readFile(path.join(__dirname, 'priv_key.pem'), function (err, priv_key)
+{
+    assert.ifError(err);
+
+    var expiry = new Date();
+    expiry.setHours(expiry.getHours() + 24);
+
+    authorize_jwt(
+    {
+        db_type: 'pouchdb',
+        deploy_name: 'token',
+        no_changes: true,
+        silent: true
+    }, function (err, authz)
+    {
+        assert.ifError(err);
+        authz.keystore.get_pub_key_by_uri(uri, function (err, pub_key, issuer_id)
+        {
+            assert.ifError(err);
+            assert(pub_key);
+            assert(issuer_id);
+            console.log(new jsjws.JWT().generateJWTByKey({ alg: 'PS256' },
+            {
+                iss: issuer_id,
+                access_control: {
+                    subscribe: { allow: ['#'], disallow: [] },
+                    publish: { allow: ['#'], disallow: [] }
+                }
+            }, expiry, ursa.createPrivateKey(priv_key)));
+        });
+    });
+});
+----
+
+The token is valid for 24 hours and is written to standard output. The client
+examples below expect it in an environment variable called `CENTRO_TOKEN` so
+you might do something like this to set it:
+
+[source,bash]
+----
+export CENTRO_TOKEN=$(node make_token.js)
+----
+
+=== Clients
+
+==== In-memory client
+
+The `in-mem` transport lets you connect from the server process itself without
+incurring the overhead of a TCP connection. For example, to display every
+message published on every transport you could add the following to `server.js`:
+
+[source,javascript]
+.server.js
+----
+var assert = require('assert');
+
+server.on('ready', function ()
+{
+    this.transport_ops['in-mem'].connect(function (err, stream)
+    {
+        assert.ifError(err);
+
+        centro.stream_auth(stream).subscribe('#', function (s, info)
+        {
+            console.log('topic:', info.topic);
+            s.pipe(process.stdout);
+        }, assert.ifError);
+    });
+});
+----
 
 
 ////

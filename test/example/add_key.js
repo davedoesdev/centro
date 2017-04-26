@@ -1,5 +1,5 @@
 var uri = 'http://davedoesdev.com',
-    pub_keystore = require('pub-keystore'),
+    authorize_jwt = require('centro-js').authorize_jwt,
     assert = require('assert'),
     path = require('path'),
     fs = require('fs'),
@@ -7,20 +7,20 @@ var uri = 'http://davedoesdev.com',
     priv_key = ursa.generatePrivateKey(2048, 65537),
     pub_key = priv_key.toPublicPem('utf8');
 
-pub_keystore(
+authorize_jwt(
 {
     db_type: 'pouchdb',
     db_for_update: true,
     no_changes: true
-}, function (err, ks)
+}, function (err, authz)
 {
     assert.ifError(err);
-    ks.add_pub_key(uri, pub_key, function (err)
+    authz.keystore.add_pub_key(uri, pub_key, function (err)
     {
         assert.ifError(err);
+        authz.keystore.deploy();
         fs.writeFile(path.join(__dirname, 'priv_key.pem'),
                      priv_key.toPrivatePem(),
                      assert.ifError);
     });
-    ks.deploy();
 });
