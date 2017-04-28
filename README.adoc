@@ -107,6 +107,8 @@ Then you need to make a JWT, using the private key to sign it.
 The `iss` claim in the token should be the unique issuer ID associated with
 `http://davedoesdev.com` in Centro's keystore. You can use the
 https://github.com/davedoesdev/pub-keystore#pubkeystoreprototypeget_pub_key_by_uriuri-cb[`get_pub_key_by_uri`] method to retrieve the issuer ID.
+Clients which use tokens with different issuer IDs can't send messages to each
+other.
 
 The `access_control` claim in the token should specify to which topics clients
 that present this token can publish and subscribe. Topics should be in
@@ -161,18 +163,101 @@ fs.readFile(path.join(__dirname, 'priv_key.pem'), function (err, priv_key)
 });
 ----
 
-The token is valid for 24 hours and is written to standard output. The client
-examples below expect it in an environment variable called `CENTRO_TOKEN` so
-you might do something like this to set it:
+The token is valid for 24 hours, allows clients which use it to publish and
+subscribe to any topic and is written to standard output. The client examples
+below expect it in an environment variable called `CENTRO_TOKEN` so you might
+do something like this to set it:
 
 [source,bash]
 ----
 export CENTRO_TOKEN=$(node make_token.js)
 ----
 
-=== Clients
+=== Command-line clients
 
-==== In-memory client
+==== TCP
+
+Subscribe to a topic given on the command line and display the topic and content
+of each message received:
+
+[source,javascript]
+.subscribe.js
+----
+var centro = require('centro-js'),
+    net = require('net'),
+    assert = require('assert');
+
+net.createConnection(8800, function ()
+{
+    centro.stream_auth(this,
+    {
+        token: process.env.CENTRO_TOKEN
+    }).on('ready', function ()
+    {
+        this.subscribe(process.argv[2], function (s, info)
+        {
+            console.log('topic:', info.topic);
+            s.pipe(process.stdout);
+        }, assert.ifError);
+    });
+});
+----
+
+Publish a message, topic given on the command line and content read from
+standard input:
+
+[source,javascript]
+.publish.js
+----
+var centro = require('centro-js'),
+    net = require('net'),
+    assert = require('assert');
+
+net.createConnection(8800, function ()
+{
+    var conn = this;
+
+    centro.stream_auth(conn,
+    {
+        token: process.env.CENTRO_TOKEN
+    }).on('ready', function ()
+    {
+        process.stdin.pipe(this.publish(process.argv[2], function (err)
+        {
+            assert.ifError(err);
+            conn.end();
+        }));
+    });
+});
+----
+
+Here's a sample run:
+
+[cols="a,a",frame="none",grid="none"]
+|===
+
+|[source,bash]
+----
+$ node subscribe.js foo
+topic: foo
+hello
+----
+
+|[source,bash]
+----
+$ echo hello \| node publish.js foo
+----
+|===
+
+==== Primus
+
+=== Web clients
+
+==== Primus
+
+==== HTTP
+
+=== In-memory client
 
 The `in-mem` transport lets you connect from the server process itself without
 incurring the overhead of a TCP connection. For example, to display every
