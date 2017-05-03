@@ -31,7 +31,7 @@ Here's a server which listens on all transports.
 var centro = require('centro-js');
 
 var config = {
-    allowed_algs: ['PS256'],
+    allowed_algs: ['PS256'], <1>
     transports: [{
         server: 'tcp',
         config: { port: 8800 }
@@ -43,7 +43,7 @@ var config = {
         config: { port: 8802 }
     }, {
         server: 'in-mem',
-        authorize_config: { ANONYMOUS_MODE: true }
+        authorize_config: { ANONYMOUS_MODE: true } <2>
     }]
 };
 
@@ -54,10 +54,14 @@ server.on('ready', function ()
     console.log('READY.');
 });
 ----
+<1> <<authz-tokens,Authorization tokens>> signed with these algorithms are accepted.
+<2> In-memory transport doesn't require authorization tokens.
+<3> Connections may be refused until `ready` is emitted.
 
 This is just an example -- you only need to list transports to which your
 applications will connect.
 
+[[authz-tokens]]
 === Authorization tokens
 
 Transports not configured for `ANONYMOUS_MODE` expect clients to present an
@@ -74,33 +78,42 @@ Here's a program which generates a keypair using https://github.com/quartzjer/ur
 [source,javascript]
 .add_key.js
 ----
-var uri = 'http://davedoesdev.com',
+var uri = 'http://davedoesdev.com', <1>
     authorize_jwt = require('centro-js').authorize_jwt,
     assert = require('assert'),
     path = require('path'),
     fs = require('fs'),
     ursa = require('ursa'),
-    priv_key = ursa.generatePrivateKey(2048, 65537),
-    pub_key = priv_key.toPublicPem('utf8');
+    priv_key = ursa.generatePrivateKey(2048, 65537), <2>
+    pub_key = priv_key.toPublicPem('utf8'); <3>
 
 authorize_jwt(
 {
-    db_type: 'pouchdb',
-    db_for_update: true,
-    no_changes: true
+    db_type: 'pouchdb', <4>
+    db_for_update: true, <5>
+    no_changes: true <6>
 }, function (err, authz)
 {
     assert.ifError(err);
-    authz.keystore.add_pub_key(uri, pub_key, function (err)
+    authz.keystore.add_pub_key(uri, pub_key, function (err) <7>
     {
         assert.ifError(err);
-        fs.writeFile(path.join(__dirname, 'priv_key.pem'),
+        fs.writeFile(path.join(__dirname, 'priv_key.pem'), <8>
                      priv_key.toPrivatePem(),
                      assert.ifError);
-        authz.keystore.deploy();
+        authz.keystore.deploy(); <9>
     });
 });
 ----
+<1> Unique identifier for the keypair.
+<2> Generate the keypair.
+<3> Get the public key in PEM form.
+<4> You can use `couchdb` but you'll have to set up your own http://couchdb.apache.org/[CouchDB] server.
+<5> We're going to update the keystore.
+<6> We're not interested in changes to the keystore -- we're just going to update the public key and exit.
+<7> Associate the public key with `http://davedoesdev.com`.
+<8> The private key is not stored in the keystore but needs to be available when you want to sign authorization tokens. Here we write it to disk but this is just an example -- you probably want a more secure way of storing it.
+<9> https://pouchdb.com/[PouchDB]-based keystores update a master database and then replicate changes to reader databases. Here we `deploy()` the master database to let any active reader databases know we're done updating. 
 
 Then you need to make a JWT, using the private key to sign it.
 
@@ -129,14 +142,14 @@ var uri = 'http://davedoesdev.com',
     fs = require('fs'),
     ursa = require('ursa');
 
-fs.readFile(path.join(__dirname, 'priv_key.pem'), function (err, priv_key)
+fs.readFile(path.join(__dirname, 'priv_key.pem'), function (err, priv_key) <1>
 {
     assert.ifError(err);
 
     var expiry = new Date();
-    expiry.setHours(expiry.getHours() + 24);
+    expiry.setHours(expiry.getHours() + 24); <2>
 
-    authorize_jwt(
+    authorize_jwt( <3>
     {
         db_type: 'pouchdb',
         deploy_name: 'token',
@@ -145,23 +158,30 @@ fs.readFile(path.join(__dirname, 'priv_key.pem'), function (err, priv_key)
     }, function (err, authz)
     {
         assert.ifError(err);
-        authz.keystore.get_pub_key_by_uri(uri, function (err, pub_key, issuer_id)
+        authz.keystore.get_pub_key_by_uri(uri, function (err, pub_key, issuer_id) <4>
         {
             assert.ifError(err);
             assert(pub_key);
             assert(issuer_id);
             console.log(new jsjws.JWT().generateJWTByKey({ alg: 'PS256' },
             {
-                iss: issuer_id,
-                access_control: {
+                iss: issuer_id, <5>
+                access_control: { <6>
                     subscribe: { allow: ['#'], disallow: [] },
                     publish: { allow: ['#'], disallow: [] }
                 }
-            }, expiry, ursa.createPrivateKey(priv_key)));
+            }, expiry, ursa.createPrivateKey(priv_key))); <7>
         });
     });
 });
 ----
+<1> Read the private key. This is just an example -- you should have a more secure way of storing private keys.
+<2> Set token expiry to 24 hours.
+<3> Open the keystore for reading.
+<4> Retrieve the issuer ID for `http://davedoesdev.com`.
+<5> Use the issuer ID in the token.
+<6> Allow clients using this token to subscribe and publish to any topic.
+<7> Supply the expiry time and private key for signing.
 
 The token is valid for 24 hours, allows clients which use it to publish and
 subscribe to any topic and is written to standard output. The client examples
@@ -173,7 +193,7 @@ do something like this to set it:
 export CENTRO_TOKEN=$(node make_token.js)
 ----
 
-=== Command-line clients
+=== Node clients
 
 ==== TCP
 
@@ -181,33 +201,39 @@ Subscribe to a topic given on the command line and display the topic and content
 of each message received:
 
 [source,javascript]
-.subscribe.js
+.subscribe_tcp.js
 ----
 var centro = require('centro-js'),
     net = require('net'),
     assert = require('assert');
 
-net.createConnection(8800, function ()
+net.createConnection(8800, function () <1>
 {
-    centro.stream_auth(this,
+    centro.stream_auth(this, <2>
     {
-        token: process.env.CENTRO_TOKEN
+        token: process.env.CENTRO_TOKEN <3>
     }).on('ready', function ()
     {
-        this.subscribe(process.argv[2], function (s, info)
+        this.subscribe(process.argv[2], function (s, info) <4>
         {
-            console.log('topic:', info.topic);
-            s.pipe(process.stdout);
+            console.log('topic:', info.topic); <5>
+            s.pipe(process.stdout); <6>
         }, assert.ifError);
     });
 });
 ----
+<1> Open a TCP connection to the server on port 8800.
+<2> The TCP transport expects the token on the connection stream.
+<3> Read the token from the environment.
+<4> Subscribe to the topic given on the comment line.
+<5> Display the message's topic
+<6> Pipe the message's content stream to standard output.
 
 Publish a message, topic given on the command line and content read from
 standard input:
 
 [source,javascript]
-.publish.js
+.publish_tcp.js
 ----
 var centro = require('centro-js'),
     net = require('net'),
@@ -222,14 +248,17 @@ net.createConnection(8800, function ()
         token: process.env.CENTRO_TOKEN
     }).on('ready', function ()
     {
-        process.stdin.pipe(this.publish(process.argv[2], function (err)
+        process.stdin.pipe(this.publish(process.argv[2], function (err) <1><2>
         {
             assert.ifError(err);
-            conn.end();
+            conn.end(); <3>
         }));
     });
 });
 ----
+<1> Publish the message to the topic given on the command line.
+<2> Pipe standard input to the message's content stream.
+<3> Close the TCP connection, which will also cause the process to exit.
 
 Here's a sample run:
 
@@ -238,18 +267,94 @@ Here's a sample run:
 
 |[source,bash]
 ----
-$ node subscribe.js foo
+$ node subscribe_tcp.js foo
 topic: foo
 hello
 ----
 
 |[source,bash]
 ----
-$ echo hello \| node publish.js foo
+$ echo hello \| node publish_tcp.js foo
 ----
 |===
 
 ==== Primus
+
+Here are similar clients which use the Primus transport.
+
+[source,javascript]
+.subscribe_primus.js
+----
+var centro = require('centro-js'),
+    assert = require('assert'),
+    Primus = require('primus'),
+    Socket = Primus.createSocket(
+    {
+        pathname: '/centro/v' + centro.version + '/primus' <1>
+    }),
+    PrimusDuplex = require('primus-backpressure').PrimusDuplex; <2>
+
+centro.separate_auth( <3>
+{
+    token: process.env.CENTRO_TOKEN
+}, function (err, userpass, make_client)
+{
+    assert.ifError(err);
+
+    var socket = new Socket('http://' + userpass + '@localhost:8801', <4>
+                            { strategy: false }), <5>
+        duplex = new PrimusDuplex(socket);
+
+    make_client(duplex).on('ready', function () <6>
+    {
+        this.subscribe(process.argv[2], function (s, info)
+        {
+            console.log('topic:', info.topic);
+            s.pipe(process.stdout);
+        }, assert.ifError);
+    });
+});
+----
+<1> The Primus transport uses a versioned path.
+<2> The Primus transport uses https://github.com/davedoesdev/primus-backpressure[primus-backpressure].
+<3> The Primus transport expects the token to be supplied in the HTTP request authorization, before the connection stream is established.
+<4> Open a connection to the server.
+<5> You should disable Primus's auto-reconnect feature because it doesn't work with Centro. Centro's connections are stateful (they have shared state between the client and server). The server deletes its state immediately upon disconnect. If you need auto-reconnect you should implement it in your application.
+<6> Establish a connection stream to the server.
+
+[source,javascript]
+.publish_primus.js
+----
+var centro = require('centro-js'),
+    assert = require('assert'),
+    Primus = require('primus'),
+    Socket = Primus.createSocket(
+    {
+        pathname: '/centro/v' + centro.version + '/primus'
+    }),
+    PrimusDuplex = require('primus-backpressure').PrimusDuplex;
+
+centro.separate_auth(
+{
+    token: process.env.CENTRO_TOKEN
+}, function (err, userpass, make_client)
+{
+    assert.ifError(err);
+
+    var socket = new Socket('http://' + userpass + '@localhost:8801',
+                            { strategy: false }),
+        duplex = new PrimusDuplex(socket);
+
+    make_client(duplex).on('ready', function ()
+    {
+        process.stdin.pipe(this.publish(process.argv[2], function (err)
+        {
+            assert.ifError(err);
+            duplex.end();
+        }));
+    });
+});
+----
 
 === Web clients
 
@@ -260,8 +365,8 @@ $ echo hello \| node publish.js foo
 === In-memory client
 
 The `in-mem` transport lets you connect from the server process itself without
-incurring the overhead of a TCP connection. For example, to display every
-message published on every transport you could add the following to `server.js`:
+the overhead of a TCP connection. For example, to display every message
+published on every transport you could add the following to `server.js`:
 
 [source,javascript]
 .server.js
