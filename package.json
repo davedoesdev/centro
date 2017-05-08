@@ -62,7 +62,7 @@
     "jsjws": "~2.1.1",
     "ws": "~2.2.3",
     "fastest-writable": "~1.0.0",
-    "webpack": "2.3.3",
+    "webpack": "2.4.1",
     "json-loader": "~0.5.4",
     "rimraf": "~2.6.1"
   },

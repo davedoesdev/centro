@@ -1,51 +1,51 @@
 .message, .status
 {
-    margin-bottom: 10px;
+  margin-bottom: 10px;
 }
 
 .topic
 {
-    font-weight: bold;
-    text-decoration: underline;
+  font-weight: bold;
+  text-decoration: underline;
 }
 
 .status
 {
-    font-style: italic;
+  font-style: italic;
 }
 
 #input
 {
-    display: flex;
-    align-items: center;
-    margin-bottom: 20px;
-    flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+  flex: 0 0 auto;
 }
 
 #input > div
 {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    margin-right: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  margin-right: 10px;
 }
 
 label
 {
-    margin-top: 5px;
-    margin-bottom: 5px;
+  margin-top: 5px;
+  margin-bottom: 5px;
 }
 
 form
 {
-    height: 100%;
-    margin: 0;
-    display: flex;
-    flex-direction: column;
+  height: 100%;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 #messages
 {
-    flex: 1 1 auto;
-    overflow-y: auto;
+  flex: 1 1 auto;
+  overflow-y: auto;
 }
