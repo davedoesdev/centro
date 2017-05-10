@@ -67,6 +67,11 @@ module.exports = function (grunt)
                 fail: true
             },
 
+            check_dist: {
+                cmd: './node_modules/.bin/webpack --config webpack.check.config && diff -u dist/centro.js dist/check.js && rm -f dist/check.js',
+                fail: true
+            },
+
             keys: {
                 cmd: './test/keys.sh',
                 fail: true
