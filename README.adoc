@@ -609,20 +609,20 @@ function connect()
 
     source.addEventListener('start', function (e)
     {
-        var info = JSON.parse(e.data);
-        info.data = '';
-        msgs.set(info.id, info);
+        var info = JSON.parse(e.data); <4>
+        info.data = ''; <5>
+        msgs.set(info.id, info); <6>
     });
 
     source.addEventListener('data', function (e)
     {
         var info = JSON.parse(e.data);
-        msgs.get(info.id).data += atob(info.data);
+        msgs.get(info.id).data += info.data; <7>
     });
 
     source.addEventListener('end', function (e)
     {
-        var info = msgs.get(JSON.parse(e.data).id);
+        var info = msgs.get(JSON.parse(e.data).id); <8>
 
         var msg = document.createElement('div');
         msg.className = 'message';
@@ -644,6 +644,12 @@ authorization token and the topic we want messages for as query parameters.
 <2> POST message to the server using an `XMLHttpRequest`. We pass the
 authorization token and message topic as query parameters.
 <3> Send the message content.
+<4> Each message begins with a `start` event, which has JSON-encoded data
+containing the message's topic and unique ID.
+<5> Message data can be delivered across multiple events. In this example we need a place to accumulate it.
+<6> Messages can be interleaved so while we're accumulating data, we need to remember them by their unique IDs.
+<7> Message data arrives in `data` events and we accumulate it here.
+<8> When all a message's data has been received, we get an `end` event. In this example, we display the message's topic and data.
 
 === In-memory client
 
@@ -672,6 +678,14 @@ server.on('ready', function ()
 ----
 
 === Clients in other languages
+
+If you're not using Javascript, you can use the HTTP transport. As long as you
+can make POST requests, you can publish messages. To subscribe to messages,
+you'll need to be able to receive server-sent events.
+
+
+
+
 
 
 ////

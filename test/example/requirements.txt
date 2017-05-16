@@ -1,0 +1,2 @@
+requests>=2.10.0
+sseclient-py>=1.5

@@ -65,7 +65,7 @@ function connect()
     source.addEventListener('data', function (e)
     {
         var info = JSON.parse(e.data);
-        msgs.get(info.id).data += atob(info.data);
+        msgs.get(info.id).data += info.data;
     });
 
     source.addEventListener('end', function (e)
