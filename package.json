@@ -40,7 +40,7 @@
     "mqlobber-access-control": "~4.0.2",
     "qlobber-fsq": "~7.1.1",
     "authorize-jwt": "~2.0.2",
-    "primus": "~7.0.0",
+    "primus": "~7.0.2",
     "primus-backpressure": "~1.0.1",
     "frame-stream": "~1.1.1",
     "ajv": "~5.0.4-beta",
@@ -64,7 +64,8 @@
     "fastest-writable": "~1.0.0",
     "webpack": "2.4.1",
     "json-loader": "~0.5.4",
-    "rimraf": "~2.6.1"
+    "rimraf": "~2.6.1",
+    "eventsource": "~1.0.1"
   },
   "engines": {
     "node": ">=0.12"
