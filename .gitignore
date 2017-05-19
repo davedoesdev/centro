@@ -1,5 +1,5 @@
 /node_modules*
-/test/example/priv_key.pem
+/test/example/node/priv_key.pem
 /test/ca.key
 /test/ca.pem
 /test/ca.srl

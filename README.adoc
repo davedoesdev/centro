@@ -684,9 +684,9 @@ server.on('ready', function ()
 
 === Other clients
 
-You can also use the HTTP transport outside the browser. As long as you can make
-POST requests, you can publish messages. To subscribe to messages, you'll need
-to be able to receive server-sent events.
+You can also use the HTTP transport outside the browser and from languages other
+than Node. As long as you can make POST requests, you can publish messages.
+To subscribe to messages, you'll need to be able to receive server-sent events.
 
 ==== Python
 
@@ -739,5 +739,42 @@ requests.post('http://localhost:8802/centro/v1/publish', <1>
 You can also use the HTTP transport from Node, if you don't want to use Primus
 or TCP.
 
+[source,javascript]
+.subscribe_http.js
+----
+var EventSource = require('eventsource'), <1>
+    es = new EventSource('http://localhost:8802/centro/v1/subscribe?' +
+                         require('querystring').stringify(
+                         {
+                             authz_token: process.env.CENTRO_TOKEN,
+                             topic: process.argv[2]
+                         }));
 
+es.addEventListener('start', function (e)
+{
+    console.log('topic:', JSON.parse(e.data).topic);
+});
 
+es.addEventListener('data', function (e)
+{
+    process.stdout.write(JSON.parse(e.data).data, 'binary');
+});
+----
+<1> https://github.com/EventSource/eventsource[`EventSource` for Node].
+
+[source,javascript]
+.publish_http.js
+----
+process.stdin.pipe(require('http').request( <1>
+{
+    method: 'POST',
+    hostname: 'localhost',
+    port: 8802,
+    path: '/centro/v1/publish?' + require('querystring').stringify(
+    {
+        authz_token: process.env.CENTRO_TOKEN,
+        topic: process.argv[2]
+    })
+}));
+----
+<1> Make POST request to publish message.
