@@ -11,5 +11,5 @@ for event in client.events():
     if (event.event == 'start'):
         print('topic:', json.loads(event.data)['topic'])
     elif (event.event == 'data'):
-        sys.stdout.write(json.loads(event.data)['data'])
+        sys.stdout.buffer.write(json.loads(event.data)['data'].encode('latin1'))
         sys.stdout.flush()
