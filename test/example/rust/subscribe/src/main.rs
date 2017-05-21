@@ -1,5 +1,6 @@
 extern crate reqwest;
 extern crate eventsource;
+extern crate encoding;
 #[macro_use]
 extern crate serde_derive;
 extern crate serde;
@@ -8,6 +9,8 @@ use std::io::{self, Write};
 use std::env;
 use reqwest::Url;
 use eventsource::reqwest::Client;
+use encoding::{Encoding, EncoderTrap};
+use encoding::all::ISO_8859_1;
 
 #[derive(Deserialize)]
 struct Start {
@@ -33,7 +36,6 @@ fn main() {
         match ev.event_type {
             Some(ref evtype) => {
 // TODO: how print to stderr and continue?
-// need to encode string as binary and print that
                 match evtype.as_str() {
                     "start" => {
                         match serde_json::from_str::<Start>(&ev.data) {
@@ -46,8 +48,13 @@ fn main() {
                     "data" => {
                         match serde_json::from_str::<Data>(&ev.data) {
                             Ok(data) => {
-                                print!("{}", data.data);
-                                let _ = io::stdout().flush();
+                                match ISO_8859_1.encode(&data.data, EncoderTrap::Strict) {
+                                    Ok(bytes) => {
+                                        let _ = io::stdout().write(bytes.as_slice());
+                                        let _ = io::stdout().flush();
+                                    },
+                                    Err(err) => { println!("Failed to covert data to bytes: {}", err); }
+                                }
                             },
                             Err(err) => { println!("Failed to parse data event: {}", err); }
                         }
