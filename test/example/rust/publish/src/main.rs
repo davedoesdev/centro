@@ -11,9 +11,10 @@ fn main() {
         ("authz_token", token),
         ("topic", topic)])
         .expect("Failed to parse url");
-    Client::new().expect("Couldn't create client")
+    let mut response = Client::new().expect("Couldn't create client")
         .post(url)
         .body(reqwest::Body::new(io::stdin()))
         .send()
         .expect("Failed to send request");
+    let _ = io::copy(&mut response, &mut io::stdout());
 }
