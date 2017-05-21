@@ -8,6 +8,7 @@ extern crate serde_json;
 use std::io::{self, Write};
 use std::env;
 use reqwest::Url;
+use eventsource::event::Event;
 use eventsource::reqwest::Client;
 use encoding::{Encoding, EncoderTrap};
 use encoding::all::ISO_8859_1;
@@ -48,6 +49,13 @@ fn encode(data: &str) -> Option<Vec<u8>> {
     }
 }
 
+fn handle<'a, T>(ev: &'a Event, f: &Fn(T) -> ())
+where T: serde::Deserialize<'a> {
+    if let Some(v) = parse::<T>(&ev.data) {
+        f(v);
+    }
+}
+
 fn main() {
     let url_str = "http://localhost:8802/centro/v1/subscribe";
     let token = env::var("CENTRO_TOKEN").expect("no token");
@@ -59,21 +67,17 @@ fn main() {
     let client = Client::new(url).expect("Failed to start EventSource");
     for event in client {
         let ev = event.expect("Failed to read event");
-        if let Some(evtype) = ev.event_type {
+        if let Some(ref evtype) = ev.event_type {
             match evtype.as_str() {
-                "start" => {
-                    if let Some(start) = parse::<Start>(&ev.data) {
-                        println!("topic: {}", start.topic);
-                    }
-                },
-                "data" => {
-                    if let Some(data) = parse::<Data>(&ev.data) {
+                "start" =>
+                    handle::<Start>(&ev, &|start| 
+                        println!("topic: {}", start.topic)),
+                "data" =>
+                    handle::<Data>(&ev, &|data|
                         if let Some(bytes) = encode(&data.data) {
                             let _ = io::stdout().write(bytes.as_slice());
                             let _ = io::stdout().flush();
-                        }
-                    }
-                },
+                        }),
                 _ => {}
             }
         }
