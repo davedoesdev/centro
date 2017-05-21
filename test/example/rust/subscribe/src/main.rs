@@ -22,6 +22,32 @@ struct Data {
     data: String
 }
 
+fn parse<'a, T>(data: &'a str) -> Option<T>
+where T: serde::Deserialize<'a> {
+    match serde_json::from_str::<T>(data) {
+        Ok(start) => {
+            return Some(start);
+        },
+        Err(err) => { 
+            // TODO: how print to stderr?
+            println!("Failed to parse JSON: {}", err);
+            return None;
+        }
+    }
+}
+
+fn encode(data: &str) -> Option<Vec<u8>> {
+    match ISO_8859_1.encode(data, EncoderTrap::Strict) {
+        Ok(bytes) => {
+            return Some(bytes);
+        },
+        Err(err) => {
+            println!("Failed to covert data to bytes: {}", err);
+            return None;
+        }
+    }
+}
+
 fn main() {
     let url_str = "http://localhost:8802/centro/v1/subscribe";
     let token = env::var("CENTRO_TOKEN").expect("no token");
@@ -33,36 +59,23 @@ fn main() {
     let client = Client::new(url).expect("Failed to start EventSource");
     for event in client {
         let ev = event.expect("Failed to read event");
-        match ev.event_type {
-            Some(ref evtype) => {
-// TODO: how print to stderr and continue?
-                match evtype.as_str() {
-                    "start" => {
-                        match serde_json::from_str::<Start>(&ev.data) {
-                            Ok(start) => {
-                                println!("topic: {}", start.topic);
-                            },
-                            Err(err) => { println!("Failed to parse start event: {}", err); }
+        if let Some(evtype) = ev.event_type {
+            match evtype.as_str() {
+                "start" => {
+                    if let Some(start) = parse::<Start>(&ev.data) {
+                        println!("topic: {}", start.topic);
+                    }
+                },
+                "data" => {
+                    if let Some(data) = parse::<Data>(&ev.data) {
+                        if let Some(bytes) = encode(&data.data) {
+                            let _ = io::stdout().write(bytes.as_slice());
+                            let _ = io::stdout().flush();
                         }
-                    },
-                    "data" => {
-                        match serde_json::from_str::<Data>(&ev.data) {
-                            Ok(data) => {
-                                match ISO_8859_1.encode(&data.data, EncoderTrap::Strict) {
-                                    Ok(bytes) => {
-                                        let _ = io::stdout().write(bytes.as_slice());
-                                        let _ = io::stdout().flush();
-                                    },
-                                    Err(err) => { println!("Failed to covert data to bytes: {}", err); }
-                                }
-                            },
-                            Err(err) => { println!("Failed to parse data event: {}", err); }
-                        }
-                    },
-                    _ => {}
-                }
-            },
-            None => {}
+                    }
+                },
+                _ => {}
+            }
         }
     }
 }
