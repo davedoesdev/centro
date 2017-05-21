@@ -6,3 +6,5 @@
 /test/server.key
 /test/server.pem
 /.nyc_output
+/test/example/rust/*/Cargo.lock
+/test/example/rust/*/target

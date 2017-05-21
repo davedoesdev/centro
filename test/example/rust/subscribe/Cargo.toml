@@ -1,0 +1,11 @@
+[package]
+name = "subscribe"
+version = "0.1.0"
+authors = ["David Halls <dahalls@gmail.com>"]
+
+[dependencies]
+reqwest = "~0.6.2"
+eventsource = "~0.2.0"
+serde = "~1.0.7"
+serde_derive = "~1.0.7"
+serde_json = "~1.0.2"
