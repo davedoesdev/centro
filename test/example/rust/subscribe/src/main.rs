@@ -1,8 +1,7 @@
 extern crate reqwest;
 extern crate eventsource;
 extern crate encoding;
-#[macro_use]
-extern crate serde_derive;
+#[macro_use] extern crate serde_derive;
 extern crate serde;
 extern crate serde_json;
 use std::io::{self, Write};
@@ -12,6 +11,8 @@ use eventsource::event::Event;
 use eventsource::reqwest::Client;
 use encoding::{Encoding, EncoderTrap};
 use encoding::all::ISO_8859_1;
+#[macro_use] extern crate log;
+extern crate env_logger;
 
 #[derive(Deserialize)]
 struct Start {
@@ -30,8 +31,7 @@ where T: serde::Deserialize<'a> {
             return Some(start);
         },
         Err(err) => { 
-            // TODO: how print to stderr?
-            println!("Failed to parse JSON: {}", err);
+            error!("Failed to parse JSON: {}", err);
             return None;
         }
     }
@@ -43,7 +43,7 @@ fn encode(data: &str) -> Option<Vec<u8>> {
             return Some(bytes);
         },
         Err(err) => {
-            println!("Failed to covert data to bytes: {}", err);
+            error!("Failed to covert data to bytes: {}", err);
             return None;
         }
     }
@@ -57,6 +57,7 @@ where T: serde::Deserialize<'a> {
 }
 
 fn main() {
+    env_logger::init().expect("Failed to init logger");
     let url_str = "http://localhost:8802/centro/v1/subscribe";
     let token = env::var("CENTRO_TOKEN").expect("no token");
     let topic = env::args().nth(1).expect("no topic");
