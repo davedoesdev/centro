@@ -16,11 +16,14 @@ extern crate env_logger;
 
 #[derive(Deserialize)]
 struct Start {
+    id: u64,
     topic: String
 }
 
 #[derive(Deserialize)]
+#[allow(dead_code)]
 struct Data {
+    id: u64,
     data: String
 }
 
@@ -72,7 +75,7 @@ fn main() {
             match evtype.as_str() {
                 "start" =>
                     handle::<Start>(&ev, &|start| 
-                        println!("topic: {}", start.topic)),
+                        println!("id: {} topic: {}", start.id, start.topic)),
                 "data" =>
                     handle::<Data>(&ev, &|data|
                         if let Some(bytes) = encode(&data.data) {

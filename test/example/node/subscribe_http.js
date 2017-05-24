@@ -8,7 +8,8 @@ var EventSource = require('eventsource'),
 
 es.addEventListener('start', function (e)
 {
-    console.log('topic:', JSON.parse(e.data).topic);
+    var data = JSON.parse(e.data);
+    console.log('id:', data.id, 'topic:', data.topic);
 });
 
 es.addEventListener('data', function (e)

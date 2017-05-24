@@ -707,7 +707,8 @@ response.raise_for_status()
 client = sseclient.SSEClient(response) <2>
 for event in client.events():
     if (event.event == 'start'):
-        print('topic:', json.loads(event.data)['topic']) <3>
+        data = json.loads(event.data)
+        print('id:', data['id'], 'topic:', data['topic']) <3>
     elif (event.event == 'data'):
         sys.stdout.write(json.loads(event.data)['data']) <4>
         sys.stdout.flush()
@@ -715,8 +716,9 @@ for event in client.events():
 <1> Make a long-running GET request to subscribe to messages.
 <2> Use the https://github.com/mpetazzoni/sseclient[sseclient-py] module to
 read messages.
-<3> Display message topic.
-<4> Display message content. There may be many `data` events for each message.
+<3> Display message ID and topic.
+<4> Display message content. There may be many `data` events for each message
+(they will share the same ID).
 
 Publish a message, topic given on the command line and content read from standard input:
 
@@ -752,7 +754,8 @@ var EventSource = require('eventsource'), <1>
 
 es.addEventListener('start', function (e)
 {
-    console.log('topic:', JSON.parse(e.data).topic);
+    var data = JSON.parse(e.data);
+    console.log('id:', data.id, 'topic:', data.topic);
 });
 
 es.addEventListener('data', function (e)

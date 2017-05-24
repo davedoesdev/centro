@@ -9,7 +9,8 @@ response.raise_for_status()
 client = sseclient.SSEClient(response)
 for event in client.events():
     if (event.event == 'start'):
-        print('topic:', json.loads(event.data)['topic'])
+        data = json.loads(event.data)
+        print('id:', data['id'], 'topic:', data['topic'])
     elif (event.event == 'data'):
         sys.stdout.buffer.write(json.loads(event.data)['data'].encode('latin1'))
         sys.stdout.flush()
