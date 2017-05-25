@@ -3,7 +3,7 @@ var EventSource = require('eventsource'),
                          require('querystring').stringify(
                          {
                              authz_token: process.env.CENTRO_TOKEN,
-                             topic: process.argv[2]
+                             topic: process.argv.slice(2)
                          }));
 
 es.addEventListener('start', function (e)

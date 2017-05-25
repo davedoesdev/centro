@@ -12,19 +12,18 @@
 (deftype OnData [] EventListener
   (onEvent [_ e]
     (let [data (json/decode (.readData e) true)]
-      (print (:data data))
+      (.write System/out (.getBytes (:data data) "ISO-8859-1"))
       (flush))))
 
 (defn -main
   "Subscribe to messages from example Centro server"
-  [topic]
-  (let [builder (ClientBuilder/newBuilder)
-        registered-builder (.register builder SseFeature)
-        client (.build registered-builder)
-        target (.queryParam (.queryParam 
-          (.target client "http://localhost:8802/centro/v1/subscribe")
-          "authz_token" (into-array Object [(System/getenv "CENTRO_TOKEN")]))
-          "topic" (into-array Object [topic]))
+  [& topics]
+  (let [token (System/getenv "CENTRO_TOKEN")
+        builder (.register (ClientBuilder/newBuilder) SseFeature)
+        client (.build builder)
+        target (-> (.target client "http://localhost:8802/centro/v1/subscribe")
+                   (.queryParam "authz_token"(into-array Object [token]))
+                   (.queryParam "topic" (into-array Object topics)))
         event-source (.build (EventSource/target target))]
     (.register event-source (OnStart.) "start" (into-array String []))
     (.register event-source (OnData.) "data" (into-array String[]))

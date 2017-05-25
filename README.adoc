@@ -208,7 +208,7 @@ export CENTRO_TOKEN=$(node make_token.js)
 
 ==== TCP
 
-Subscribe to a topic given on the command line and display the topic and content
+Subscribe to topics given on the command line and display the topic and content
 of each message received:
 
 [source,javascript]
@@ -218,27 +218,32 @@ var centro = require('centro-js'),
     net = require('net'),
     assert = require('assert');
 
-net.createConnection(8800, function () <1>
+function display_message(s, info)
 {
-    centro.stream_auth(this, <2>
+    console.log('topic:', info.topic); <1>
+    s.pipe(process.stdout); <2>
+}
+
+net.createConnection(8800, function () <3>
+{
+    centro.stream_auth(this, <4>
     {
-        token: process.env.CENTRO_TOKEN <3>
+        token: process.env.CENTRO_TOKEN <5>
     }).on('ready', function ()
     {
-        this.subscribe(process.argv[2], function (s, info) <4>
+        for (var topic of process.argv.slice(2))
         {
-            console.log('topic:', info.topic); <5>
-            s.pipe(process.stdout); <6>
-        }, assert.ifError);
+            this.subscribe(topic, display_message, assert.ifError); <6>
+        }
     });
 });
 ----
-<1> Open a TCP connection to the server on port 8800.
-<2> The TCP transport expects the token on the connection stream.
-<3> Read the token from the environment.
-<4> Subscribe to the topic given on the comment line.
-<5> Display the message's topic
-<6> Pipe the message's content stream to standard output.
+<1> Display the message's topic
+<2> Pipe the message's content stream to standard output.
+<3> Open a TCP connection to the server on port 8800.
+<4> The TCP transport expects the token on the connection stream.
+<5> Read the token from the environment.
+<6> Subscribe to the topics given on the command line.
 
 Publish a message, topic given on the command line and content read from
 standard input:
@@ -305,6 +310,12 @@ var centro = require('centro-js'),
     }),
     PrimusDuplex = require('primus-backpressure').PrimusDuplex; <2>
 
+function display_message(s, info)
+{
+    console.log('topic:', info.topic);
+    s.pipe(process.stdout);
+}
+
 centro.separate_auth( <3>
 {
     token: process.env.CENTRO_TOKEN
@@ -318,11 +329,10 @@ centro.separate_auth( <3>
 
     make_client(duplex).on('ready', function () <6>
     {
-        this.subscribe(process.argv[2], function (s, info)
+        for (var topic of process.argv.slice(2))
         {
-            console.log('topic:', info.topic);
-            s.pipe(process.stdout);
-        }, assert.ifError);
+            this.subscribe(topic, display_message, assert.ifError);
+        }
     });
 });
 ----
@@ -690,7 +700,7 @@ To subscribe to messages, you'll need to be able to receive server-sent events.
 
 ==== Python
 
-Here's an example Python program which subscribes to a topic given on the
+Here's an example Python program which subscribes to topics given on the
 command line and displays the topic and content of each message received:
 
 [source,python]
@@ -699,7 +709,7 @@ command line and displays the topic and content of each message received:
 import requests, sseclient, os, sys, json
 params = {
     'authz_token': os.environ['CENTRO_TOKEN'],
-    'topic': sys.argv[1]
+    'topic': sys.argv[1:]
 }
 response = requests.get('http://localhost:8802/centro/v1/subscribe', <1>
                         params=params, stream=True)
@@ -749,7 +759,7 @@ var EventSource = require('eventsource'), <1>
                          require('querystring').stringify(
                          {
                              authz_token: process.env.CENTRO_TOKEN,
-                             topic: process.argv[2]
+                             topic: process.argv.slice(2)
                          }));
 
 es.addEventListener('start', function (e)

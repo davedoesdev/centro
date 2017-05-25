@@ -7,6 +7,12 @@ var centro = require('centro-js'),
     }),
     PrimusDuplex = require('primus-backpressure').PrimusDuplex;
 
+function display_message(s, info)
+{
+    console.log('topic:', info.topic);
+    s.pipe(process.stdout);
+}
+
 centro.separate_auth(
 {
     token: process.env.CENTRO_TOKEN
@@ -20,10 +26,9 @@ centro.separate_auth(
 
     make_client(duplex).on('ready', function ()
     {
-        this.subscribe(process.argv[2], function (s, info)
+        for (var topic of process.argv.slice(2))
         {
-            console.log('topic:', info.topic);
-            s.pipe(process.stdout);
-        }, assert.ifError);
+            this.subscribe(topic, display_message, assert.ifError);
+        }
     });
 });

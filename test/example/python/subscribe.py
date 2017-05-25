@@ -1,7 +1,7 @@
 import requests, sseclient, os, sys, json
 params = {
     'authz_token': os.environ['CENTRO_TOKEN'],
-    'topic': sys.argv[1]
+    'topic': sys.argv[1:]
 }
 response = requests.get('http://localhost:8802/centro/v1/subscribe',
                         params=params, stream=True)
