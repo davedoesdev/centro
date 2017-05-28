@@ -1,5 +1,5 @@
 %{"certifi": {:hex, :certifi, "1.2.1", "c3904f192bd5284e5b13f20db3ceac9626e14eeacfbb492e19583cf0e37b22be", [:rebar3], [], "hexpm"},
-  "eventsource_ex": {:git, "https://github.com/cwc/eventsource_ex", "14634854bb4bb66ef97859d5db17e4a22ef3768c", []},
+  "eventsource_ex": {:git, "https://github.com/cwc/eventsource_ex", "75ffc4f599318daa3db67f2deff37fd04e2d0a92", []},
   "hackney": {:hex, :hackney, "1.8.3", "9148b2311f7d68aff2dc78f2be4da8f05b1a15421b9ef4199ba4935a1d39b3c1", [:rebar3], [{:certifi, "1.2.1", [hex: :certifi, repo: "hexpm", optional: false]}, {:idna, "5.0.1", [hex: :idna, repo: "hexpm", optional: false]}, {:metrics, "1.0.1", [hex: :metrics, repo: "hexpm", optional: false]}, {:mimerl, "1.0.2", [hex: :mimerl, repo: "hexpm", optional: false]}, {:ssl_verify_fun, "1.1.1", [hex: :ssl_verify_fun, repo: "hexpm", optional: false]}], "hexpm"},
   "httpoison": {:hex, :httpoison, "0.11.2", "9e59f17a473ef6948f63c51db07320477bad8ba88cf1df60a3eee01150306665", [:mix], [{:hackney, "~> 1.8.0", [hex: :hackney, repo: "hexpm", optional: false]}], "hexpm"},
   "idna": {:hex, :idna, "5.0.1", "5aa8fdce3f876f49d90daa13f071155a7c3259d02f7847dadd164da4a877da2a", [:rebar3], [{:unicode_util_compat, "0.1.0", [hex: :unicode_util_compat, repo: "hexpm", optional: false]}], "hexpm"},
