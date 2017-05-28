@@ -1043,3 +1043,40 @@ defmodule Subscribe do
   end
 end
 ----
+
+== Installation
+
+[source,bash]
+----
+npm install centro-js
+----
+
+== Licence
+
+link:LICENCE[MIT]
+
+== Test
+
+[source,bash]
+----
+grunt test
+----
+
+== Lint
+
+[source,bash]
+----
+grunt lint
+----
+
+== Coverage
+
+[source,bash]
+----
+grunt coverage
+----
+
+https://istanbul.js.org/[Istanbul] results are available
+http://rawgit.davedoesdev.com/davedoesdev/centro/master/coverage/lcov-report/index.html[here].
+
+Coveralls page is https://coveralls.io/r/davedoesdev/centro[here].
