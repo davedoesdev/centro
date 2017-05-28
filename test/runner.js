@@ -1746,6 +1746,15 @@ module.exports = function (config, connect, options)
             {
                 function check_error(err)
                 {
+                    if (err.message === 'carrier stream finished before duplex finished')
+                    {
+                        if (is_transport('primus'))
+                        {
+                            return done();
+                        }
+                        return;
+                    }
+
                     expect(err.message).to.equal('carrier stream ended before end message received');
                     done();
                 }
@@ -3153,15 +3162,25 @@ module.exports = function (config, connect, options)
                 {
                     var msg;
 
-                    server.once('warning', function (err)
+                    server.on('warning', function warn(err)
                     {
-                        msg = err.message;
+                        if ((err.message !== 'carrier stream finished before duplex finished') &&
+                            (err.message !== 'carrier stream ended before end message received'))
+                        {
+                            msg = err.message;
+                            this.removeListener('warning', warn);
+                        }
                     });
 
                     server.once('empty', function ()
                     {
                         expect(msg).to.equal('unknown uri on closed connection: ' + uri);
                         done();
+                    });
+
+                    clients[0].on('error', function (err)
+                    {
+                        expect(err.message).to.equal('carrier stream finished before duplex finished');
                     });
 
                     server._connections.delete(uri);
@@ -3722,7 +3741,9 @@ module.exports = function (config, connect, options)
                     if (clients[0].last_error && server.last_warning)
                     {
                         expect(server.last_warning.message).to.equal('unsupported version: 1');
-                        if (!is_transport('primus') || (clients[0].last_error.message !== 'carrier stream ended before end message received'))
+                        if (!is_transport('primus') ||
+                            ((clients[0].last_error.message !== 'carrier stream ended before end message received') &&
+                             (clients[0].last_error.message !== 'carrier stream finished before duplex finished')))
                         {
                             expect(clients[0].last_error.message).to.equal('data.version should be equal to one of the allowed values');
                         }

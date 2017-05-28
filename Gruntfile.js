@@ -25,6 +25,7 @@ module.exports = function (grunt)
                    'test/read_frame-error.js',
                    'test/connect-after-close.js',
                    'test/pipeline.js',
+                   'test/sep-auth-no-config.js',
                    'test/example/example.js' ],
             options: {
                 bail: true

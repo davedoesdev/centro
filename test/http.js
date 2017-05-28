@@ -301,7 +301,7 @@ function connect(config, server, cb)
                                     else if (ev === 'data')
                                     {
                                         pthru = passthrus.get(info.id);
-                                        if (pthru && !pthru.write(new Buffer(info.data, 'base64')))
+                                        if (pthru && !pthru.write(new Buffer(info.data, 'binary')))
                                         {
                                             pthru.once('drain', function ()
                                             {
