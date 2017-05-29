@@ -1062,6 +1062,8 @@ link:LICENCE[MIT]
 grunt test
 ----
 
+(make sure you do `grunt keys` at least once first)
+
 == Lint
 
 [source,bash]
