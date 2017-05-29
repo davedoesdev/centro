@@ -69,7 +69,7 @@ module.exports = function (grunt)
             },
 
             check_dist: {
-                cmd: './node_modules/.bin/webpack --config webpack.check.config && diff -u dist/centro.js dist/check.js && rm -f dist/check.js',
+                cmd: './node_modules/.bin/removeNPMAbsolutePaths node_modules && ./node_modules/.bin/webpack --config webpack.check.config && diff -u dist/centro.js dist/check.js && rm -f dist/check.js',
                 fail: true
             },
 
