@@ -12,11 +12,4 @@ addons:
 env:
   - CXX=g++-6
 script:
-  - ( while true; do echo keep alive!; sleep 60; done ) &
-  - if npm run travis-coverage-$TRAVIS_NODE_VERSION >& build.log; then
-      tail -n 100 build.log;
-    else
-      r=$?;
-      tail -n 1000 build.log;
-      exit $r;
-    fi
+  - npm run travis-coverage-$TRAVIS_NODE_VERSION

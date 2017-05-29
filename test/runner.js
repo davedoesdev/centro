@@ -177,7 +177,7 @@ module.exports = function (config, connect, options)
                         (err.message !== 'backoff') &&
                         (err.message !== 'This socket is closed.'))
                     {
-                        console.warn(err);
+                        console.warn(err.message);
                         this.last_warning = err;
                     }
                 });
