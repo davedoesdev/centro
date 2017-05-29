@@ -89,6 +89,7 @@ module.exports = function (grunt)
     grunt.registerTask('test', 'mochaTest');
     grunt.registerTask('docs', 'bgShell:jsdoc');
     grunt.registerTask('dist', 'bgShell:webpack');
+    grunt.registerTask('check_dist', 'bgShell:check_dist');
     grunt.registerTask('coverage', ['bgShell:cover',
                                     'bgShell:cover_report',
                                     'bgShell:cover_check']);

@@ -19,7 +19,7 @@
   "main": "index.js",
   "scripts": {
     "test": "grunt lint test",
-    "travis-coverage": "grunt lint coverage coveralls"
+    "travis-coverage": "grunt lint check_dist coverage coveralls"
   },
   "directories": {
     "test": "test",
