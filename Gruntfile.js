@@ -64,7 +64,7 @@ module.exports = function (grunt)
             },
 
             webpack: {
-                cmd: './node_modules/.bin/webpack',
+                cmd: './node_modules/.bin/removeNPMAbsolutePaths node_modules && ./node_modules/.bin/webpack',
                 fail: true
             },
 
