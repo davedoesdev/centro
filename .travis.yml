@@ -12,4 +12,5 @@ addons:
 env:
   - CXX=g++-6
 script:
+  - ( while true; do echo keep alive!; sleep 60; done ) &
   - npm run travis-coverage-$TRAVIS_NODE_VERSION
