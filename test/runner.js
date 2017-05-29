@@ -401,6 +401,11 @@ module.exports = function (config, connect, options)
 
                             next(null, this);
                         });
+
+                        c.on('warning', function (err)
+                        {
+                            console.error(err.message);
+                        });
                     });
                 }, function (err, cs)
                 {
