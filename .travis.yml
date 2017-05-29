@@ -12,4 +12,8 @@ addons:
 env:
   - CXX=g++-6
 script:
-  - npm run travis-coverage-$TRAVIS_NODE_VERSION
+  - if npm run travis-coverage-$TRAVIS_NODE_VERSION >& build.log; then
+      tail -n 100 build.log;
+    else
+      tail -n 1000 build.log;
+    fi
