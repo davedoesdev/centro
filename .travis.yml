@@ -18,5 +18,5 @@ script:
     else
       r=$?;
       tail -n 1000 build.log;
-      exit $?;
+      exit $r;
     fi
