@@ -85,7 +85,7 @@ module.exports = function (config, connect, options)
     {
         /* jshint validthis: true */
         this.timeout((config.test_timeout || 20000) *
-                     (is_transport('primus') ? 20 : 1));
+                     (is_transport('primus') ? 50 : 1));
 
         var server, clients,
             priv_key, priv_key2,
