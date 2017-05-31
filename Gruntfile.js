@@ -39,61 +39,51 @@ module.exports = function (grunt)
             extraHeadingLevels: 1
         },
 
-        bgShell: {
+        exec: {
             cover: {
-                cmd: "./node_modules/.bin/nyc -x Gruntfile.js -x 'test/**' ./node_modules/.bin/grunt -- test",
-                fail: true,
-                execOpts: {
-                    maxBuffer: 0
-                }
+                cmd: "./node_modules/.bin/nyc -x Gruntfile.js -x 'test/**' ./node_modules/.bin/grunt -- test"
             },
 
             cover_report: {
-                cmd: "./node_modules/.bin/nyc report -r lcov",
-                fail: true
+                cmd: "./node_modules/.bin/nyc report -r lcov"
             },
 
             cover_check: {
-                cmd: './node_modules/.bin/nyc check-coverage --statements 100 --branches 100 --functions 100 --lines 100',
-                fail: true
+                cmd: './node_modules/.bin/nyc check-coverage --statements 100 --branches 100 --functions 100 --lines 100'
             },
 
             coveralls: {
-                cmd: 'cat coverage/lcov.info | coveralls',
-                fail: true
+                cmd: 'cat coverage/lcov.info | coveralls'
             },
 
             webpack: {
-                cmd: './node_modules/.bin/removeNPMAbsolutePaths node_modules && ./node_modules/.bin/webpack',
-                fail: true
+                cmd: './node_modules/.bin/removeNPMAbsolutePaths node_modules && ./node_modules/.bin/webpack'
             },
 
             check_dist: {
-                cmd: './node_modules/.bin/removeNPMAbsolutePaths node_modules && ./node_modules/.bin/webpack --config webpack.check.config && diff -u dist/centro.js dist/check.js && rm -f dist/check.js',
-                fail: true
+                cmd: './node_modules/.bin/removeNPMAbsolutePaths node_modules && ./node_modules/.bin/webpack --config webpack.check.config && diff -u dist/centro.js dist/check.js && rm -f dist/check.js'
             },
 
             keys: {
-                cmd: './test/keys.sh',
-                fail: true
+                cmd: './test/keys.sh'
             }
         }
     });
 
     grunt.loadNpmTasks('grunt-contrib-jshint');
     grunt.loadNpmTasks('grunt-mocha-test');
-    grunt.loadNpmTasks('grunt-bg-shell');
+    grunt.loadNpmTasks('grunt-exec');
 
     grunt.registerTask('lint', 'jshint');
-    grunt.registerTask('keys', 'bgShell:keys');
+    grunt.registerTask('keys', 'exec:keys');
     grunt.registerTask('test', 'mochaTest');
-    grunt.registerTask('docs', 'bgShell:jsdoc');
-    grunt.registerTask('dist', 'bgShell:webpack');
-    grunt.registerTask('check_dist', 'bgShell:check_dist');
-    grunt.registerTask('coverage', ['bgShell:cover',
-                                    'bgShell:cover_report',
-                                    'bgShell:cover_check']);
-    grunt.registerTask('coveralls', 'bgShell:coveralls');
+    grunt.registerTask('docs', 'exec:jsdoc');
+    grunt.registerTask('dist', 'exec:webpack');
+    grunt.registerTask('check_dist', 'exec:check_dist');
+    grunt.registerTask('coverage', ['exec:cover',
+                                    'exec:cover_report',
+                                    'exec:cover_check']);
+    grunt.registerTask('coveralls', 'exec:coveralls');
     grunt.registerTask('default', ['lint', 'test']);
 };
 
