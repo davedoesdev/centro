@@ -5688,7 +5688,7 @@ module.exports = function (config, connect, options)
                 });
             });
 
-            describe('backoff event (skip message)', function ()
+            describe.only('backoff event (skip message)', function ()
             {
                 var skipped = 0, on_skip;
 
@@ -5765,6 +5765,7 @@ module.exports = function (config, connect, options)
                             on_skip: function (info)
                             {
                                 skipped += 1;
+                                console.log("CHECK2", skipped);
                                 if (on_skip)
                                 {
                                     on_skip();
