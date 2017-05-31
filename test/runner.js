@@ -5688,7 +5688,7 @@ module.exports = function (config, connect, options)
                 });
             });
 
-            describe.only('backoff event (skip message)', function ()
+            describe('backoff event (skip message)', function ()
             {
                 var skipped = 0, on_skip;
 
