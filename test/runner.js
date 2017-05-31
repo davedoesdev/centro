@@ -5735,7 +5735,7 @@ module.exports = function (config, connect, options)
 
                             on_skip = function ()
                             {
-                                if (skipped === 1)
+                                if ((skipped > 0) && !state.onpub)
                                 {
                                     expect(state.published).to.equal(undefined);
                                     state.onpub = check;
@@ -5939,7 +5939,7 @@ module.exports = function (config, connect, options)
 
                             on_skip = function ()
                             {
-                                if (skipped === 1)
+                                if ((skipped > 0) && !state.onpub)
                                 {
                                     expect(state.published).to.equal(undefined);
                                     state.onpub = check;
@@ -6029,7 +6029,7 @@ module.exports = function (config, connect, options)
 
                             on_delay = function ()
                             {
-                                if (delayed === 1)
+                                if ((delayed > 0) && !state.onpub)
                                 {
                                     expect(state.published).to.equal(undefined);
                                     state.onpub = check;
