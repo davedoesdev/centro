@@ -85,7 +85,7 @@ module.exports = function (config, connect, options)
     {
         /* jshint validthis: true */
         this.timeout((config.test_timeout || 20000) *
-                     (is_transport('primus') ? 50 : 1));
+                     (is_transport('primus') ? 10 : 1));
 
         var server, clients,
             priv_key, priv_key2,
@@ -5688,7 +5688,7 @@ module.exports = function (config, connect, options)
                 });
             });
 
-            describe('backoff event (skip message)', function ()
+            describe.only('backoff event (skip message)', function ()
             {
                 var skipped = 0, on_skip;
 
@@ -5711,6 +5711,7 @@ module.exports = function (config, connect, options)
 
                         function check(err)
                         {
+                        console.log("CHECK", state.published, skipped, messages);
                             if (err) { return done(err); }
 
                             if ((state.published === 3981) &&
