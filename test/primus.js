@@ -29,7 +29,7 @@ function connect(config, server, cb)
                 {
                     strategy: false,
                     transport: client_config,
-                    pingTimeout: 90000 // Travis is slow
+                    pingTimeout: 15 * 60 * 1000 // Travis is slow
                 }, client_config);
 
         cb(null, make_client(new PrimusDuplex(socket)));
@@ -84,7 +84,7 @@ setup('https',
     port: port,
     key: fs.readFileSync(path.join(__dirname, 'server.key')),
     cert: fs.readFileSync(path.join(__dirname, 'server.pem')),
-    pingInterval: 60000 // Travis is slow
+    pingInterval: 10 * 60 * 1000 120000 // Travis is slow
 },
 {
     agent: new (require('https').Agent)(),
