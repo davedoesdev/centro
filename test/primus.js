@@ -77,7 +77,11 @@ runner(
 
 }
 
-setup('http', { port: port });
+setup('http',
+{
+    port: port,
+    pingInterval: 10 * 60 * 1000 // Travis is slow
+});
 
 setup('https',
 {
