@@ -21,7 +21,7 @@
     "test": "grunt lint test",
     "travis-coverage-0.12": "grunt lint keys coverage coveralls",
     "travis-coverage-4": "grunt lint keys coverage coveralls",
-    "travis-coverage-6": "grunt keys && mocha test/in-mem.js test/tcp.js test/primus.js test/embedded.js test/embedded-authz.js test/http.js test/in-mem-fsq.js test/in-mem-anon.js test/server-extra.js test/read_frame-error.js test/connect-after-close.js test/pipeline.js test/sep-auth-no-config.js test/example/example.js"
+    "travis-coverage-6": "grunt lint check_dist keys coverage coveralls"
   },
   "directories": {
     "test": "test",

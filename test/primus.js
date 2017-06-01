@@ -12,7 +12,7 @@ var runner = require('./runner'),
     fs = require('fs'),
     port = 8700;
 
-function setup(mod, transport_config, client_config, server_config)
+function setup(mod, transport_config, client_config)
 {
 
 function connect(config, server, cb)
@@ -28,7 +28,8 @@ function connect(config, server, cb)
                 mod + '://' + userpass + '@localhost:' + port,
                 {
                     strategy: false,
-                    transport: client_config
+                    transport: client_config,
+                    pingTimeout: 90000 // Travis is slow
                 }, client_config);
 
         cb(null, make_client(new PrimusDuplex(socket)));
@@ -62,9 +63,8 @@ runner(
 
         config.server = Primus.createServer(Object.assign(
         {
-            pathname: '/centro/v' + centro.version + '/primus',
-            port: port
-        }, server_config));
+            pathname: '/centro/v' + centro.version + '/primus'
+        }, transport_config));
 
         config.server.on('initialised', cb);
     },
@@ -83,13 +83,10 @@ setup('https',
 {
     port: port,
     key: fs.readFileSync(path.join(__dirname, 'server.key')),
-    cert: fs.readFileSync(path.join(__dirname, 'server.pem'))
+    cert: fs.readFileSync(path.join(__dirname, 'server.pem')),
+    pingInterval: 60000 // Travis is slow
 },
 {
     agent: new (require('https').Agent)(),
     ca: fs.readFileSync(path.join(__dirname, 'ca.pem'))
-},
-{
-    key: fs.readFileSync(path.join(__dirname, 'server.key')),
-    cert: fs.readFileSync(path.join(__dirname, 'server.pem'))
 });
