@@ -19,7 +19,6 @@
   "main": "index.js",
   "scripts": {
     "test": "grunt lint test",
-    "travis-coverage-0.12": "grunt lint keys coverage coveralls",
     "travis-coverage-4": "grunt lint keys coverage coveralls",
     "travis-coverage-6": "grunt lint check_dist keys coverage coveralls"
   },
@@ -71,6 +70,6 @@
     "removeNPMAbsolutePaths": "~0.0.3"
   },
   "engines": {
-    "node": ">=0.12"
+    "node": ">=4"
   }
 }
