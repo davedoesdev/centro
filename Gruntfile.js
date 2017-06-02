@@ -41,7 +41,7 @@ module.exports = function (grunt)
 
         exec: {
             cover: {
-                cmd: "./node_modules/.bin/nyc -x Gruntfile.js -x 'test/**' ./node_modules/.bin/grunt -- test"
+                cmd: "node " + (String.prototype.endsWith ? "" : "--harmony ") + "./node_modules/.bin/nyc -x Gruntfile.js -x 'test/**' ./node_modules/.bin/grunt -- test"
             },
 
             cover_report: {
