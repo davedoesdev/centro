@@ -19,7 +19,7 @@
   "main": "index.js",
   "scripts": {
     "test": "grunt lint test",
-    "travis-coverage-0.12": "grunt lint keys coverage coveralls",
+    "travis-coverage-0.12": "node --harmony $(which grunt) lint keys coverage coveralls",
     "travis-coverage-4": "grunt lint keys coverage coveralls",
     "travis-coverage-6": "grunt lint check_dist keys coverage coveralls"
   },
