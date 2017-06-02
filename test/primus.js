@@ -32,31 +32,6 @@ function connect(config, server, cb)
                     pingTimeout: 15 * 60 * 1000 // Travis is slow
                 }, client_config);
 
-        socket.on('error', function (err)
-        {
-            console.log("ERROR", err);
-        });
-
-        socket.on('destroy', function ()
-        {
-            console.log("DESTROY");
-        });
-
-        socket.on('close', function ()
-        {
-            console.log("CLOSE");
-        });
-
-        socket.on('end', function ()
-        {
-            console.log("END");
-        });
-
-        socket.on('offline', function ()
-        {
-            console.log("OFFLINE");
-        });
-
         cb(null, make_client(new PrimusDuplex(socket)));
     });
 }

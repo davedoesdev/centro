@@ -428,7 +428,7 @@ module.exports = function (config, connect, options)
                         return setTimeout(cb, 1000);
                     }
 
-                    if (connected === n)
+                    if (opts.skip_connect || (connected === n))
                     {
                         cb();
                     }
@@ -2192,27 +2192,112 @@ module.exports = function (config, connect, options)
             it('should close connection when token expires', function (done)
             {
                 var empty = false,
-                    ended = false;
+                    ended = false,
+                    expired = false;
+
+                function check()
+                {
+                    if (empty && ended && expired)
+                    {
+                        done();
+                    }
+                }
 
                 server.once('empty', function ()
                 {
                     empty = true;
-                    if (ended)
-                    {
-                        done();
-                    }
+                    check();
+                });
+
+                server.once('expired', function (info)
+                {
+                    expired = true;
+                    expect(info.connid).to.equal(clients[0].self);
+                    check();
                 });
 
                 clients[0].mux.on('end', function ()
                 {
                     ended = true;
-                    if (empty)
-                    {
-                        done();
-                    }
+                    check();
                 });
             });
         });
+
+        if (!options.anon)
+        {
+            describe('token expiry (before connect event)', function ()
+            {
+                setup(1,
+                {
+                    access_control: {
+                        publish: {
+                            allow: ['foo'],
+                            disallow: []
+                        },
+                        subscribe: {
+                            allow: ['foo'],
+                            disallow: []
+                        }
+                    },
+                    ttl: 2,
+                    before_connect_function: function ()
+                    {
+                        var orig_get_pub_key_by_uri = server.transport_ops[0].authz.keystore.get_pub_key_by_uri;
+
+                        server.transport_ops[0].authz.keystore.get_pub_key_by_uri = function (uri, cb)
+                        {
+                            this.get_pub_key_by_uri = orig_get_pub_key_by_uri;
+                        };
+                    },
+                    skip_ready: true,
+                    skip_connect: true
+                });
+
+                it('should close connection when token expires', function (done)
+                {
+                    var empty = false,
+                        ended = false;
+
+                    function unexpected(info)
+                    {
+                        done(new Error('should not be called'));
+                    }
+
+                    server.on('expired', unexpected);
+                    server.on('connect', unexpected);
+
+                    function check()
+                    {
+                        if (empty && ended)
+                        {
+                            server.removeListener('expired', unexpected);
+                            server.removeListener('connect', unexpected);
+                            done();
+                        }
+                    }
+
+                    server.once('empty', function ()
+                    {
+                        empty = true;
+                        check();
+                    });
+
+                    clients[0].mux.on('end', function ()
+                    {
+                        ended = true;
+                        check();
+                    });
+
+                    clients[0].on('error', function (err)
+                    {
+                        expect(err.message).to.be.oneOf([
+                            'carrier stream finished before duplex finished',
+                            'carrier stream ended before end message received']);
+                    });
+                });
+            });
+        }
 
         function client_function(c, i, onconnect)
         {
@@ -5247,7 +5332,8 @@ module.exports = function (config, connect, options)
                                 allow: ['foo', 'foo2', 'bar'],
                                 disallow: []
                             }
-                        }
+                        },
+                        ttl: 10 * 60
                     });
 
                     function restore()
@@ -5418,7 +5504,8 @@ module.exports = function (config, connect, options)
                                 allow: ['foo'],
                                 disallow: []
                             }
-                        }
+                        },
+                        ttl: 10 * 60
                     });
 
                     function check(state)
@@ -5688,7 +5775,7 @@ module.exports = function (config, connect, options)
                 });
             });
 
-            describe.only('backoff event (skip message)', function ()
+            describe('backoff event (skip message)', function ()
             {
                 var skipped = 0, on_skip;
 
@@ -5711,7 +5798,6 @@ module.exports = function (config, connect, options)
 
                         function check(err)
                         {
-                        console.log("CHECK", state.published, skipped, messages);
                             if (err) { return done(err); }
 
                             if ((state.published === 3981) &&
@@ -5765,7 +5851,6 @@ module.exports = function (config, connect, options)
                             on_skip: function (info)
                             {
                                 skipped += 1;
-                                console.log("CHECK2", skipped);
                                 if (on_skip)
                                 {
                                     on_skip();
