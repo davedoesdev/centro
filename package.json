@@ -1,5 +1,5 @@
 {
-  "name": "centro",
+  "name": "centro-js",
   "description": "Pub-sub and work queue service on Primus or TCP. Supports wildcards, streams and back-pressure. Just Node and a filesystem required.",
   "version": "0.0.1",
   "homepage": "https://github.com/davedoesdev/centro",
@@ -67,7 +67,8 @@
     "json-loader": "~0.5.4",
     "rimraf": "~2.6.1",
     "eventsource": "~1.0.1",
-    "removeNPMAbsolutePaths": "~0.0.3"
+    "removeNPMAbsolutePaths": "~0.0.3",
+    "documentation": "~4.0.0-rc.1"
   },
   "engines": {
     "node": ">=4"

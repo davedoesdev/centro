@@ -1,4 +1,4 @@
-= centro{nbsp}{nbsp}{nbsp}image:https://travis-ci.org/davedoesdev/centro-js.png[Build Status,link=https://travis-ci.org/davedoesdev/centro-js] image:https://coveralls.io/repos/davedoesdev/centro-js/badge.png?branch=master&service=github[Coverage Status,link=https://coveralls.io/r/davedoesdev/centro-js?branch=master] image:https://badge.fury.io/js/centro-js.png[NPM version,link=http://badge.fury.io/js/centro-js]
+= centro{nbsp}{nbsp}{nbsp}image:https://travis-ci.org/davedoesdev/centro.png[Build Status,link=https://travis-ci.org/davedoesdev/centro] image:https://coveralls.io/repos/davedoesdev/centro/badge.png?branch=master&service=github[Coverage Status,link=https://coveralls.io/r/davedoesdev/centro?branch=master] image:https://badge.fury.io/js/centro-js.png[NPM version,link=http://badge.fury.io/js/centro-js]
 :prewrap!:
 :toc:
 :toclevels: 3
@@ -21,7 +21,7 @@ same directory, for example one per CPU core.
 Clients can connect to the server using https://github.com/primus/primus[Primus]
 (Websockets), TCP, HTTP or in-memory streams.
 
-The API doc is a work-in-progress and will be available http://rawgit.davedoesdev.com/davedoesdev/centro/master/docs/index.html[here].
+API documentation is available http://rawgit.davedoesdev.com/davedoesdev/centro/master/docs/index.html[here].
 
 toc::[]
 

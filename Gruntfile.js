@@ -32,13 +32,6 @@ module.exports = function (grunt)
             }
         },
 
-        apidox: {
-            input: [ 'index.js', 'events_doc.js' ],
-            output: 'README.md',
-            fullSourceDescription: true,
-            extraHeadingLevels: 1
-        },
-
         exec: {
             cover: {
                 cmd: "./node_modules/.bin/nyc -x Gruntfile.js -x 'test/**' ./node_modules/.bin/grunt test"
@@ -66,6 +59,14 @@ module.exports = function (grunt)
 
             keys: {
                 cmd: './test/keys.sh'
+            },
+
+            documentation: {
+                cmd: './node_modules/.bin/documentation build -c documentation.yml -f html -o docs'
+            },
+
+            serve_documentation: {
+                cmd: './node_modules/.bin/documentation serve -w -c documentation.yml'
             }
         }
     });
@@ -77,7 +78,8 @@ module.exports = function (grunt)
     grunt.registerTask('lint', 'jshint');
     grunt.registerTask('keys', 'exec:keys');
     grunt.registerTask('test', 'mochaTest');
-    grunt.registerTask('docs', 'exec:jsdoc');
+    grunt.registerTask('docs', 'exec:documentation');
+    grunt.registerTask('serve_docs', 'exec:serve_documentation');
     grunt.registerTask('dist', 'exec:webpack');
     grunt.registerTask('check_dist', 'exec:check_dist');
     grunt.registerTask('coverage', ['exec:cover',
@@ -85,19 +87,5 @@ module.exports = function (grunt)
                                     'exec:cover_check']);
     grunt.registerTask('coveralls', 'exec:coveralls');
     grunt.registerTask('default', ['lint', 'test']);
-
-	// For Node 0.12:
-	// https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/String/endsWith#Polyfill
-	if (!String.prototype.endsWith) {
-	  String.prototype.endsWith = function(searchString, position) {
-		  var subjectString = this.toString();
-		  if (typeof position !== 'number' || !isFinite(position) || Math.floor(position) !== position || position > subjectString.length) {
-			position = subjectString.length;
-		  }
-		  position -= searchString.length;
-		  var lastIndex = subjectString.lastIndexOf(searchString, position);
-		  return lastIndex !== -1 && lastIndex === position;
-	  };
-	}
 };
 
