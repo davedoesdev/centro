@@ -2,3 +2,5 @@ toc:
   - centro-js
   - centro-js/lib/client
   - centro-js/lib/server
+#- server extensions
+#- http REST API (see https://opencredo.com/rest-api-tooling-review/)

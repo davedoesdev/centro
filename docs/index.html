@@ -47,7 +47,7 @@
                     <li class='h5'><span>Static members</span></li>
                     
                       <li><a
-                        href='#centro-js/lib/client.separate_auth'
+                        href='#centro-jslibclientseparate_auth'
                         class='regular pre-open'>
                         .separate_auth
                       </a></li>
@@ -66,6 +66,16 @@
                   href='#centro-jslibserver'
                   class="">
                   centro-js/lib/server
+                  
+                </a>
+                
+                </li>
+              
+                
+                <li><a
+                  href='#connectcallback'
+                  class="">
+                  connectCallback
                   
                 </a>
                 
@@ -94,7 +104,8 @@
   </div>
   
 
-  
+  <p>Re-exports all exports of <a href="#centro-jslibclient">centro-js/lib/client</a> and <a href="#centro-jslibserver">centro-js/lib/server</a></p>
+
 
   <div class='pre p1 fill-light mt0'>centro-js</div>
   
@@ -168,11 +179,11 @@
     <div class='py1 quiet mt1 prose-big'>Static Members</div>
     <div class="clearfix">
   
-    <div class='border-bottom' id='centro-js/lib/client.separate_auth'>
+    <div class='border-bottom' id='centro-jslibclientseparate_auth'>
       <div class="clearfix small pointer toggle-sibling">
         <div class="py1 contain">
             <a class='icon pin-right py1 dark-link caret-right'>▸</a>
-            <span class='code strong strong truncate'>separate_auth(config, cb)</span>
+            <span class='code strong strong truncate'>separate_auth(config?, cb)</span>
         </div>
       </div>
       <div class="clearfix display-none toggle-target">
@@ -180,10 +191,12 @@
 
   
 
-  <p>Foobar</p>
+  <p>Get authorization data for transports which use HTTP Basic Authentication
+(currently Primus) and then initiate communication with a server on a stream
+you supply.</p>
 
 
-  <div class='pre p1 fill-light mt0'>separate_auth(config: any, cb: any)</div>
+  <div class='pre p1 fill-light mt0'>separate_auth(config: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>?, cb: <a href="#connectcallback">connectCallback</a>)</div>
   
   
 
@@ -200,16 +213,45 @@
       
         <div class='space-bottom0'>
           <div>
-            <span class='code bold'>config</span> <code class='quiet'>(any)</code>
-	    
+            <span class='code bold'>config</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>?)</code>
+	    Configuration options. This supports all the options supported by {@linkcode 
+<a href="https://github.com/davedoesdev/mqlobber#mqlobberclientstream-options%7CMQlobberClient%7D">https://github.com/davedoesdev/mqlobber#mqlobberclientstream-options|MQlobberClient}</a>
+ as well as the following:
+
           </div>
+          
+          <table class='mt1 mb2 fixed-table h5 col-12'>
+            <colgroup>
+              <col width='30%' />
+              <col width='70%' />
+            </colgroup>
+            <thead>
+              <tr class='bold fill-light'>
+                <th>Name</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody class='mt1'>
+              
+                <tr>
+                  <td class='break-word'><span class='code bold'>config.token</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a> | <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array">Array</a>&#x3C;<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>>)?</code>
+                  </td>
+                  <td class='break-word'><span>JSON Web Token(s) to present to the server. If the transport you're going to use is configured for 
+<code>ANONYMOUS_MODE</code>
+ then you don't need this.
+</span></td>
+                </tr>
+              
+            </tbody>
+          </table>
           
         </div>
       
         <div class='space-bottom0'>
           <div>
-            <span class='code bold'>cb</span> <code class='quiet'>(any)</code>
-	    
+            <span class='code bold'>cb</span> <code class='quiet'>(<a href="#connectcallback">connectCallback</a>)</code>
+	    Called with authorization data.
+
           </div>
           
         </div>
@@ -274,6 +316,87 @@
   
   
 
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</section>
+
+          
+        
+          
+            <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+  <div class='clearfix'>
+    
+    <h3 class='fl m0' id='connectcallback'>
+      connectCallback
+    </h3>
+    
+    
+  </div>
+  
+
+  <p>Callback for HTTP Basic Authentication data</p>
+
+
+  <div class='pre p1 fill-light mt0'>connectCallback</div>
+  
+    <p>
+      Type:
+      <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/function">Function</a>
+    </p>
+  
+  
+
+  
+  
+  
+  
+  
+  
+
+  
+    <div class='py1 quiet mt1 prose-big'>Parameters</div>
+    <div class='prose'>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>err</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error">Error</a>?)</code>
+	    Error, if one occurred.
+
+          </div>
+          
+        </div>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>userpass</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>)</code>
+	    Authentication data in the form 
+<code>centro:&#x3C;tokens></code>
+ where 
+<code>&#x3C;tokens></code>
+ a comma-separated list of tokens you passed to 
+<a href="#centro-jslibclientseparate_auth">centro-js/lib/client.separate_auth</a>
+.
+
+          </div>
+          
+        </div>
+      
+    </div>
   
 
   
