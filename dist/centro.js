@@ -15425,7 +15425,7 @@ exports.start = start;
  * (currently Primus) and then initiate communication with a server on a stream
  * you supply.
  *
- * @param {Object} [config] - Configuration options. This supports all the options supported by {@linkcode https://github.com/davedoesdev/mqlobber#mqlobberclientstream-options|MQlobberClient} as well as the following:
+ * @param {Object} [config] - Configuration options. This supports all the options supported by {@link https://github.com/davedoesdev/mqlobber#mqlobberclientstream-options|MQlobberClient} as well as the following:
  * @param {string|string[]} [config.token] - JSON Web Token(s) to present to the server. If the transport you're going to use is configured for `ANONYMOUS_MODE` then you don't need this.
  * @param {centro-js/lib/client.authzCallback} cb - Called with authorization data.
  */
@@ -15443,6 +15443,15 @@ exports.separate_auth = function (config, cb)
     });
 };
 
+/**
+ * Authorize with a server on a stream, for transports which send authorization
+ * data as a stream header (currently all except Primus and HTTP).
+ *
+ * @param {stream.Duplex} stream - Connection you've already made to the server.
+ * @param {Object} [config] - Configuration options. This supports all the options supported by {@link https://github.com/davedoesdev/mqlobber#mqlobberclientstream-options|MQlobberClient} as well as the following:
+ * @param {string|string[]} [config.token] - JSON Web Token(s) to present to the server. If the transport you're going to use is configured for `ANONYMOUS_MODE` then you don't need this.
+ * @returns {MQlobberClient} - Object you can use for publishing and subscribing to messages. See the {@link https://github.com/davedoesdev/mqlobber#mqlobberclientstream-options|mqlobber documentation}.
+ */
 exports.stream_auth = function (stream, config)
 {
     // write frame
@@ -15462,22 +15471,35 @@ exports.stream_auth = function (stream, config)
     return start(stream, config);
 };
 
-/** Callback type for HTTP Basic Authentication data
+/**
+ * Callback type for HTTP Basic Authentication data
  *
  * @callback authzCallback
  * @param {?Error} err - Error, if one occurred.
  * @param {string} userpass - Authentication data in the form `centro:<tokens>` where `<tokens>` a comma-separated list of tokens you passed to {@link centro-js/lib/client.separate_auth}.
  * @param {streamCallback} cb - Call this when you've made a connection to the server.
  */
+/* istanbul ignore next */
 exports.authzCallback = function (err, userpass, cb) {};
 
-/** Callback type for connection to server
+/**
+  * Callback type for connection to server
   *
   * @callback streamCallback
   * @param {stream.Duplex} stream - Connection you've made to the server.
   * @returns {MQlobberClient} - Object you can use for publishing and subscribing to messages. See the {@link https://github.com/davedoesdev/mqlobber#mqlobberclientstream-options|mqlobber documentation}.
   */
+/* istanbul ignore next */
 exports.streamCallback = function (stream) {};
+
+/**
+  * Ready event. This is an extra event added to {@link https://github.com/davedoesdev/mqlobber#mqlobberclientstream-options|MQlobberClient} and is emitted when the server has authorized the client and connection is established.
+  *
+  * @event ready
+  * @param {Object.<string, boolean>[]} [subscriptions] - For each authorization token you supplied to {@link centro-js/lib/client.separate_auth} or {@link centro-js/lib/client.stream_auth}, a map containing the topics to which the client has been pre-subscribed. Each topic maps to whether the client will receive existing messages for the topic (`true`) or just new ones (`false`). If no tokens specified any pre-subscriptions then this will be `undefined`.
+  */
+/* istanbul ignore next */
+exports.ready = function (subscriptions) {};
 
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0).Buffer))
 

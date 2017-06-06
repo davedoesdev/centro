@@ -52,10 +52,39 @@
                         .separate_auth
                       </a></li>
                     
+                      <li><a
+                        href='#centro-jslibclientstream_auth'
+                        class='regular pre-open'>
+                        .stream_auth
+                      </a></li>
+                    
+                      <li><a
+                        href='#centro-jslibclientauthzcallback'
+                        class='regular pre-open'>
+                        .authzCallback
+                      </a></li>
+                    
+                      <li><a
+                        href='#centro-jslibclientstreamcallback'
+                        class='regular pre-open'>
+                        .streamCallback
+                      </a></li>
+                    
                     </ul>
                   
                   
                   
+                  
+                    <ul class='list-reset py1-ul pl1'>
+                      <li class='h5'>Events</li>
+                      
+                        <li><a
+                          href='#centro-jslibclienteventready'
+                          class='regular pre-open'>
+                          ⓔ ready
+                        </a></li>
+                      
+                    </ul>
                   
                 </div>
                 
@@ -66,16 +95,6 @@
                   href='#centro-jslibserver'
                   class="">
                   centro-js/lib/server
-                  
-                </a>
-                
-                </li>
-              
-                
-                <li><a
-                  href='#connectcallback'
-                  class="">
-                  connectCallback
                   
                 </a>
                 
@@ -196,7 +215,7 @@
 you supply.</p>
 
 
-  <div class='pre p1 fill-light mt0'>separate_auth(config: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>?, cb: <a href="#connectcallback">connectCallback</a>)</div>
+  <div class='pre p1 fill-light mt0'>separate_auth(config: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>?, cb: <a href="#centro-jslibclientauthzcallback">centro-js/lib/client.authzCallback</a>)</div>
   
   
 
@@ -214,8 +233,8 @@ you supply.</p>
         <div class='space-bottom0'>
           <div>
             <span class='code bold'>config</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>?)</code>
-	    Configuration options. This supports all the options supported by {@linkcode 
-<a href="https://github.com/davedoesdev/mqlobber#mqlobberclientstream-options%7CMQlobberClient%7D">https://github.com/davedoesdev/mqlobber#mqlobberclientstream-options|MQlobberClient}</a>
+	    Configuration options. This supports all the options supported by 
+<a href="https://github.com/davedoesdev/mqlobber#mqlobberclientstream-options">MQlobberClient</a>
  as well as the following:
 
           </div>
@@ -249,7 +268,7 @@ you supply.</p>
       
         <div class='space-bottom0'>
           <div>
-            <span class='code bold'>cb</span> <code class='quiet'>(<a href="#connectcallback">connectCallback</a>)</code>
+            <span class='code bold'>cb</span> <code class='quiet'>(<a href="#centro-jslibclientauthzcallback">centro-js/lib/client.authzCallback</a>)</code>
 	    Called with authorization data.
 
           </div>
@@ -277,7 +296,102 @@ you supply.</p>
       </div>
     </div>
   
-</div>
+    <div class='border-bottom' id='centro-jslibclientstream_auth'>
+      <div class="clearfix small pointer toggle-sibling">
+        <div class="py1 contain">
+            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
+            <span class='code strong strong truncate'>stream_auth(stream, config?)</span>
+        </div>
+      </div>
+      <div class="clearfix display-none toggle-target">
+        <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+
+  <p>Authorize with a server on a stream, for transports which send authorization
+data as a stream header (currently all except Primus and HTTP).</p>
+
+
+  <div class='pre p1 fill-light mt0'>stream_auth(stream: <a href="https://nodejs.org/api/stream.html#stream_class_stream_duplex_1">stream.Duplex</a>, config: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>?): MQlobberClient</div>
+  
+  
+
+  
+  
+  
+  
+  
+  
+
+  
+    <div class='py1 quiet mt1 prose-big'>Parameters</div>
+    <div class='prose'>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>stream</span> <code class='quiet'>(<a href="https://nodejs.org/api/stream.html#stream_class_stream_duplex_1">stream.Duplex</a>)</code>
+	    Connection you've already made to the server.
+
+          </div>
+          
+        </div>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>config</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>?)</code>
+	    Configuration options. This supports all the options supported by 
+<a href="https://github.com/davedoesdev/mqlobber#mqlobberclientstream-options">MQlobberClient</a>
+ as well as the following:
+
+          </div>
+          
+          <table class='mt1 mb2 fixed-table h5 col-12'>
+            <colgroup>
+              <col width='30%' />
+              <col width='70%' />
+            </colgroup>
+            <thead>
+              <tr class='bold fill-light'>
+                <th>Name</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody class='mt1'>
+              
+                <tr>
+                  <td class='break-word'><span class='code bold'>config.token</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a> | <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array">Array</a>&#x3C;<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>>)?</code>
+                  </td>
+                  <td class='break-word'><span>JSON Web Token(s) to present to the server. If the transport you're going to use is configured for 
+<code>ANONYMOUS_MODE</code>
+ then you don't need this.
+</span></td>
+                </tr>
+              
+            </tbody>
+          </table>
+          
+        </div>
+      
+    </div>
+  
+
+  
+
+  
+    
+      <div class='py1 quiet mt1 prose-big'>Returns</div>
+      <code>MQlobberClient</code>:
+        Object you can use for publishing and subscribing to messages. See the 
+<a href="https://github.com/davedoesdev/mqlobber#mqlobberclientstream-options">mqlobber documentation</a>
+.
+
+      
+    
+  
+
+  
+
+  
 
   
 
@@ -286,73 +400,25 @@ you supply.</p>
   
 </section>
 
-          
-        
-          
-            <section class='p2 mb2 clearfix bg-white minishadow'>
-
+      </div>
+    </div>
   
-  <div class='clearfix'>
-    
-    <h3 class='fl m0' id='centro-jslibserver'>
-      centro-js/lib/server
-    </h3>
-    
-    
-  </div>
-  
-
-  <p>Centro server class</p>
-
-
-  <div class='pre p1 fill-light mt0'>centro-js/lib/server</div>
-  
-  
-
-  
-  
-  
-  
-  
-  
+    <div class='border-bottom' id='centro-jslibclientauthzcallback'>
+      <div class="clearfix small pointer toggle-sibling">
+        <div class="py1 contain">
+            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
+            <span class='code strong strong truncate'>authzCallback</span>
+        </div>
+      </div>
+      <div class="clearfix display-none toggle-target">
+        <section class='p2 mb2 clearfix bg-white minishadow'>
 
   
 
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-</section>
-
-          
-        
-          
-            <section class='p2 mb2 clearfix bg-white minishadow'>
-
-  
-  <div class='clearfix'>
-    
-    <h3 class='fl m0' id='connectcallback'>
-      connectCallback
-    </h3>
-    
-    
-  </div>
-  
-
-  <p>Callback for HTTP Basic Authentication data</p>
+  <p>Callback type for HTTP Basic Authentication data</p>
 
 
-  <div class='pre p1 fill-light mt0'>connectCallback</div>
+  <div class='pre p1 fill-light mt0'>authzCallback</div>
   
     <p>
       Type:
@@ -396,7 +462,226 @@ you supply.</p>
           
         </div>
       
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>cb</span> <code class='quiet'>(streamCallback)</code>
+	    Call this when you've made a connection to the server.
+
+          </div>
+          
+        </div>
+      
     </div>
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</section>
+
+      </div>
+    </div>
+  
+    <div class='border-bottom' id='centro-jslibclientstreamcallback'>
+      <div class="clearfix small pointer toggle-sibling">
+        <div class="py1 contain">
+            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
+            <span class='code strong strong truncate'>streamCallback</span>
+        </div>
+      </div>
+      <div class="clearfix display-none toggle-target">
+        <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+
+  <p>Callback type for connection to server</p>
+
+
+  <div class='pre p1 fill-light mt0'>streamCallback</div>
+  
+    <p>
+      Type:
+      <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/function">Function</a>
+    </p>
+  
+  
+
+  
+  
+  
+  
+  
+  
+
+  
+    <div class='py1 quiet mt1 prose-big'>Parameters</div>
+    <div class='prose'>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>stream</span> <code class='quiet'>(<a href="https://nodejs.org/api/stream.html#stream_class_stream_duplex_1">stream.Duplex</a>)</code>
+	    Connection you've made to the server.
+
+          </div>
+          
+        </div>
+      
+    </div>
+  
+
+  
+
+  
+    
+      <div class='py1 quiet mt1 prose-big'>Returns</div>
+      <code>MQlobberClient</code>:
+        Object you can use for publishing and subscribing to messages. See the 
+<a href="https://github.com/davedoesdev/mqlobber#mqlobberclientstream-options">mqlobber documentation</a>
+.
+
+      
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</section>
+
+      </div>
+    </div>
+  
+</div>
+
+  
+
+  
+
+  
+    <div class='py1 quiet mt1 prose-big'>Events</div>
+    <div class="clearfix">
+  
+    <div class='border-bottom' id='centro-jslibclienteventready'>
+      <div class="clearfix small pointer toggle-sibling">
+        <div class="py1 contain">
+            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
+            <span class='code strong strong truncate'>ready</span>
+        </div>
+      </div>
+      <div class="clearfix display-none toggle-target">
+        <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+
+  <p>Ready event. This is an extra event added to <a href="https://github.com/davedoesdev/mqlobber#mqlobberclientstream-options">MQlobberClient</a> and is emitted when the server has authorized the client and connection is established.</p>
+
+
+  <div class='pre p1 fill-light mt0'>ready</div>
+  
+  
+
+  
+  
+  
+  
+  
+  
+
+  
+    <div class='py1 quiet mt1 prose-big'>Parameters</div>
+    <div class='prose'>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>subscriptions</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array">Array</a>&#x3C;<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>&#x3C;<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>, <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Boolean">boolean</a>>>?)</code>
+	    For each authorization token you supplied to 
+<a href="#centro-jslibclientseparate_auth">centro-js/lib/client.separate_auth</a>
+ or 
+<a href="#centro-jslibclientstream_auth">centro-js/lib/client.stream_auth</a>
+, a map containing the topics to which the client has been pre-subscribed. Each topic maps to whether the client will receive existing messages for the topic (
+<code>true</code>
+) or just new ones (
+<code>false</code>
+). If no tokens specified any pre-subscriptions then this will be 
+<code>undefined</code>
+.
+
+          </div>
+          
+        </div>
+      
+    </div>
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</section>
+
+      </div>
+    </div>
+  
+</div>
+
+  
+</section>
+
+          
+        
+          
+            <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+  <div class='clearfix'>
+    
+    <h3 class='fl m0' id='centro-jslibserver'>
+      centro-js/lib/server
+    </h3>
+    
+    
+  </div>
+  
+
+  <p>Centro server class</p>
+
+
+  <div class='pre p1 fill-light mt0'>centro-js/lib/server</div>
+  
+  
+
+  
+  
+  
+  
+  
+  
+
   
 
   
