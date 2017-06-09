@@ -2,5 +2,7 @@ toc:
   - centro-js
   - centro-js/lib/client
   - centro-js/lib/server
+#- transports (incl doc that uses primus-backpressure)
 #- server extensions
+#- authz token
 #- http REST API (see https://opencredo.com/rest-api-tooling-review/)

@@ -93,10 +93,28 @@
                 
                 <li><a
                   href='#centro-jslibserver'
-                  class="">
+                  class=" toggle-sibling">
                   centro-js/lib/server
-                  
+                  <span class='icon'>▸</span>
                 </a>
+                
+                <div class='toggle-target display-none'>
+                  
+                  <ul class='list-reset py1-ul pl1'>
+                    <li class='h5'><span>Static members</span></li>
+                    
+                      <li><a
+                        href='#centro-jslibservercentroserver'
+                        class='regular pre-open'>
+                        .CentroServer
+                      </a></li>
+                    
+                    </ul>
+                  
+                  
+                  
+                  
+                </div>
                 
                 </li>
               
@@ -261,6 +279,28 @@ you supply.</p>
 </span></td>
                 </tr>
               
+                <tr>
+                  <td class='break-word'><span class='code bold'>config.max_subscriptions</span> <code class='quiet'>integer?</code>
+                  </td>
+                  <td class='break-word'><span>If the server returns pre-subscription data (see the 
+<a href="#centro-jslibclienteventready">ready</a>
+ event), emit an 
+<code>error</code>
+ event if there are more entries than this maximum. If not specified, no limit is applied.
+</span></td>
+                </tr>
+              
+                <tr>
+                  <td class='break-word'><span class='code bold'>config.max_topic_length</span> <code class='quiet'>integer?</code>
+                  </td>
+                  <td class='break-word'><span>If the server returns pre-subscription data (see the 
+<a href="#centro-jslibclienteventready">ready</a>
+ event), emit an 
+<code>error</code>
+ event if one of the topics exceeds this length. If not specified, no limit is applied.
+</span></td>
+                </tr>
+              
             </tbody>
           </table>
           
@@ -367,6 +407,28 @@ data as a stream header (currently all except Primus and HTTP).</p>
 </span></td>
                 </tr>
               
+                <tr>
+                  <td class='break-word'><span class='code bold'>config.max_subscriptions</span> <code class='quiet'>integer?</code>
+                  </td>
+                  <td class='break-word'><span>If the server returns pre-subscription data (see the 
+<a href="#centro-jslibclienteventready">ready</a>
+ event), emit an 
+<code>error</code>
+ event if there are more entries than this maximum. If not specified, no limit is applied.
+</span></td>
+                </tr>
+              
+                <tr>
+                  <td class='break-word'><span class='code bold'>config.max_topic_length</span> <code class='quiet'>integer?</code>
+                  </td>
+                  <td class='break-word'><span>If the server returns pre-subscription data (see the 
+<a href="#centro-jslibclienteventready">ready</a>
+ event), emit an 
+<code>error</code>
+ event if one of the topics exceeds this length. If not specified, no limit is applied.
+</span></td>
+                </tr>
+              
             </tbody>
           </table>
           
@@ -415,7 +477,7 @@ data as a stream header (currently all except Primus and HTTP).</p>
 
   
 
-  <p>Callback type for HTTP Basic Authentication data</p>
+  <p>Callback type for HTTP Basic Authentication data.</p>
 
 
   <div class='pre p1 fill-light mt0'>authzCallback</div>
@@ -504,7 +566,7 @@ data as a stream header (currently all except Primus and HTTP).</p>
 
   
 
-  <p>Callback type for connection to server</p>
+  <p>Callback type for connection to server.</p>
 
 
   <div class='pre p1 fill-light mt0'>streamCallback</div>
@@ -589,7 +651,7 @@ data as a stream header (currently all except Primus and HTTP).</p>
 
   
 
-  <p>Ready event. This is an extra event added to <a href="https://github.com/davedoesdev/mqlobber#mqlobberclientstream-options">MQlobberClient</a> and is emitted when the server has authorized the client and connection is established.</p>
+  <p>Ready event. This is an extra event added to <a href="https://github.com/davedoesdev/mqlobber#mqlobberclientstream-options">MQlobberClient</a> and is emitted when the server has authorized the client and a connection is established.</p>
 
 
   <div class='pre p1 fill-light mt0'>ready</div>
@@ -691,6 +753,306 @@ data as a stream header (currently all except Primus and HTTP).</p>
   
 
   
+
+  
+    <div class='py1 quiet mt1 prose-big'>Static Members</div>
+    <div class="clearfix">
+  
+    <div class='border-bottom' id='centro-jslibservercentroserver'>
+      <div class="clearfix small pointer toggle-sibling">
+        <div class="py1 contain">
+            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
+            <span class='code strong strong truncate'>new CentroServer(config)</span>
+        </div>
+      </div>
+      <div class="clearfix display-none toggle-target">
+        <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+
+  <p>Create a server which publishes and subscribes to messages on behalf of
+clients.</p>
+
+
+  <div class='pre p1 fill-light mt0'>new CentroServer(config: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</div>
+  
+  
+    <p>
+      Extends
+      
+        <a href="https://nodejs.org/api/all.html#all_class_events_eventemitter">events.EventEmitter</a>
+      
+    </p>
+  
+
+  
+  
+  
+  
+  
+  
+
+  
+    <div class='py1 quiet mt1 prose-big'>Parameters</div>
+    <div class='prose'>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>config</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</code>
+	    Configuration options. This supports all the options supported by 
+<a href="https://github.com/davedoesdev/mqlobber#mqlobberserverfsq-stream-options">MQlobberServer</a>
+ and 
+<a href="https://github.com/davedoesdev/mqlobber-access-control#accesscontroloptions">AccessControl</a>
+ as well as the following:
+
+          </div>
+          
+          <table class='mt1 mb2 fixed-table h5 col-12'>
+            <colgroup>
+              <col width='30%' />
+              <col width='70%' />
+            </colgroup>
+            <thead>
+              <tr class='bold fill-light'>
+                <th>Name</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody class='mt1'>
+              
+                <tr>
+                  <td class='break-word'><span class='code bold'>config.transport</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a> | <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)?</code>
+                  </td>
+                  <td class='break-word'><span>Specifies which transport to load into the server. This should be either the transport's name or its configuration, with its name in the 
+<code>server</code>
+ property.
+</span></td>
+                </tr>
+              
+                <tr>
+                  <td class='break-word'><span class='code bold'>config.transports</span> <code class='quiet'><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array">Array</a>&#x3C;(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a> | <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)>?</code>
+                  </td>
+                  <td class='break-word'><span>Specifies multiple transports to load into the server.
+</span></td>
+                </tr>
+              
+                <tr>
+                  <td class='break-word'><span class='code bold'>config.authorize</span> <code class='quiet'><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/function">Function</a>?</code>
+                  </td>
+                  <td class='break-word'><span>Function for creating an object which can authorize 
+<a href="http://self-issued.info/docs/draft-ietf-oauth-json-web-token.html">JSON Web Tokens</a>
+ presented by clients. Defaults to 
+<a href="https://github.com/davedoesdev/authorize-jwt#moduleexportsconfig-cb">authorize-jwt</a>
+. If you supply your own, it must comply with authorize-jwt's API. 
+<code>authorize_config</code>
+ or 
+<code>config</code>
+ is passed as the first argument.
+</span></td>
+                </tr>
+              
+                <tr>
+                  <td class='break-word'><span class='code bold'>config.authorize_config</span> <code class='quiet'><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>?</code>
+                  </td>
+                  <td class='break-word'><span>Configuration specific to 
+<code>config.authorize</code>
+.
+</span></td>
+                </tr>
+              
+                <tr>
+                  <td class='break-word'><span class='code bold'>config.allowed_algs</span> <code class='quiet'><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array">Array</a>&#x3C;<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>></code>
+                  </td>
+                  <td class='break-word'><span>Which JWT algorithms are allowed. Clients which present tokens which aren't signed with one of these algorithms are rejected. You must supply this list.
+</span></td>
+                </tr>
+              
+                <tr>
+                  <td class='break-word'><span class='code bold'>config.fsq</span> <code class='quiet'><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>?</code>
+                  </td>
+                  <td class='break-word'><span><a href="https://github.com/davedoesdev/qlobber-fsq#qlobberfsqoptions">QlobberFSQ</a>
+ instance for handling messages. Defaults to a new instance, passing 
+<code>fsq_config</code>
+ or 
+<code>config</code>
+ to the constructor.
+</span></td>
+                </tr>
+              
+                <tr>
+                  <td class='break-word'><span class='code bold'>config.fsq_config</span> <code class='quiet'><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>?</code>
+                  </td>
+                  <td class='break-word'><span>Configuration specific to 
+<code>config.fsq</code>
+.
+</span></td>
+                </tr>
+              
+                <tr>
+                  <td class='break-word'><span class='code bold'>config.realm</span> <code class='quiet'><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></code>
+                  
+                    (default <code>centro</code>)
+                  </td>
+                  <td class='break-word'><span>When authorization of a client fails, the transport is given information it can (optionally) use when rejecting the connection. This includes a HTTP Basic Authentication header specifying this realm.
+</span></td>
+                </tr>
+              
+                <tr>
+                  <td class='break-word'><span class='code bold'>config.max_tokens</span> <code class='quiet'>integer</code>
+                  
+                    (default <code>10</code>)
+                  </td>
+                  <td class='break-word'><span>Maximum number of authorization tokens each client is allowed to present.
+</span></td>
+                </tr>
+              
+                <tr>
+                  <td class='break-word'><span class='code bold'>config.max_token_length</span> <code class='quiet'>integer</code>
+                  
+                    (default <code>1MiB</code>)
+                  </td>
+                  <td class='break-word'><span>Maximum size of authorization token each client is allowed to present.
+</span></td>
+                </tr>
+              
+                <tr>
+                  <td class='break-word'><span class='code bold'>config.max_topic_length</span> <code class='quiet'>integer</code>
+                  
+                    (default <code>32KiB</code>)
+                  </td>
+                  <td class='break-word'><span>Maximum length of topics the client can specify, in subscription and publish requests and in the authorization token.
+</span></td>
+                </tr>
+              
+                <tr>
+                  <td class='break-word'><span class='code bold'>config.max_issuer_length</span> <code class='quiet'>integer</code>
+                  
+                    (default <code>128</code>)
+                  </td>
+                  <td class='break-word'><span>Maximum length of the 
+<code>iss</code>
+ claim in authorization tokens.
+</span></td>
+                </tr>
+              
+                <tr>
+                  <td class='break-word'><span class='code bold'>config.max_subscribe_topics</span> <code class='quiet'>integer</code>
+                  
+                    (default <code>1000</code>)
+                  </td>
+                  <td class='break-word'><span>Maximum number of topics that 
+<code>subscribe</code>
+ claims in authorization tokens can contain. These claims specify to which topics client which present them are pre-subscribed.
+</span></td>
+                </tr>
+              
+                <tr>
+                  <td class='break-word'><span class='code bold'>config.max_allow_publish_topics</span> <code class='quiet'>integer</code>
+                  
+                    (default <code>1000</code>)
+                  </td>
+                  <td class='break-word'><span>Maximum number of topics that 
+<code>access_control.publish.allow</code>
+ claims in authorization tokens can contain. These claims are passed to 
+<a href="https://github.com/davedoesdev/mqlobber-access-control#accesscontroloptions">AccessControl</a>
+ and specify to which topics clients which present them can publish messages.
+</span></td>
+                </tr>
+              
+                <tr>
+                  <td class='break-word'><span class='code bold'>config.max_disallow_publish_topics</span> <code class='quiet'>integer</code>
+                  
+                    (default <code>1000</code>)
+                  </td>
+                  <td class='break-word'><span>Maximum number of topics that 
+<code>access_control.publish.disallow</code>
+ claims in authorization tokens can contain. These claims are passed to 
+<a href="https://github.com/davedoesdev/mqlobber-access-control#accesscontroloptions">AccessControl</a>
+ and specify to which topics clients which present them cannot publish messages.
+</span></td>
+                </tr>
+              
+                <tr>
+                  <td class='break-word'><span class='code bold'>config.max_allow_subscribe_topics</span> <code class='quiet'>integer</code>
+                  
+                    (default <code>1000</code>)
+                  </td>
+                  <td class='break-word'><span>Maximum number of topics that 
+<code>access_control.subscribe.allow</code>
+ claims in authorization tokens can contain. These claims are passed to 
+<a href="https://github.com/davedoesdev/mqlobber-access-control#accesscontroloptions">AccessControl</a>
+ and specify to which topics clients which present them cannot subscribe.
+</span></td>
+                </tr>
+              
+                <tr>
+                  <td class='break-word'><span class='code bold'>config.max_disallow_subscribe_topics</span> <code class='quiet'>integer</code>
+                  
+                    (default <code>1000</code>)
+                  </td>
+                  <td class='break-word'><span>Maximum number of topics that 
+<code>access_control.subscribe.disallow</code>
+ claims in authorization tokens can contain. These claims are passed to 
+<a href="https://github.com/davedoesdev/mqlobber-access-control#accesscontroloptions">AccessControl</a>
+ and specify to which topics clients which present them cannot subscribe.
+</span></td>
+                </tr>
+              
+                <tr>
+                  <td class='break-word'><span class='code bold'>config.max_block_topics</span> <code class='quiet'>integer</code>
+                  
+                    (default <code>1000</code>)
+                  </td>
+                  <td class='break-word'><span>Maximum number of topics that 
+<code>access_control.block</code>
+ claims in authorization tokens can contain. These claims are passed to 
+<a href="https://github.com/davedoesdev/mqlobber-access-control#accesscontroloptions">AccessControl</a>
+ and specify which messages aren't delivered to clients which present them.
+</span></td>
+                </tr>
+              
+                <tr>
+                  <td class='break-word'><span class='code bold'>config.max_presence_data_length</span> <code class='quiet'>integer</code>
+                  
+                    (default <code>1MiB</code>)
+                  </td>
+                  <td class='break-word'><span>Maximum length of 
+<code>presence.connect.data</code>
+ and 
+<code>presence.disconnect.data</code>
+ claims in authorization tokens can contain. The 
+<code>presence</code>
+ claims specify messages to send when clients which present them connect and disconnect.
+</span></td>
+                </tr>
+              
+            </tbody>
+          </table>
+          
+        </div>
+      
+    </div>
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</section>
+
+      </div>
+    </div>
+  
+</div>
 
   
 
