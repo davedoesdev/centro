@@ -79,9 +79,9 @@
                       <li class='h5'>Events</li>
                       
                         <li><a
-                          href='#centro-jslibclienteventready'
+                          href='#centro-jslibclienteventmqlobberclientready'
                           class='regular pre-open'>
-                          ⓔ ready
+                          ⓔ MQlobberClient#ready
                         </a></li>
                       
                     </ul>
@@ -109,10 +109,75 @@
                         .CentroServer
                       </a></li>
                     
+                      <li><a
+                        href='#centro-jslibserverclosecallback'
+                        class='regular pre-open'>
+                        .closeCallback
+                      </a></li>
+                    
+                      <li><a
+                        href='#centro-jslibservercancelcallback'
+                        class='regular pre-open'>
+                        .cancelCallback
+                      </a></li>
+                    
+                      <li><a
+                        href='#centro-jslibserveronclosecallback'
+                        class='regular pre-open'>
+                        .oncloseCallback
+                      </a></li>
+                    
                     </ul>
                   
                   
                   
+                  
+                    <ul class='list-reset py1-ul pl1'>
+                      <li class='h5'>Events</li>
+                      
+                        <li><a
+                          href='#centro-jslibservereventcentroserverready'
+                          class='regular pre-open'>
+                          ⓔ CentroServer#ready
+                        </a></li>
+                      
+                        <li><a
+                          href='#centro-jslibservereventcentroservertransport_ready'
+                          class='regular pre-open'>
+                          ⓔ CentroServer#transport_ready
+                        </a></li>
+                      
+                        <li><a
+                          href='#centro-jslibservereventcentroserverauthz_start'
+                          class='regular pre-open'>
+                          ⓔ CentroServer#authz_start
+                        </a></li>
+                      
+                        <li><a
+                          href='#centro-jslibservereventcentroserverauthz_end'
+                          class='regular pre-open'>
+                          ⓔ CentroServer#authz_end
+                        </a></li>
+                      
+                        <li><a
+                          href='#centro-jslibservereventcentroserverclose'
+                          class='regular pre-open'>
+                          ⓔ CentroServer#close
+                        </a></li>
+                      
+                        <li><a
+                          href='#centro-jslibservereventcentroservererror'
+                          class='regular pre-open'>
+                          ⓔ CentroServer#error
+                        </a></li>
+                      
+                        <li><a
+                          href='#centro-jslibservereventcentroserverwarning'
+                          class='regular pre-open'>
+                          ⓔ CentroServer#warning
+                        </a></li>
+                      
+                    </ul>
                   
                 </div>
                 
@@ -283,7 +348,7 @@ you supply.</p>
                   <td class='break-word'><span class='code bold'>config.max_subscriptions</span> <code class='quiet'>integer?</code>
                   </td>
                   <td class='break-word'><span>If the server returns pre-subscription data (see the 
-<a href="#centro-jslibclienteventready">ready</a>
+<a href="centro-js/lib/client.event:ready">ready</a>
  event), emit an 
 <code>error</code>
  event if there are more entries than this maximum. If not specified, no limit is applied.
@@ -294,7 +359,7 @@ you supply.</p>
                   <td class='break-word'><span class='code bold'>config.max_topic_length</span> <code class='quiet'>integer?</code>
                   </td>
                   <td class='break-word'><span>If the server returns pre-subscription data (see the 
-<a href="#centro-jslibclienteventready">ready</a>
+<a href="centro-js/lib/client.event:ready">ready</a>
  event), emit an 
 <code>error</code>
  event if one of the topics exceeds this length. If not specified, no limit is applied.
@@ -411,7 +476,7 @@ data as a stream header (currently all except Primus and HTTP).</p>
                   <td class='break-word'><span class='code bold'>config.max_subscriptions</span> <code class='quiet'>integer?</code>
                   </td>
                   <td class='break-word'><span>If the server returns pre-subscription data (see the 
-<a href="#centro-jslibclienteventready">ready</a>
+<a href="centro-js/lib/client.event:ready">ready</a>
  event), emit an 
 <code>error</code>
  event if there are more entries than this maximum. If not specified, no limit is applied.
@@ -422,7 +487,7 @@ data as a stream header (currently all except Primus and HTTP).</p>
                   <td class='break-word'><span class='code bold'>config.max_topic_length</span> <code class='quiet'>integer?</code>
                   </td>
                   <td class='break-word'><span>If the server returns pre-subscription data (see the 
-<a href="#centro-jslibclienteventready">ready</a>
+<a href="centro-js/lib/client.event:ready">ready</a>
  event), emit an 
 <code>error</code>
  event if one of the topics exceeds this length. If not specified, no limit is applied.
@@ -639,11 +704,11 @@ data as a stream header (currently all except Primus and HTTP).</p>
     <div class='py1 quiet mt1 prose-big'>Events</div>
     <div class="clearfix">
   
-    <div class='border-bottom' id='centro-jslibclienteventready'>
+    <div class='border-bottom' id='centro-jslibclienteventmqlobberclientready'>
       <div class="clearfix small pointer toggle-sibling">
         <div class="py1 contain">
             <a class='icon pin-right py1 dark-link caret-right'>▸</a>
-            <span class='code strong strong truncate'>ready</span>
+            <span class='code strong strong truncate'>MQlobberClient#ready</span>
         </div>
       </div>
       <div class="clearfix display-none toggle-target">
@@ -654,7 +719,7 @@ data as a stream header (currently all except Primus and HTTP).</p>
   <p>Ready event. This is an extra event added to <a href="https://github.com/davedoesdev/mqlobber#mqlobberclientstream-options">MQlobberClient</a> and is emitted when the server has authorized the client and a connection is established.</p>
 
 
-  <div class='pre p1 fill-light mt0'>ready</div>
+  <div class='pre p1 fill-light mt0'>MQlobberClient#ready</div>
   
   
 
@@ -868,7 +933,7 @@ clients.</p>
                 </tr>
               
                 <tr>
-                  <td class='break-word'><span class='code bold'>config.fsq</span> <code class='quiet'><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>?</code>
+                  <td class='break-word'><span class='code bold'>config.fsq</span> <code class='quiet'>QlobberFSQ?</code>
                   </td>
                   <td class='break-word'><span><a href="https://github.com/davedoesdev/qlobber-fsq#qlobberfsqoptions">QlobberFSQ</a>
  instance for handling messages. Defaults to a new instance, passing 
@@ -1045,6 +1110,233 @@ clients.</p>
   
 
   
+    <div class='py1 quiet mt1 prose-big'>Instance Members</div>
+    <div class="clearfix">
+  
+    <div class='border-bottom' id='centro-jslibservercentroserverfsq'>
+      <div class="clearfix small pointer toggle-sibling">
+        <div class="py1 contain">
+            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
+            <span class='code strong strong truncate'>fsq</span>
+        </div>
+      </div>
+      <div class="clearfix display-none toggle-target">
+        <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+
+  <p><a href="https://github.com/davedoesdev/qlobber-fsq#qlobberfsqoptions">QlobberFSQ</a> instance being used to handle messages.</p>
+
+
+  <div class='pre p1 fill-light mt0'>fsq</div>
+  
+    <p>
+      Type:
+      QlobberFSQ
+    </p>
+  
+  
+
+  
+  
+  
+  
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</section>
+
+      </div>
+    </div>
+  
+    <div class='border-bottom' id='centro-jslibservercentroservertransport_ops'>
+      <div class="clearfix small pointer toggle-sibling">
+        <div class="py1 contain">
+            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
+            <span class='code strong strong truncate'>transport_ops</span>
+        </div>
+      </div>
+      <div class="clearfix display-none toggle-target">
+        <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+
+  <p>Operations you can perform on transport you specified when constructing <a href="#centro-jslibservercentroserver">CentroServer</a>. Transports can define their own operations in addition to <code>close</code>. Indexable by position or transport name.</p>
+
+
+  <div class='pre p1 fill-light mt0'>transport_ops</div>
+  
+    <p>
+      Type:
+      <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array">Array</a>&#x3C;{close: <a href="#centro-jslibserverclosecallback">centro-js/lib/server.closeCallback</a>}>
+    </p>
+  
+  
+
+  
+  
+  
+  
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</section>
+
+      </div>
+    </div>
+  
+    <div class='border-bottom' id='centro-jslibservercentroserverclose'>
+      <div class="clearfix small pointer toggle-sibling">
+        <div class="py1 contain">
+            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
+            <span class='code strong strong truncate'>close(cb)</span>
+        </div>
+      </div>
+      <div class="clearfix display-none toggle-target">
+        <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+
+  <p>Close the server.</p>
+
+
+  <div class='pre p1 fill-light mt0'>close(cb: <a href="#centro-jslibserverclosecallback">centro-js/lib/server.closeCallback</a>)</div>
+  
+  
+
+  
+  
+  
+  
+  
+  
+
+  
+    <div class='py1 quiet mt1 prose-big'>Parameters</div>
+    <div class='prose'>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>cb</span> <code class='quiet'>(<a href="#centro-jslibserverclosecallback">centro-js/lib/server.closeCallback</a>)</code>
+	    Called when the server has been closed.
+
+          </div>
+          
+        </div>
+      
+    </div>
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</section>
+
+      </div>
+    </div>
+  
+    <div class='border-bottom' id='centro-jslibservercentroserverattach_extension'>
+      <div class="clearfix small pointer toggle-sibling">
+        <div class="py1 contain">
+            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
+            <span class='code strong strong truncate'>attach_extension(ext, config?)</span>
+        </div>
+      </div>
+      <div class="clearfix display-none toggle-target">
+        <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+
+  <p>Attach an extension to the server.</p>
+
+
+  <div class='pre p1 fill-light mt0'>attach_extension(ext: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>, config: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>?)</div>
+  
+  
+
+  
+  
+  
+  
+  
+  
+
+  
+    <div class='py1 quiet mt1 prose-big'>Parameters</div>
+    <div class='prose'>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>ext</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</code>
+	    Extension to attach.
+
+          </div>
+          
+        </div>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>config</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>?)</code>
+	    Configuration to pass to the extension.
+
+          </div>
+          
+        </div>
+      
+    </div>
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
 
   
 </section>
@@ -1057,6 +1349,725 @@ clients.</p>
   
 
   
+</section>
+
+      </div>
+    </div>
+  
+    <div class='border-bottom' id='centro-jslibserverclosecallback'>
+      <div class="clearfix small pointer toggle-sibling">
+        <div class="py1 contain">
+            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
+            <span class='code strong strong truncate'>closeCallback</span>
+        </div>
+      </div>
+      <div class="clearfix display-none toggle-target">
+        <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+
+  <p>Callback type for server or transport close.</p>
+
+
+  <div class='pre p1 fill-light mt0'>closeCallback</div>
+  
+    <p>
+      Type:
+      <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/function">Function</a>
+    </p>
+  
+  
+
+  
+  
+  
+  
+  
+  
+
+  
+    <div class='py1 quiet mt1 prose-big'>Parameters</div>
+    <div class='prose'>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>err</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error">Error</a>?)</code>
+	    = Error, if one occurred.
+
+          </div>
+          
+        </div>
+      
+    </div>
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</section>
+
+      </div>
+    </div>
+  
+    <div class='border-bottom' id='centro-jslibservercancelcallback'>
+      <div class="clearfix small pointer toggle-sibling">
+        <div class="py1 contain">
+            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
+            <span class='code strong strong truncate'>cancelCallback</span>
+        </div>
+      </div>
+      <div class="clearfix display-none toggle-target">
+        <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+
+  <p>Callback type for cancelling authorization.</p>
+
+
+  <div class='pre p1 fill-light mt0'>cancelCallback</div>
+  
+    <p>
+      Type:
+      <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/function">Function</a>
+    </p>
+  
+  
+
+  
+  
+  
+  
+  
+  
+
+  
+    <div class='py1 quiet mt1 prose-big'>Parameters</div>
+    <div class='prose'>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>err</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error">Error</a>?)</code>
+	    = Error which led to cancelling the authorization, if available.
+
+          </div>
+          
+        </div>
+      
+    </div>
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</section>
+
+      </div>
+    </div>
+  
+    <div class='border-bottom' id='centro-jslibserveronclosecallback'>
+      <div class="clearfix small pointer toggle-sibling">
+        <div class="py1 contain">
+            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
+            <span class='code strong strong truncate'>oncloseCallback</span>
+        </div>
+      </div>
+      <div class="clearfix display-none toggle-target">
+        <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+
+  <p>Callback type for registering close handler.</p>
+
+
+  <div class='pre p1 fill-light mt0'>oncloseCallback</div>
+  
+    <p>
+      Type:
+      <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/function">Function</a>
+    </p>
+  
+  
+
+  
+  
+  
+  
+  
+  
+
+  
+    <div class='py1 quiet mt1 prose-big'>Parameters</div>
+    <div class='prose'>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>cb</span> <code class='quiet'>(closeCallback)</code>
+	    Called when close completes.
+
+          </div>
+          
+        </div>
+      
+    </div>
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</section>
+
+      </div>
+    </div>
+  
+</div>
+
+  
+
+  
+
+  
+    <div class='py1 quiet mt1 prose-big'>Events</div>
+    <div class="clearfix">
+  
+    <div class='border-bottom' id='centro-jslibservereventcentroserverready'>
+      <div class="clearfix small pointer toggle-sibling">
+        <div class="py1 contain">
+            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
+            <span class='code strong strong truncate'>CentroServer#ready</span>
+        </div>
+      </div>
+      <div class="clearfix display-none toggle-target">
+        <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+
+  <p>Ready event. Emitted when the server is ready to accept connections.</p>
+
+
+  <div class='pre p1 fill-light mt0'>CentroServer#ready</div>
+  
+  
+
+  
+  
+  
+  
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</section>
+
+      </div>
+    </div>
+  
+    <div class='border-bottom' id='centro-jslibservereventcentroservertransport_ready'>
+      <div class="clearfix small pointer toggle-sibling">
+        <div class="py1 contain">
+            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
+            <span class='code strong strong truncate'>CentroServer#transport_ready</span>
+        </div>
+      </div>
+      <div class="clearfix display-none toggle-target">
+        <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+
+  <p>Transport ready event. Emitted when an individual transport has been loaded
+and is ready to accept connections.</p>
+
+
+  <div class='pre p1 fill-light mt0'>CentroServer#transport_ready</div>
+  
+  
+
+  
+  
+  
+  
+  
+  
+
+  
+    <div class='py1 quiet mt1 prose-big'>Parameters</div>
+    <div class='prose'>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>config</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</code>
+	    Configuration you gave to the transport when constructing 
+<a href="#centro-jslibservercentroserver">CentroServer</a>
+.
+
+          </div>
+          
+        </div>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>ops</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</code>
+	    Operations you can perform on the transport, including:
+
+          </div>
+          
+        </div>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>close</span> <code class='quiet'>(<a href="#centro-jslibserverclosecallback">centro-js/lib/server.closeCallback</a>)</code>
+	    Close the transport.
+
+          </div>
+          
+        </div>
+      
+    </div>
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</section>
+
+      </div>
+    </div>
+  
+    <div class='border-bottom' id='centro-jslibservereventcentroserverauthz_start'>
+      <div class="clearfix small pointer toggle-sibling">
+        <div class="py1 contain">
+            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
+            <span class='code strong strong truncate'>CentroServer#authz_start</span>
+        </div>
+      </div>
+      <div class="clearfix display-none toggle-target">
+        <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+
+  <p>Authorization start event. Emitted when a client presents an authorization
+token. This is the first event emitted when a client connects.</p>
+
+
+  <div class='pre p1 fill-light mt0'>CentroServer#authz_start</div>
+  
+  
+
+  
+  
+  
+  
+  
+  
+
+  
+    <div class='py1 quiet mt1 prose-big'>Parameters</div>
+    <div class='prose'>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>cancel</span> <code class='quiet'>(cancelCallback)</code>
+	    Call this to cancel authorization.
+
+          </div>
+          
+        </div>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>onclose</span> <code class='quiet'>(oncloseCallback)</code>
+	    Call this to register a handler when the connection is closed.
+
+          </div>
+          
+        </div>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>obj</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</code>
+	    What's being authorized. This is either a HTTP request (with a 
+<code>url</code>
+ property) or a stream.
+
+          </div>
+          
+        </div>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>config</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</code>
+	    Configuration you gave to the transport when constructing 
+<a href="#centro-jslibservercentroserver">CentroServer</a>
+.
+
+          </div>
+          
+        </div>
+      
+    </div>
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</section>
+
+      </div>
+    </div>
+  
+    <div class='border-bottom' id='centro-jslibservereventcentroserverauthz_end'>
+      <div class="clearfix small pointer toggle-sibling">
+        <div class="py1 contain">
+            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
+            <span class='code strong strong truncate'>CentroServer#authz_end</span>
+        </div>
+      </div>
+      <div class="clearfix display-none toggle-target">
+        <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+
+  <p>Authorization end event. Emitted when a authorization token has been accepted
+or rejected.</p>
+
+
+  <div class='pre p1 fill-light mt0'>CentroServer#authz_end</div>
+  
+  
+
+  
+  
+  
+  
+  
+  
+
+  
+    <div class='py1 quiet mt1 prose-big'>Parameters</div>
+    <div class='prose'>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>err</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>?)</code>
+	    <code>null</code>
+ if token was accepted otherwise cause of rejection.
+
+          </div>
+          
+        </div>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>handshakes</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array">Array</a>&#x3C;{payload: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>, uri: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>, rev: rev}>?)</code>
+	    The token's payload, issuer URI and public key revision (see 
+<a href="https://github.com/davedoesdev/authorize-jwt">authorize-jwt</a>
+). Normally you won't need this information.
+
+          </div>
+          
+        </div>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>tokens</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array">Array</a>&#x3C;{string}>?)</code>
+	    The raw JSON Web Tokens. Normally you won't need this information.
+
+          </div>
+          
+        </div>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>obj</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>?)</code>
+	    What was authorized. This is either a HTTP request (with a 
+<code>url</code>
+ property) or a stream.
+
+          </div>
+          
+        </div>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>config</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>?)</code>
+	    Configuration you gave to the transport when constructing 
+<a href="#centro-jslibservercentroserver">CentroServer</a>
+.
+
+          </div>
+          
+        </div>
+      
+    </div>
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</section>
+
+      </div>
+    </div>
+  
+    <div class='border-bottom' id='centro-jslibservereventcentroserverclose'>
+      <div class="clearfix small pointer toggle-sibling">
+        <div class="py1 contain">
+            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
+            <span class='code strong strong truncate'>CentroServer#close</span>
+        </div>
+      </div>
+      <div class="clearfix display-none toggle-target">
+        <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+
+  <p>Close event. Emitted when the server has been closed (see <a href="#centro-jslibservercentroserverclose">close</a>).</p>
+
+
+  <div class='pre p1 fill-light mt0'>CentroServer#close</div>
+  
+  
+
+  
+  
+  
+  
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</section>
+
+      </div>
+    </div>
+  
+    <div class='border-bottom' id='centro-jslibservereventcentroservererror'>
+      <div class="clearfix small pointer toggle-sibling">
+        <div class="py1 contain">
+            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
+            <span class='code strong strong truncate'>CentroServer#error</span>
+        </div>
+      </div>
+      <div class="clearfix display-none toggle-target">
+        <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+
+  <p>Error event.</p>
+
+
+  <div class='pre p1 fill-light mt0'>CentroServer#error</div>
+  
+  
+
+  
+  
+  
+  
+  
+  
+
+  
+    <div class='py1 quiet mt1 prose-big'>Parameters</div>
+    <div class='prose'>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>err</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</code>
+	    The error which occurred.
+
+          </div>
+          
+        </div>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>obj</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</code>
+	    The object which originally raised the error.
+
+          </div>
+          
+        </div>
+      
+    </div>
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</section>
+
+      </div>
+    </div>
+  
+    <div class='border-bottom' id='centro-jslibservereventcentroserverwarning'>
+      <div class="clearfix small pointer toggle-sibling">
+        <div class="py1 contain">
+            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
+            <span class='code strong strong truncate'>CentroServer#warning</span>
+        </div>
+      </div>
+      <div class="clearfix display-none toggle-target">
+        <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+
+  <p>Warning event. If you don't listen to this event then the error is printed
+to <code>console.error</code>.</p>
+
+
+  <div class='pre p1 fill-light mt0'>CentroServer#warning</div>
+  
+  
+
+  
+  
+  
+  
+  
+  
+
+  
+    <div class='py1 quiet mt1 prose-big'>Parameters</div>
+    <div class='prose'>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>err</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</code>
+	    The non-fatal error which occurred.
+
+          </div>
+          
+        </div>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>obj</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</code>
+	    The object which originally raised the error.
+
+          </div>
+          
+        </div>
+      
+    </div>
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</section>
+
+      </div>
+    </div>
+  
+</div>
 
   
 </section>
