@@ -127,6 +127,12 @@
                         .oncloseCallback
                       </a></li>
                     
+                      <li><a
+                        href='#centro-jslibserverdestroycallback'
+                        class='regular pre-open'>
+                        .destroyCallback
+                      </a></li>
+                    
                     </ul>
                   
                   
@@ -157,6 +163,36 @@
                           href='#centro-jslibservereventcentroserverauthz_end'
                           class='regular pre-open'>
                           ⓔ CentroServer#authz_end
+                        </a></li>
+                      
+                        <li><a
+                          href='#centro-jslibservereventcentroserverpre_connect'
+                          class='regular pre-open'>
+                          ⓔ CentroServer#pre_connect
+                        </a></li>
+                      
+                        <li><a
+                          href='#centro-jslibservereventcentroserverconnect'
+                          class='regular pre-open'>
+                          ⓔ CentroServer#connect
+                        </a></li>
+                      
+                        <li><a
+                          href='#centro-jslibservereventcentroserverdisconnect'
+                          class='regular pre-open'>
+                          ⓔ CentroServer#disconnect
+                        </a></li>
+                      
+                        <li><a
+                          href='#centro-jslibservereventcentroserverexpired'
+                          class='regular pre-open'>
+                          ⓔ CentroServer#expired
+                        </a></li>
+                      
+                        <li><a
+                          href='#centro-jslibservereventcentroserverempty'
+                          class='regular pre-open'>
+                          ⓔ CentroServer#empty
                         </a></li>
                       
                         <li><a
@@ -1521,7 +1557,7 @@ clients.</p>
       
         <div class='space-bottom0'>
           <div>
-            <span class='code bold'>cb</span> <code class='quiet'>(closeCallback)</code>
+            <span class='code bold'>cb</span> <code class='quiet'>(<a href="#centro-jslibserverclosecallback">centro-js/lib/server.closeCallback</a>)</code>
 	    Called when close completes.
 
           </div>
@@ -1529,6 +1565,57 @@ clients.</p>
         </div>
       
     </div>
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</section>
+
+      </div>
+    </div>
+  
+    <div class='border-bottom' id='centro-jslibserverdestroycallback'>
+      <div class="clearfix small pointer toggle-sibling">
+        <div class="py1 contain">
+            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
+            <span class='code strong strong truncate'>destroyCallback</span>
+        </div>
+      </div>
+      <div class="clearfix display-none toggle-target">
+        <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+
+  <p>Callback type for closing a connection.</p>
+
+
+  <div class='pre p1 fill-light mt0'>destroyCallback</div>
+  
+    <p>
+      Type:
+      <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/function">Function</a>
+    </p>
+  
+  
+
+  
+  
+  
+  
+  
+  
+
   
 
   
@@ -1698,8 +1785,8 @@ and is ready to accept connections.</p>
 
   
 
-  <p>Authorization start event. Emitted when a client presents an authorization
-token. This is the first event emitted when a client connects.</p>
+  <p>Authorization start event. This is the first event emitted when a client
+connects.</p>
 
 
   <div class='pre p1 fill-light mt0'>CentroServer#authz_start</div>
@@ -1719,7 +1806,7 @@ token. This is the first event emitted when a client connects.</p>
       
         <div class='space-bottom0'>
           <div>
-            <span class='code bold'>cancel</span> <code class='quiet'>(cancelCallback)</code>
+            <span class='code bold'>cancel</span> <code class='quiet'>(<a href="#centro-jslibservercancelcallback">centro-js/lib/server.cancelCallback</a>)</code>
 	    Call this to cancel authorization.
 
           </div>
@@ -1728,7 +1815,7 @@ token. This is the first event emitted when a client connects.</p>
       
         <div class='space-bottom0'>
           <div>
-            <span class='code bold'>onclose</span> <code class='quiet'>(oncloseCallback)</code>
+            <span class='code bold'>onclose</span> <code class='quiet'>(<a href="#centro-jslibserveronclosecallback">centro-js/lib/server.oncloseCallback</a>)</code>
 	    Call this to register a handler when the connection is closed.
 
           </div>
@@ -1790,8 +1877,7 @@ token. This is the first event emitted when a client connects.</p>
 
   
 
-  <p>Authorization end event. Emitted when a authorization token has been accepted
-or rejected.</p>
+  <p>Authorization end event. Emitted when a client has been accepted or rejected.</p>
 
 
   <div class='pre p1 fill-light mt0'>CentroServer#authz_end</div>
@@ -1813,7 +1899,7 @@ or rejected.</p>
           <div>
             <span class='code bold'>err</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>?)</code>
 	    <code>null</code>
- if token was accepted otherwise cause of rejection.
+ if client was accepted otherwise cause of rejection.
 
           </div>
           
@@ -1821,11 +1907,8 @@ or rejected.</p>
       
         <div class='space-bottom0'>
           <div>
-            <span class='code bold'>handshakes</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array">Array</a>&#x3C;{payload: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>, uri: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>, rev: rev}>?)</code>
-	    The token's payload, issuer URI and public key revision (see 
-<a href="https://github.com/davedoesdev/authorize-jwt">authorize-jwt</a>
-). Normally you won't need this information.
-
+            <span class='code bold'>handshakes</span> <code class='quiet'>(any)</code>
+	    
           </div>
           
         </div>
@@ -1833,7 +1916,7 @@ or rejected.</p>
         <div class='space-bottom0'>
           <div>
             <span class='code bold'>tokens</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array">Array</a>&#x3C;{string}>?)</code>
-	    The raw JSON Web Tokens. Normally you won't need this information.
+	    The raw authorization tokens.
 
           </div>
           
@@ -1861,7 +1944,387 @@ or rejected.</p>
           
         </div>
       
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>token_infos</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array">Array</a>&#x3C;{payload: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>, uri: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>, rev: rev}>?)</code>
+	    For each authorization token the client presented, its payload, issuer URI and public key revision (see 
+<a href="https://github.com/davedoesdev/authorize-jwt">authorize-jwt</a>
+).
+
+          </div>
+          
+        </div>
+      
     </div>
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</section>
+
+      </div>
+    </div>
+  
+    <div class='border-bottom' id='centro-jslibservereventcentroserverpre_connect'>
+      <div class="clearfix small pointer toggle-sibling">
+        <div class="py1 contain">
+            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
+            <span class='code strong strong truncate'>CentroServer#pre_connect</span>
+        </div>
+      </div>
+      <div class="clearfix display-none toggle-target">
+        <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+
+  <p>Pre-connect event. Emitted after <a href="centro-js/lib/server.event:authz_end">centro-js/lib/server.event:authz_end</a>
+but before <a href="centro-js/lib/server.event:connect">centro-js/lib/server.event:connect</a>. The client connection
+has been authorized but handshake data has not yet been received.</p>
+
+
+  <div class='pre p1 fill-light mt0'>CentroServer#pre_connect</div>
+  
+  
+
+  
+  
+  
+  
+  
+  
+
+  
+    <div class='py1 quiet mt1 prose-big'>Parameters</div>
+    <div class='prose'>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>info</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</code>
+	    Information about the connection.
+
+          </div>
+          
+          <table class='mt1 mb2 fixed-table h5 col-12'>
+            <colgroup>
+              <col width='30%' />
+              <col width='70%' />
+            </colgroup>
+            <thead>
+              <tr class='bold fill-light'>
+                <th>Name</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody class='mt1'>
+              
+                <tr>
+                  <td class='break-word'><span class='code bold'>info.mqserver</span> <code class='quiet'>MQlobberServer</code>
+                  </td>
+                  <td class='break-word'><span><a href="https://github.com/davedoesdev/mqlobber#mqlobberserverfsq-stream-options">MQlobberServer</a>
+ object managing the connection.
+</span></td>
+                </tr>
+              
+                <tr>
+                  <td class='break-word'><span class='code bold'>info.access_control</span> <code class='quiet'>AccessControl</code>
+                  </td>
+                  <td class='break-word'><span><a href="https://github.com/davedoesdev/mqlobber-access-control#accesscontroloptions">AccessControl</a>
+ object enforcing access control on the connection.
+</span></td>
+                </tr>
+              
+                <tr>
+                  <td class='break-word'><span class='code bold'>info.connid</span> <code class='quiet'><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></code>
+                  </td>
+                  <td class='break-word'><span>Unique ID for the connection.
+</span></td>
+                </tr>
+              
+                <tr>
+                  <td class='break-word'><span class='code bold'>info.prefixes</span> <code class='quiet'><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array">Array</a>&#x3C;<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>></code>
+                  </td>
+                  <td class='break-word'><span>For each authorization token the client presented, a prefix which 
+<code>info.access_control</code>
+ enforces on topics. The prefix is a hash of the token's issuer ID, thus preventing clients with tokens from different issuers sending and receiving messages to each other. That is, messages are 'scoped' by token issuer.
+</span></td>
+                </tr>
+              
+                <tr>
+                  <td class='break-word'><span class='code bold'>info.destroy</span> <code class='quiet'><a href="#centro-jslibserverdestroycallback">centro-js/lib/server.destroyCallback</a></code>
+                  </td>
+                  <td class='break-word'><span>Call this to close the connection.
+</span></td>
+                </tr>
+              
+                <tr>
+                  <td class='break-word'><span class='code bold'>info.onclose</span> <code class='quiet'><a href="#centro-jslibserveronclosecallback">centro-js/lib/server.oncloseCallback</a></code>
+                  </td>
+                  <td class='break-word'><span>Call this to register a handler when the connection is closed.
+</span></td>
+                </tr>
+              
+                <tr>
+                  <td class='break-word'><span class='code bold'>info.token_infos</span> <code class='quiet'><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array">Array</a>&#x3C;{payload: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>, uri: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>, rev: rev}></code>
+                  </td>
+                  <td class='break-word'><span>For each authorization token the client presented, its payload, issuer URI and public key revision (see 
+<a href="https://github.com/davedoesdev/authorize-jwt">authorize-jwt</a>
+).
+</span></td>
+                </tr>
+              
+            </tbody>
+          </table>
+          
+        </div>
+      
+    </div>
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</section>
+
+      </div>
+    </div>
+  
+    <div class='border-bottom' id='centro-jslibservereventcentroserverconnect'>
+      <div class="clearfix small pointer toggle-sibling">
+        <div class="py1 contain">
+            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
+            <span class='code strong strong truncate'>CentroServer#connect</span>
+        </div>
+      </div>
+      <div class="clearfix display-none toggle-target">
+        <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+
+  <p>Connect event. Emitted when handshake data has been received on a connection.</p>
+
+
+  <div class='pre p1 fill-light mt0'>CentroServer#connect</div>
+  
+  
+
+  
+  
+  
+  
+  
+  
+
+  
+    <div class='py1 quiet mt1 prose-big'>Parameters</div>
+    <div class='prose'>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>connid</span> <code class='quiet'>(any)</code>
+	    
+          </div>
+          
+        </div>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>hsdata</span> <code class='quiet'>(<a href="https://nodejs.org/api/buffer.html">Buffer</a>)</code>
+	    Handshake received from the client.
+
+          </div>
+          
+        </div>
+      
+    </div>
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</section>
+
+      </div>
+    </div>
+  
+    <div class='border-bottom' id='centro-jslibservereventcentroserverdisconnect'>
+      <div class="clearfix small pointer toggle-sibling">
+        <div class="py1 contain">
+            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
+            <span class='code strong strong truncate'>CentroServer#disconnect</span>
+        </div>
+      </div>
+      <div class="clearfix display-none toggle-target">
+        <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+
+  <p>Disconnect event. Emitted when a client disconnects.</p>
+
+
+  <div class='pre p1 fill-light mt0'>CentroServer#disconnect</div>
+  
+  
+
+  
+  
+  
+  
+  
+  
+
+  
+    <div class='py1 quiet mt1 prose-big'>Parameters</div>
+    <div class='prose'>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>connid</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>)</code>
+	    Unique ID for the connection.
+
+          </div>
+          
+        </div>
+      
+    </div>
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</section>
+
+      </div>
+    </div>
+  
+    <div class='border-bottom' id='centro-jslibservereventcentroserverexpired'>
+      <div class="clearfix small pointer toggle-sibling">
+        <div class="py1 contain">
+            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
+            <span class='code strong strong truncate'>CentroServer#expired</span>
+        </div>
+      </div>
+      <div class="clearfix display-none toggle-target">
+        <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+
+  <p>Expired event. Emitted when a token presented by a client expires whilst it
+is connected. After the event is emitted, the connection is destroyed.</p>
+
+
+  <div class='pre p1 fill-light mt0'>CentroServer#expired</div>
+  
+  
+
+  
+  
+  
+  
+  
+  
+
+  
+    <div class='py1 quiet mt1 prose-big'>Parameters</div>
+    <div class='prose'>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>connid</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>)</code>
+	    Unique ID for the connection.
+
+          </div>
+          
+        </div>
+      
+    </div>
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</section>
+
+      </div>
+    </div>
+  
+    <div class='border-bottom' id='centro-jslibservereventcentroserverempty'>
+      <div class="clearfix small pointer toggle-sibling">
+        <div class="py1 contain">
+            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
+            <span class='code strong strong truncate'>CentroServer#empty</span>
+        </div>
+      </div>
+      <div class="clearfix display-none toggle-target">
+        <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+
+  <p>Empty event. Emitted when a client disconnects and there are no other
+clients connected.</p>
+
+
+  <div class='pre p1 fill-light mt0'>CentroServer#empty</div>
+  
+  
+
+  
+  
+  
+  
+  
+  
+
   
 
   

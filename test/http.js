@@ -809,8 +809,9 @@ runner(
 
         it('should catch errors when writing response', function (done)
         {
-            get_info().server.once('connect', function (info)
+            get_info().server.once('connect', function (connid)
             {
+                var info = get_info().connections.get(connid);
                 // make sure another test doesn't pick up the message
                 info.mqserver.once('publish_requested', function (topic, duplex, options, done2)
                 {
@@ -877,8 +878,9 @@ runner(
 
         it('should catch errors when ending response', function (done)
         {
-            get_info().server.once('connect', function (info)
+            get_info().server.once('connect', function (connid)
             {
+                var info = get_info().connections.get(connid);
                 // make sure another test doesn't pick up the message
                 info.mqserver.once('publish_requested', function (topic, duplex, options, done2)
                 {
@@ -947,8 +949,9 @@ runner(
         {
             var response;
 
-            get_info().server.once('connect', function (info)
+            get_info().server.once('connect', function (connid)
             {
+                var info = get_info().connections.get(connid);
                 info.mqserver.once('subscribe_requested', function (topic, done)
                 {
                     response.emit('close');
@@ -995,8 +998,9 @@ runner(
 
         it('should handle request errors', function (done)
         {
-            get_info().server.once('connect', function (info)
+            get_info().server.once('connect', function (connid)
             {
+                var info = get_info().connections.get(connid);
                 info.mqserver.once('publish_requested', function (topic, duplex, options, done2)
                 {
                     // handshake is sent after carrier finishes
@@ -1056,8 +1060,9 @@ runner(
 
         it('should handle response errors', function (done)
         {
-            get_info().server.once('connect', function (info)
+            get_info().server.once('connect', function (connid)
             {
+                var info = get_info().connections.get(connid);
                 info.mqserver.once('publish_requested', function (topic, duplex, options, done2)
                 {
                     // handshake is sent after carrier finishes

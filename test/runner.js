@@ -93,6 +93,17 @@ module.exports = function (config, connect, options)
             rev, rev2,
             connections = new Map();
 
+        function get_connid_from_mqserver(mqserver)
+        {
+            for (var entry of connections)
+            {
+                if (entry[1].mqserver === mqserver)
+                {
+                    return entry[0];
+                }
+            }
+        }
+
         function on_before(cb)
         {
             var ths = this;
@@ -104,17 +115,22 @@ module.exports = function (config, connect, options)
             {
                 server = new centro.CentroServer(config);
 
-                server.on('connect', function (info)
+                server.on('pre_connect', function (info)
                 {
-                    pending_presence_topics.add('join.' + info.connid);
-                    pending_presence_topics.add('leave.' + info.connid);
-                    pending_presence_topics.add('ready.all.' + info.connid);
-                    connections.set(info.mqserver, info);
+                    connections.set(info.connid, info);
                 });
 
-                server.on('disconnect', function (info)
+                server.on('connect', function (connid, hsdata)
                 {
-                    connections.delete(info.mqserver);
+                    pending_presence_topics.add('join.' + connid);
+                    pending_presence_topics.add('leave.' + connid);
+                    pending_presence_topics.add('ready.all.' + connid);
+                    connections.get(connid).hsdata = hsdata;
+                });
+
+                server.on('disconnect', function (connid)
+                {
+                    connections.delete(connid);
                 });
 
                 if (config.before_server_ready)
@@ -496,7 +512,8 @@ module.exports = function (config, connect, options)
                 client_function: client_function,
                 expect_error: expect_error,
                 attach_extension: attach_extension,
-                detach_extension: detach_extension
+                detach_extension: detach_extension,
+                get_connid_from_mqserver: get_connid_from_mqserver
             };
         }
 
@@ -673,9 +690,9 @@ module.exports = function (config, connect, options)
                     });
                 }
 
-                for (var mqserver of connections.keys())
+                for (var info of connections.values())
                 {
-                    regreq(mqserver);
+                    regreq(info.mqserver);
                 }
 
                 clients[0].subscribe('foo', function (s, info)
@@ -973,7 +990,7 @@ module.exports = function (config, connect, options)
                     {
                         if (err) return done(err);
 
-                        var mqserver = connections.keys().next().value;
+                        var mqserver = connections.values().next().value.mqserver;
 
                         mqserver.subscribe('foo', function (err)
                         {
@@ -1198,9 +1215,9 @@ module.exports = function (config, connect, options)
                     });
                 }
 
-                for (var mqserver of connections.keys())
+                for (var info of connections.values())
                 {
-                    regreq(mqserver);
+                    regreq(info.mqserver);
                 }
 
                 clients[0].subscribe('foo', function (s, info)
@@ -1611,9 +1628,9 @@ module.exports = function (config, connect, options)
                     expect(err.message).to.equal('dummy');
                 });
 
-                for (var mqserver of connections.keys())
+                for (var info of connections.values())
                 {
-                    mqserver.mux.carrier.emit('error', new Error('dummy'));
+                    info.mqserver.mux.carrier.emit('error', new Error('dummy'));
                 }
             });
 
@@ -1629,21 +1646,21 @@ module.exports = function (config, connect, options)
 
                 function pubreq(topic, stream, options, done)
                 {
-                    expect(topic).to.equal(info[1].prefixes[0] + 'foo');
+                    expect(topic).to.equal(info.prefixes[0] + 'foo');
                     stream.emit('error', new Error('dummy2'));
                     done();
                 }
 
-                function connect(info)
+                function connect(connid)
                 {
-                    info.mqserver.on('publish_requested', pubreq);
+                    connections.get(connid).mqserver.on('publish_requested', pubreq);
                 }
 
                 server.once('connect', connect);
 
-                for (var info of connections)
+                for (var info of connections.values())
                 {
-                    info[0].on('publish_requested', pubreq);
+                    info.mqserver.on('publish_requested', pubreq);
                 }
         
                 clients[0].publish('foo', function (err)
@@ -1690,9 +1707,9 @@ module.exports = function (config, connect, options)
                 {
                     if (err) { return done(err); }
 
-                    for (var mqserver of connections.keys())
+                    for (var info of connections.values())
                     {
-                        regmsg(mqserver);
+                        regmsg(info.mqserver);
                     }
 
                     clients[0].publish('foo', function (err)
@@ -2209,10 +2226,10 @@ module.exports = function (config, connect, options)
                     check();
                 });
 
-                server.once('expired', function (info)
+                server.once('expired', function (connid)
                 {
                     expired = true;
-                    expect(info.connid).to.equal(clients[0].self);
+                    expect(connid).to.equal(clients[0].self);
                     check();
                 });
 
@@ -2257,21 +2274,19 @@ module.exports = function (config, connect, options)
                 it('should close connection when token expires', function (done)
                 {
                     var empty = false,
-                        ended = false;
+                        ended = false,
+                        expired = false;
 
-                    function unexpected(info)
+                    function unexpected()
                     {
                         done(new Error('should not be called'));
                     }
-
-                    server.on('expired', unexpected);
                     server.on('connect', unexpected);
 
                     function check()
                     {
-                        if (empty && ended)
+                        if (empty && ended && expired)
                         {
-                            server.removeListener('expired', unexpected);
                             server.removeListener('connect', unexpected);
                             done();
                         }
@@ -2280,6 +2295,12 @@ module.exports = function (config, connect, options)
                     server.once('empty', function ()
                     {
                         empty = true;
+                        check();
+                    });
+
+                    server.once('expired', function ()
+                    {
+                        expired = true;
                         check();
                     });
 
@@ -3051,7 +3072,7 @@ module.exports = function (config, connect, options)
 
                 it('should close connection if public key changes', function (done)
                 {
-                    var mqs,
+                    var cid,
                         server_done = 0,
                         client_done = 0;
 
@@ -3059,7 +3080,7 @@ module.exports = function (config, connect, options)
                     {
                         if (info.hsdata[0] === 0)
                         {
-                            mqs = info.mqserver;
+                            cid = info.connid;
                             break;
                         }
                     }
@@ -3071,6 +3092,7 @@ module.exports = function (config, connect, options)
                             setTimeout(function ()
                             {
                                 server.removeListener('disconnect', disconnect);
+                                clients[0].mux.carrier.removeListener('end', end);
                                 clients[1].mux.carrier.removeListener('end', end2);
                                 done();
                             }, 1000);
@@ -3081,11 +3103,13 @@ module.exports = function (config, connect, options)
                         }
                     }
 
-                    function disconnect(info)
+                    function disconnect(connid)
                     {
-                        expect(info.mqserver).to.equal(mqs);
-                        server_done += 1;
-                        check();
+                        if (connid === cid)
+                        {
+                            server_done += 1;
+                            check();
+                        }
                     }
 
                     server.on('disconnect', disconnect);
@@ -3292,7 +3316,7 @@ module.exports = function (config, connect, options)
 
                 if (ext.connect)
                 {
-                    ext.connect.call(server, info);
+                    ext.connect.call(server, info.connid);
                 }
             }
 
@@ -3439,7 +3463,8 @@ module.exports = function (config, connect, options)
 
             it('should be able to limit data published per message', function (done)
             {
-                var mqserver,
+                var cid,
+                    mqserver,
                     client_done = false,
                     server_done = false;
 
@@ -3476,21 +3501,23 @@ module.exports = function (config, connect, options)
 
                 if (options.relay)
                 {
-                    server.once('connect', function (info)
+                    server.once('connect', function (connid)
                     {
-                        mqserver = info.mqserver;
+                        cid = connid;
+                        mqserver = connections.get(connid).mqserver;
                         register();
                     });
                 }
                 else
                 {
-                    mqserver = connections.keys().next().value;
+                    cid = connections.values().next().value.connid;
+                    mqserver = connections.values().next().value.mqserver;
                     register();
                 }
 
-                server.once('disconnect', function (info)
+                server.once('disconnect', function (connid)
                 {
-                    expect(info.mqserver).to.equal(mqserver);
+                    expect(connid).to.equal(cid);
                     server_done = true;
                     if (client_done)
                     {
@@ -3563,7 +3590,7 @@ module.exports = function (config, connect, options)
                             check();
                         });
 
-                        server.once('disconnect', function (info)
+                        server.once('disconnect', function ()
                         {
                             server_done = true;
                             check();
@@ -3640,7 +3667,7 @@ module.exports = function (config, connect, options)
                             check();
                         });
 
-                        server.once('disconnect', function (info)
+                        server.once('disconnect', function ()
                         {
                             server_done = true;
                             check();
@@ -4208,9 +4235,9 @@ module.exports = function (config, connect, options)
                 {
                     if (err) { return done(err); }
 
-                    for (var mqserver of connections.keys())
+                    for (var info of connections.values())
                     {
-                        regmsg(mqserver);
+                        regmsg(info.mqserver);
                     }
 
                     clients[0].publish('foo').end('bar');
@@ -4577,15 +4604,15 @@ module.exports = function (config, connect, options)
                         });
                     }
 
-                    for (var mqserver of connections.keys())
+                    for (var info of connections.values())
                     {
-                        reg(mqserver);
+                        reg(info.mqserver);
                     }
 
                     server.once('warning', function (err, mqserver)
                     {
                         expect(err.message).to.equal('full');
-                        expect(connections.get(mqserver)).not.to.equal(undefined);
+                        expect(get_connid_from_mqserver(mqserver)).not.to.equal(undefined);
                         server_warning = true;
                         check();
                     });
@@ -4650,9 +4677,9 @@ module.exports = function (config, connect, options)
                     done();
                 });
 
-                for (var mqserver of connections.keys())
+                for (var info of connections.values())
                 {
-                    mqserver.mux.emit('error', new Error('foo'));
+                    info.mqserver.mux.emit('error', new Error('foo'));
                 }
             });
         });
@@ -5338,9 +5365,9 @@ module.exports = function (config, connect, options)
 
                     function restore()
                     {
-                        for (var mqserver of get_info().connections.keys())
+                        for (var info of get_info().connections.values())
                         {
-                            var carrier = mqserver.mux.carrier;
+                            var carrier = info.mqserver.mux.carrier;
 
                             carrier._write = carrier.orig_write;
                             carrier._write(carrier.the_chunk, carrier.the_encoding, carrier.the_callback);
@@ -5397,15 +5424,15 @@ module.exports = function (config, connect, options)
 
                     function doit(state)
                     {
-                        for (var mqserver of get_info().connections.keys())
+                        for (var info of get_info().connections.values())
                         {
-                            reg(mqserver, state);
+                            reg(info.mqserver, state);
                         }
 
                         get_info().server.once('warning', function (err, mqserver)
                         {
                             expect(err.message).to.equal('backoff');
-                            expect(get_info().connections.get(mqserver)).not.to.equal(undefined);
+                            expect(get_info().get_connid_from_mqserver(mqserver)).not.to.equal(undefined);
                             state.server_warning = true;
                             check(state);
                         });
@@ -5531,9 +5558,9 @@ module.exports = function (config, connect, options)
 
                     function doit(state)
                     {
-                        for (var mqserver of get_info().connections.keys())
+                        for (var info of get_info().connections.values())
                         {
-                            reg(mqserver, state);
+                            reg(info.mqserver, state);
                         }
 
                         get_info().server.on('warning', function warning(err, mqserver)
@@ -5541,7 +5568,7 @@ module.exports = function (config, connect, options)
                             if (err.message === 'full')
                             {
                                 this.removeListener('warning', warning);
-                                expect(get_info().connections.get(mqserver)).not.to.equal(undefined);
+                                expect(get_info().get_connid_from_mqserver(mqserver)).not.to.equal(undefined);
                                 state.server_warning = true;
                                 check(state);
                             }
