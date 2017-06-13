@@ -3,7 +3,7 @@
 
 var runner = require('./runner'),
     centro = require('..'),
-    in_mem = require('../lib/transports/in-mem.js'),
+    in_mem = require('../lib/server_transports/in-mem.js'),
     crypto = require('crypto'),
     read_all = require('./read_all'),
     expect = require('chai').expect;

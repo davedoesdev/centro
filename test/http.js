@@ -39,7 +39,7 @@ function make_token(get_info, topic)
     }, token_exp, get_info().priv_key);
 }
 
-function setup(mod, transport_config, client_config, server_config)
+function setup(mod, client_config, server_config)
 {
 
 function connect(config, server, cb)
@@ -779,7 +779,10 @@ runner(
 {
     transport: [{
         server: 'http',
-        config: transport_config,
+        config: Object.assign(
+        {
+            port: port
+        }, server_config),
         name: mod
     }, 'in-mem'],
 }, connect,
@@ -794,8 +797,9 @@ runner(
         server: 'http',
         config: Object.assign(
         {
+            port: port,
             sse_keep_alive_interval: 1
-        }, transport_config),
+        }, server_config),
         name: mod + '_passed_in_server'
     }, {
         server: 'in-mem'
@@ -1233,14 +1237,9 @@ runner(
 
 }
 
-setup('http', { port: port });
+setup('http');
 
 setup('https',
-{
-    port: port,
-    key: fs.readFileSync(path.join(__dirname, 'server.key')),
-    cert: fs.readFileSync(path.join(__dirname, 'server.pem'))
-},
 {
     agent: new (require('https').Agent)(),
     ca: fs.readFileSync(path.join(__dirname, 'ca.pem'))

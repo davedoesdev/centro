@@ -78,6 +78,12 @@ module.exports = function (config, connect, options)
 
     function is_transport(n)
     {
+        if (n === 'tcp')
+        {
+            return name.lastIndexOf('net') === 0 ||
+                   name.lastIndexOf('tls') === 0;
+        }
+
         return name.lastIndexOf(n) === 0;
     }
 
@@ -431,12 +437,18 @@ module.exports = function (config, connect, options)
                         centro.separate_auth = orig_separate_auth;
                     }
 
+                    clients = cs;
+
                     if (err)
                     {
+                        if (opts.on_connect_error)
+                        {
+                            opts.on_connect_error(err);
+                            return cb();
+                        }
+
                         return cb(err);
                     }
-
-                    clients = cs;
 
                     if (opts.end_immediately && !is_transport('primus'))
                     {
@@ -1662,7 +1674,15 @@ module.exports = function (config, connect, options)
                 {
                     info.mqserver.on('publish_requested', pubreq);
                 }
-        
+
+                if (is_transport('tls'))
+                {
+                    clients[0].on('error', function (err)
+                    {
+                        expect(err.message).to.equal('write after end');
+                    });
+                }
+
                 clients[0].publish('foo', function (err)
                 {
                     expect(err.message).to.equal('server error');
@@ -2405,7 +2425,17 @@ module.exports = function (config, connect, options)
                         if ((typeof ignore_server !== 'number') &&
                             !is_transport('primus'))
                         {
-                            expect(errors[0].message).to.equal(msg);
+                            if (is_transport('tls'))
+                            {
+                                expect(errors[0].message).to.be.oneOf([
+                                    msg,
+                                    'carrier stream finished before duplex finished'
+                                ]);
+                            }
+                            else
+                            {
+                                expect(errors[0].message).to.equal(msg);
+                            }
                         }
                         else
                         {
@@ -3530,7 +3560,9 @@ module.exports = function (config, connect, options)
                     clients[0].on('error', function (err)
                     {
                         expect(err.message).to.be.oneOf(
-                            ['write EPIPE', 'read ECONNRESET']);
+                            ['write EPIPE',
+                             'read ECONNRESET',
+                             'write ECONNRESET']);
                     });
                 }
 
@@ -3858,7 +3890,7 @@ module.exports = function (config, connect, options)
                     if (clients[0].last_error && server.last_warning)
                     {
                         expect(server.last_warning.message).to.equal('unsupported version: 1');
-                        if (!is_transport('primus') ||
+                        if (!(is_transport('primus') || is_transport('tls')) ||
                             ((clients[0].last_error.message !== 'carrier stream ended before end message received') &&
                              (clients[0].last_error.message !== 'carrier stream finished before duplex finished')))
                         {
@@ -4479,9 +4511,17 @@ module.exports = function (config, connect, options)
 
                 wait(2, function ()
                 {
+                    clients[0].on('error', function (err)
+                    {
+                        expect(err.message).to.equal('carrier stream finished before duplex finished');
+                    });
                     clients[0].mux.carrier.end();
                     wait(1, function ()
                     {
+                        clients[1].on('error', function (err)
+                        {
+                            expect(err.message).to.equal('carrier stream finished before duplex finished');
+                        });
                         clients[1].mux.carrier.end();
                         wait(0, function ()
                         {
@@ -5283,6 +5323,8 @@ module.exports = function (config, connect, options)
                     });
                 } : function (get_info)
                 {
+                    var conn_error;
+
                     get_info().setup(2,
                     {
                         access_control: {
@@ -5298,12 +5340,21 @@ module.exports = function (config, connect, options)
 
                         client_function: get_info().client_function,
                         skip_ready: 1,
-                        series: true
+                        series: true,
+
+                        on_connect_error: is_transport('tls') ? function (err)
+                        {
+                            conn_error = err;
+                        } : undefined
                     });
 
                     it('maxConnections', get_info().expect_error(
                        undefined, 1, undefined, 1, function (done)
                        {
+                           if (is_transport('tls'))
+                           {
+                               expect(conn_error.message).to.equal('socket hang up');
+                           }
                            get_info().detach_extension(this.centro_test_ltc); 
                            done();
                        }));

@@ -1,30 +1,49 @@
 "use strict";
 
 var net = require('net'),
+	fs = require('fs'),
+	path = require('path'),
+    expect = require('chai').expect,
     runner = require('./runner'),
-    centro = require('..');
+    centro = require('..'),
+    port = 8700;
+
+function setup(mod, client_config, server_config)
+{
 
 function connect(config, server, cb)
 {
-    net.createConnection(8700, function ()
+    require(mod).connect(Object.assign(
     {
+        port: port
+    }, client_config), function ()
+    {
+        this.removeListener('error', cb);
         this.setNoDelay(true);
         cb(null, centro.stream_auth(this, config));
-    });
+    }).on('error', cb);
 }
 
 runner(
 {
-    transport: 'tcp',
-    port: 8700,
-    noDelay: true
+    transport: {
+        server: 'tcp',
+        config: Object.assign({
+            port: port,
+            noDelay: true
+        }, server_config),
+        name: mod
+    }
 }, connect);
 
 runner(
 {
     transport: {
         server: 'tcp',
-        name: 'tcp_passed_in_server'
+        config: Object.assign({
+            port: port
+        }, server_config),
+        name: mod + '_passed_in_server'
     }
 }, connect,
 {
@@ -35,8 +54,16 @@ runner(
             return cb();
         }
 
-        config.server = net.createServer();
-        config.server.listen(8700, cb);
+        if (server_config)
+        {
+            config.server = require(mod).createServer(server_config);
+        }
+        else
+        {
+            config.server = require(mod).createServer();
+        }
+
+        config.server.listen(port, cb);
     },
 
     on_after: function (config, cb)
@@ -44,3 +71,17 @@ runner(
         config.server.close(cb);
     }
 });
+
+}
+
+setup('net');
+
+setup('tls',
+{
+    ca: fs.readFileSync(path.join(__dirname, 'ca.pem'))
+},
+{
+    key: fs.readFileSync(path.join(__dirname, 'server.key')),
+    cert: fs.readFileSync(path.join(__dirname, 'server.pem'))
+});
+

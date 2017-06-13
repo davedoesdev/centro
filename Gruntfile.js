@@ -62,11 +62,11 @@ module.exports = function (grunt)
             },
 
             documentation: {
-                cmd: './node_modules/.bin/documentation build -c documentation.yml -f html -o docs'
+                cmd: './node_modules/.bin/documentation build -c documentation.yml -f html -o docs index.js lib/server_transports/*.js'
             },
 
             serve_documentation: {
-                cmd: './node_modules/.bin/documentation serve -w -c documentation.yml'
+                cmd: './node_modules/.bin/documentation serve -w -c documentation.yml index.js lib/server_transports/*.js'
             }
         }
     });

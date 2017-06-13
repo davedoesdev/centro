@@ -79,9 +79,11 @@ Transports not configured for `ANONYMOUS_MODE` expect clients to present an
 authorization token when they connect.
 
 Centro uses https://github.com/davedoesdev/authorize-jwt[authorize-jwt] to
-verify tokens. Your tokens must be http://self-issued.info/docs/draft-ietf-oauth-json-web-token.html[JSON Web Tokens]. You should generate a keypair, add the
-public key to ``authorize-jwt``'s keystore and sign your tokens with the private
-key.
+verify tokens. Your tokens must be http://self-issued.info/docs/draft-ietf-oauth-json-web-token.html[JSON Web Tokens]. The token format that Centro expects
+is described http://rawgit.davedoesdev.com/davedoesdev/centro/master/token_docs[here].
+
+You should generate a keypair, add the public key to ``authorize-jwt``'s
+keystore and sign your tokens with the private key.
 
 Here's a program which generates a keypair using https://github.com/quartzjer/ursa[ursa], adds the public key to Centro's keystore with the identifier
 `http://davedoesdev.com`, and writes the private key to `priv_key.pem`:

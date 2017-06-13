@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
-    <title>Code coverage report for centro/lib/transports/http.js</title>
+    <title>Code coverage report for centro/lib/server_transports/http.js</title>
     <meta charset="utf-8" />
     <link rel="stylesheet" href="../../../prettify.css" />
     <link rel="stylesheet" href="../../../base.css" />
@@ -16,7 +16,7 @@
 <div class='wrapper'>
   <div class='pad1'>
     <h1>
-      <a href="../../../index.html">All files</a> / <a href="index.html">centro/lib/transports</a> http.js
+      <a href="../../../index.html">All files</a> / <a href="index.html">centro/lib/server_transports</a> http.js
     </h1>
     <div class='clearfix'>
       <div class='fl pad1y space-right2'>
@@ -480,7 +480,35 @@
 435
 436
 437
-438</td><td class="line-coverage quiet"><span class="cline-any cline-yes">1x</span>
+438
+439
+440
+441
+442
+443
+444
+445
+446
+447
+448
+449
+450
+451
+452</td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
@@ -768,7 +796,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">316x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">3124x</span>
+<span class="cline-any cline-yes">3112x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -847,7 +875,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">130x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">55x</span>
+<span class="cline-any cline-yes">56x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -917,7 +945,21 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">44x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">var http = require('http'),
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">/**
+ * HTTP transport. This allows messages to be sent using HTTP POST requests
+ * and received using HTTP Server-Sent Events. See the {@link http://rawgit.davedoesdev.com/davedoesdev/centro/master/rest_docs|REST documentation}
+ * for more details.
+ *
+ * @module centro-js/lib/server_transports/http
+ * @param {Object} config - Configuration options. This supports all the options supported by {@link https://nodejs.org/api/https.html#https_https_createserver_options_requestlistener|https.createServer} and {@link https://github.com/primus/access-control|access-control} as well as the following:
+ * @param {http.Server|https.Server} [config.server] - If you want to supply your own HTTP or HTTPS server object. Otherwise, {@link https://nodejs.org/api/http.html#http_http_createserver_requestlistener|http.createServer} or {@link https://nodejs.org/api/https.html#https_https_createserver_options_requestlistener|https.createServer} will be called to create one.
+ * @param {string} [config.pathname] - Pathname prefix on which to listen for requests. Defaults to `/centro/v1/`. Publish requests are made on `/centro/v1/publish` and subscribe requests are made on `/centro/v1/subscribe`.
+ * @param {integer} [config.sse_keep_alive_interval] - If present, the number of seconds between sending a Server-Sent Event comment in order to keep a connection alive. If you don't specify this, no keep-alive comments will be sent.
+ * @param {Object} [config.http] - If present then this is used in preference to `config`.
+ */
+"use strict";
+&nbsp;
+var http = require('http'),
     https = require('https'),
     async = require('async'),
     Duplex = require('stream').Duplex,
@@ -1360,7 +1402,7 @@ module.exports = function (config, authorize, connected, ready, error, warning)
 </div><!-- /wrapper -->
 <div class='footer quiet pad2 space-top1 center small'>
   Code coverage
-  generated by <a href="http://istanbul-js.org/" target="_blank">istanbul</a> at Fri Jun 02 2017 07:45:04 GMT+0100 (BST)
+  generated by <a href="http://istanbul-js.org/" target="_blank">istanbul</a> at Tue Jun 13 2017 21:57:51 GMT+0100 (BST)
 </div>
 </div>
 <script src="../../../prettify.js"></script>
