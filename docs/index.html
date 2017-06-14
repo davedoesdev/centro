@@ -219,6 +219,64 @@
                 
                 </li>
               
+                
+                <li><a
+                  href='#centro-jslibserver_transportsprimus'
+                  class="">
+                  centro-js/lib/server_transports/primus
+                  
+                </a>
+                
+                </li>
+              
+                
+                <li><a
+                  href='#centro-jslibserver_transportstcp'
+                  class="">
+                  centro-js/lib/server_transports/tcp
+                  
+                </a>
+                
+                </li>
+              
+                
+                <li><a
+                  href='#centro-jslibserver_transportshttp'
+                  class="">
+                  centro-js/lib/server_transports/http
+                  
+                </a>
+                
+                </li>
+              
+                
+                <li><a
+                  href='#centro-jslibserver_transportsin-mem'
+                  class=" toggle-sibling">
+                  centro-js/lib/server_transports/in-mem
+                  <span class='icon'>▸</span>
+                </a>
+                
+                <div class='toggle-target display-none'>
+                  
+                  <ul class='list-reset py1-ul pl1'>
+                    <li class='h5'><span>Static members</span></li>
+                    
+                      <li><a
+                        href='#centro-jslibserver_transportsin-memconnectcallback'
+                        class='regular pre-open'>
+                        .connectCallback
+                      </a></li>
+                    
+                    </ul>
+                  
+                  
+                  
+                  
+                </div>
+                
+                </li>
+              
             </ul>
           </div>
           <div class='mt1 h6 quiet'>
@@ -1493,7 +1551,7 @@ clients.</p>
         <div class='space-bottom0'>
           <div>
             <span class='code bold'>err</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error">Error</a>?)</code>
-	    = Error which led to cancelling the authorization, if available.
+	    Error which led to cancelling the authorization, if available.
 
           </div>
           
@@ -2531,6 +2589,546 @@ to <code>console.error</code>.</p>
     </div>
   
 </div>
+
+  
+</section>
+
+          
+        
+          
+            <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+  <div class='clearfix'>
+    
+    <h3 class='fl m0' id='centro-jslibserver_transportsprimus'>
+      centro-js/lib/server_transports/primus
+    </h3>
+    
+    
+  </div>
+  
+
+  <p>Primus transport. This allows messages to be sent over <a href="https://github.com/primus/primus">Primus</a> connections.</p>
+
+
+  <div class='pre p1 fill-light mt0'>centro-js/lib/server_transports/primus</div>
+  
+  
+
+  
+  
+  
+  
+  
+  
+
+  
+    <div class='py1 quiet mt1 prose-big'>Parameters</div>
+    <div class='prose'>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>config</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</code>
+	    Configuration options. This supports all the options supported by 
+<code>Primus.createServer</code>
+ and 
+<a href="https://github.com/davedoesdev/primus-backpressure#primusduplexmsg_stream-options">PrimusDuplex</a>
+ as well as the following:
+
+          </div>
+          
+          <table class='mt1 mb2 fixed-table h5 col-12'>
+            <colgroup>
+              <col width='30%' />
+              <col width='70%' />
+            </colgroup>
+            <thead>
+              <tr class='bold fill-light'>
+                <th>Name</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody class='mt1'>
+              
+                <tr>
+                  <td class='break-word'><span class='code bold'>config.server</span> <code class='quiet'>Primus?</code>
+                  </td>
+                  <td class='break-word'><span>If you want to supply your own Primus server object. Otherwise, 
+<code>Primus.createServer</code>
+ will be called to create one.
+</span></td>
+                </tr>
+              
+                <tr>
+                  <td class='break-word'><span class='code bold'>config.pathname</span> <code class='quiet'><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></code>
+                  
+                    (default <code>/centro/v1/primus</code>)
+                  </td>
+                  <td class='break-word'><span>Pathname prefix on which Primus listens for connections.
+</span></td>
+                </tr>
+              
+                <tr>
+                  <td class='break-word'><span class='code bold'>config.primus_transport</span> <code class='quiet'><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>?</code>
+                  </td>
+                  <td class='break-word'><span>Primus transformer-specific configuration.
+</span></td>
+                </tr>
+              
+                <tr>
+                  <td class='break-word'><span class='code bold'>config.primus</span> <code class='quiet'><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>?</code>
+                  </td>
+                  <td class='break-word'><span>If present then this is used in preference to 
+<code>config</code>
+.
+</span></td>
+                </tr>
+              
+            </tbody>
+          </table>
+          
+        </div>
+      
+    </div>
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</section>
+
+          
+        
+          
+            <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+  <div class='clearfix'>
+    
+    <h3 class='fl m0' id='centro-jslibserver_transportstcp'>
+      centro-js/lib/server_transports/tcp
+    </h3>
+    
+    
+  </div>
+  
+
+  <p>TCP transport. This allows messages to be sent over TCP connections.</p>
+
+
+  <div class='pre p1 fill-light mt0'>centro-js/lib/server_transports/tcp</div>
+  
+  
+
+  
+  
+  
+  
+  
+  
+
+  
+    <div class='py1 quiet mt1 prose-big'>Parameters</div>
+    <div class='prose'>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>config</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</code>
+	    Configuration options. This supports all the options supported by 
+<a href="https://nodejs.org/api/net.html#net_server_listen_options_callback">net.Server#listen</a>
+, 
+<a href="https://nodejs.org/api/net.html#net_net_createserver_options_connectionlistener">net.createServer</a>
+ and 
+<a href="https://nodejs.org/api/tls.html#tls_tls_createserver_options_secureconnectionlistener">tls.createServer</a>
+ as well as the following:
+
+          </div>
+          
+          <table class='mt1 mb2 fixed-table h5 col-12'>
+            <colgroup>
+              <col width='30%' />
+              <col width='70%' />
+            </colgroup>
+            <thead>
+              <tr class='bold fill-light'>
+                <th>Name</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody class='mt1'>
+              
+                <tr>
+                  <td class='break-word'><span class='code bold'>config.server</span> <code class='quiet'>(net.Server | tls.Server)?</code>
+                  </td>
+                  <td class='break-word'><span>If you want to supply your own TCP or TLS server object. Otherwise, 
+<a href="https://nodejs.org/api/net.html#net_net_createserver_options_connectionlistener">net.createServer</a>
+ or 
+<a href="https://nodejs.org/api/tls.html#tls_tls_createserver_options_secureconnectionlistener">tls.createServer</a>
+ will be called to create one.
+</span></td>
+                </tr>
+              
+                <tr>
+                  <td class='break-word'><span class='code bold'>config.noDelay</span> <code class='quiet'><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Boolean">boolean</a>?</code>
+                  </td>
+                  <td class='break-word'><span>If present then 
+<a href="https://nodejs.org/api/net.html#net_socket_setnodelay_nodelay">setNoDelay</a>
+ is called on every connection with this as the argument.
+</span></td>
+                </tr>
+              
+                <tr>
+                  <td class='break-word'><span class='code bold'>config.tcp</span> <code class='quiet'><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>?</code>
+                  </td>
+                  <td class='break-word'><span>If present then this is used in preference to 
+<code>config</code>
+.
+</span></td>
+                </tr>
+              
+            </tbody>
+          </table>
+          
+        </div>
+      
+    </div>
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</section>
+
+          
+        
+          
+            <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+  <div class='clearfix'>
+    
+    <h3 class='fl m0' id='centro-jslibserver_transportshttp'>
+      centro-js/lib/server_transports/http
+    </h3>
+    
+    
+  </div>
+  
+
+  <p>HTTP transport. This allows messages to be sent using HTTP POST requests
+and received using HTTP Server-Sent Events. See the <a href="http://rawgit.davedoesdev.com/davedoesdev/centro/master/rest_docs">REST documentation</a>
+for more details.</p>
+
+
+  <div class='pre p1 fill-light mt0'>centro-js/lib/server_transports/http</div>
+  
+  
+
+  
+  
+  
+  
+  
+  
+
+  
+    <div class='py1 quiet mt1 prose-big'>Parameters</div>
+    <div class='prose'>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>config</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</code>
+	    Configuration options. This supports all the options supported by 
+<a href="https://nodejs.org/api/net.html#net_server_listen_options_callback">net.Server#listen</a>
+, 
+<a href="https://nodejs.org/api/https.html#https_https_createserver_options_requestlistener">https.createServer</a>
+ and 
+<a href="https://github.com/primus/access-control">access-control</a>
+ as well as the following:
+
+          </div>
+          
+          <table class='mt1 mb2 fixed-table h5 col-12'>
+            <colgroup>
+              <col width='30%' />
+              <col width='70%' />
+            </colgroup>
+            <thead>
+              <tr class='bold fill-light'>
+                <th>Name</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody class='mt1'>
+              
+                <tr>
+                  <td class='break-word'><span class='code bold'>config.server</span> <code class='quiet'>(http.Server | https.Server)?</code>
+                  </td>
+                  <td class='break-word'><span>If you want to supply your own HTTP or HTTPS server object. Otherwise, 
+<a href="https://nodejs.org/api/http.html#http_http_createserver_requestlistener">http.createServer</a>
+ or 
+<a href="https://nodejs.org/api/https.html#https_https_createserver_options_requestlistener">https.createServer</a>
+ will be called to create one.
+</span></td>
+                </tr>
+              
+                <tr>
+                  <td class='break-word'><span class='code bold'>config.pathname</span> <code class='quiet'><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></code>
+                  
+                    (default <code>/centro/v1/</code>)
+                  </td>
+                  <td class='break-word'><span>Pathname prefix on which to listen for requests. Publish requests are made on 
+<code>/centro/v1/publish</code>
+ and subscribe requests are made on 
+<code>/centro/v1/subscribe</code>
+.
+</span></td>
+                </tr>
+              
+                <tr>
+                  <td class='break-word'><span class='code bold'>config.sse_keep_alive_interval</span> <code class='quiet'>integer?</code>
+                  </td>
+                  <td class='break-word'><span>If present, the number of seconds between sending a Server-Sent Event comment in order to keep a connection alive. If you don't specify this, no keep-alive comments will be sent.
+</span></td>
+                </tr>
+              
+                <tr>
+                  <td class='break-word'><span class='code bold'>config.http</span> <code class='quiet'><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>?</code>
+                  </td>
+                  <td class='break-word'><span>If present then this is used in preference to 
+<code>config</code>
+.
+</span></td>
+                </tr>
+              
+            </tbody>
+          </table>
+          
+        </div>
+      
+    </div>
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</section>
+
+          
+        
+          
+            <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+  <div class='clearfix'>
+    
+    <h3 class='fl m0' id='centro-jslibserver_transportsin-mem'>
+      centro-js/lib/server_transports/in-mem
+    </h3>
+    
+    
+  </div>
+  
+
+  <p>In-memory transport. This allows messages to be sent over an in-memory stream
+to a server running in the same process. The in-memory stream has minimal
+overhead (the messages aren't copied).</p>
+<p>An extra <a href="#centro-jslibservercentroservertransport_ops">transport operation</a> for this transport is added to the <a href="#centro-jslibservercentroserver">server object</a>:</p>
+<div class="prose transport_ops mb2 h5">
+<style>.transport_ops table { width: 100%}</style>
+<table>
+<thead>
+<tr>
+<th align="left">Name</th>
+<th align="left">Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="left">connect</td>
+<td align="left"><a href="#centro-jslibserver_transportsin-memconnectcallback">connectCallback</a></td>
+</tr>
+</tbody>
+</table>
+</div>
+
+
+  <div class='pre p1 fill-light mt0'>centro-js/lib/server_transports/in-mem</div>
+  
+  
+
+  
+  
+  
+  
+  
+  
+
+  
+    <div class='py1 quiet mt1 prose-big'>Parameters</div>
+    <div class='prose'>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>config</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</code>
+	    Configuration options. This supports all the options supported by stream.Duplex as well as the following:
+
+          </div>
+          
+          <table class='mt1 mb2 fixed-table h5 col-12'>
+            <colgroup>
+              <col width='30%' />
+              <col width='70%' />
+            </colgroup>
+            <thead>
+              <tr class='bold fill-light'>
+                <th>Name</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody class='mt1'>
+              
+                <tr>
+                  <td class='break-word'><span class='code bold'>config.in-mem</span> <code class='quiet'><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>?</code>
+                  </td>
+                  <td class='break-word'><span>If present then this is used in preference to 
+<code>config</code>
+.
+</span></td>
+                </tr>
+              
+            </tbody>
+          </table>
+          
+        </div>
+      
+    </div>
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    <div class='py1 quiet mt1 prose-big'>Static Members</div>
+    <div class="clearfix">
+  
+    <div class='border-bottom' id='centro-jslibserver_transportsin-memconnectcallback'>
+      <div class="clearfix small pointer toggle-sibling">
+        <div class="py1 contain">
+            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
+            <span class='code strong strong truncate'>connectCallback</span>
+        </div>
+      </div>
+      <div class="clearfix display-none toggle-target">
+        <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+
+  <p>Callback type for connecting to in-memory transport.</p>
+
+
+  <div class='pre p1 fill-light mt0'>connectCallback</div>
+  
+    <p>
+      Type:
+      <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/function">Function</a>
+    </p>
+  
+  
+
+  
+  
+  
+  
+  
+  
+
+  
+    <div class='py1 quiet mt1 prose-big'>Parameters</div>
+    <div class='prose'>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>err</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error">Error</a>?)</code>
+	    Error, if one occurred.
+
+          </div>
+          
+        </div>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>stream</span> <code class='quiet'>(<a href="https://nodejs.org/api/stream.html#stream_class_stream_duplex_1">stream.Duplex</a>)</code>
+	    Stream on which to talk to the server. Use this with 
+<a href="#centro-jslibclientstream_auth">stream_auth</a>
+.
+
+          </div>
+          
+        </div>
+      
+    </div>
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</section>
+
+      </div>
+    </div>
+  
+</div>
+
+  
+
+  
 
   
 </section>

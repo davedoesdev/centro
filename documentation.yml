@@ -2,7 +2,10 @@ toc:
   - centro-js
   - centro-js/lib/client
   - centro-js/lib/server
-#- transports
+  - centro-js/lib/server_transports/primus
+  - centro-js/lib/server_transports/tcp
+  - centro-js/lib/server_transports/http
+  - centro-js/lib/server_transports/in-mem
 #- server extensions
 #- authz token
 #- http REST API (see https://opencredo.com/rest-api-tooling-review/)
