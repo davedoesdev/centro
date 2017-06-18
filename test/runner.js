@@ -4956,7 +4956,7 @@ module.exports = function (config, connect, options)
                             {
                                 mqservers[pccount] = info.mqserver;
                                 prefixes[pccount] = info.prefixes;
-                                pipeline(info.mqserver, 'message', pccount === 0 ? message0 : message1);
+                                this.pipeline(info.mqserver, 'message', pccount === 0 ? message0 : message1);
                                 pccount += 1;
                                 if (pccount === 2)
                                 {
