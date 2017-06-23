@@ -61,6 +61,10 @@ module.exports = function (grunt)
                 cmd: './test/keys.sh'
             },
 
+            prep_documentation: {
+                cmd: 'if [ ! -e node_modules/documentation/lib ]; then npm explore documentation -- npm install && npm explore documentation -- npm run build; fi'
+            },
+
             documentation: {
                 cmd: './node_modules/.bin/documentation build -c documentation.yml -f html -o docs index.js lib/server_transports/*.js lib/server_extensions/*.js'
             },
@@ -78,8 +82,10 @@ module.exports = function (grunt)
     grunt.registerTask('lint', 'jshint');
     grunt.registerTask('keys', 'exec:keys');
     grunt.registerTask('test', 'mochaTest');
-    grunt.registerTask('docs', 'exec:documentation');
-    grunt.registerTask('serve_docs', 'exec:serve_documentation');
+    grunt.registerTask('docs', ['exec:prep_documentation',
+                                'exec:documentation']);
+    grunt.registerTask('serve_docs', ['exec:prep_documentation',
+                                      'exec:serve_documentation']);
     grunt.registerTask('dist', 'exec:webpack');
     grunt.registerTask('check_dist', 'exec:check_dist');
     grunt.registerTask('coverage', ['exec:cover',
