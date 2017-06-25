@@ -11,4 +11,3 @@ toc:
   - centro-js/lib/server_transports/in-mem
   - name: Extensions
 #- authz token
-#- http REST API (see https://opencredo.com/rest-api-tooling-review/)

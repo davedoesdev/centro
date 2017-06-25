@@ -138,7 +138,7 @@ other.
 
 The `access_control` claim in the token should specify to which topics clients
 that present this token can publish and subscribe. Topics should be in
-amqp format: `.` delimits words, `*` matches exactly one word and `#` matches
+AMQP format: `.` delimits words, `*` matches exactly one word and `#` matches
 zero or more words.
 
 You can use any JWT module to generate your tokens. Here's an example using
