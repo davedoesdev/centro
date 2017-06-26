@@ -139,7 +139,7 @@ other.
 The `access_control` claim in the token should specify to which topics clients
 that present this token can publish and subscribe. Topics should be in
 AMQP format: `.` delimits words, `*` matches exactly one word and `#` matches
-zero or more words.
+zero or more words. See https://github.com/davedoesdev/mqlobber-access-control[mqlobber-access-control] for more details.
 
 You can use any JWT module to generate your tokens. Here's an example using
 https://github.com/davedoesdev/node-jsjws[jsjws]:
