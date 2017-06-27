@@ -130,10 +130,59 @@
 85
 86
 87
-88</td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+88
+89
+90
+91
+92
+93
+94
+95
+96
+97
+98
+99
+100
+101
+102
+103
+104
+105
+106
+107
+108
+109
+110
+111
+112
+113
+114
+115
+116
+117
+118
+119
+120
+121
+122</td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -217,12 +266,46 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">26x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">"use strict";
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">/**
+ * Centro extension for defining {@link https://github.com/davedoesdev/mqlobber#mqlobberservereventsfull|full} event behaviour.
+ *
+ * @module centro-js/lib/server_extensions/full
+ */
+"use strict";
 &nbsp;
 var wu = require('wu'),
     fl_prop = 'centro_server_extension_full';
 &nbsp;
-exports.full = function (config, pipeline)
+/**
+ * Attach behaviour to the {@link https://github.com/davedoesdev/mqlobber#mqlobberservereventsfull|full} event.
+ *
+ * @param {Object} config - Configuration options.
+ * @param {boolean} [config.close_conn] - Close connection when a `full` event occurs.
+ * @param {boolean} [config.skip_message] - When a `full` event occurs, drop messages that would be sent to the client until a {@link https://github.com/davedoesdev/mqlobber#mqlobberservereventsremovedduplex|removed} event occurs.
+ * @param {centro-js/lib/server_extensions/full.skipCallback} [config.on_skip] - Called when a message is dropped.
+ * @param {boolean} [config.delay_message] - When a `full` event occurs, postpone messages that would be sent to the client until a `removed` event occurs.
+ * @param {centro-js/lib/server_extensions/full.delayCallback} [config.on_delay] - Called when a message is postponed.
+ */
+exports.full = function (config)
 {
     if (config.close_conn)
     {
@@ -304,13 +387,32 @@ exports.full = function (config, pipeline)
 &nbsp;
     return r;
 };
+&nbsp;
+/**
+ * Callback type for dropping a message.
+ *
+ * @callback skipCallback
+ * @param {Object} info - Metadata for the message. See {@link https://github.com/davedoesdev/mqlobber#mqlobberservereventsmessagestream-info-multiplex-done|MQlobber.events.message} for details.
+ */
+/* istanbul ignore next */
+exports._skipCallback = function (info) {};
+&nbsp;
+&nbsp;
+/**
+ * Callback type for postponing a message.
+ *
+ * @callback delayCallback
+ * @param {Object} info - Metadata for the message. See {@link https://github.com/davedoesdev/mqlobber#mqlobberservereventsmessagestream-info-multiplex-done|MQlobber.events.message} for details.
+ */
+/* istanbul ignore next */
+exports._delayCallback = function (info) {};
 &nbsp;</pre></td></tr>
 </table></pre>
 <div class='push'></div><!-- for sticky footer -->
 </div><!-- /wrapper -->
 <div class='footer quiet pad2 space-top1 center small'>
   Code coverage
-  generated by <a href="http://istanbul-js.org/" target="_blank">istanbul</a> at Tue Jun 13 2017 21:57:51 GMT+0100 (BST)
+  generated by <a href="http://istanbul-js.org/" target="_blank">istanbul</a> at Tue Jun 27 2017 23:27:11 GMT+0100 (BST)
 </div>
 </div>
 <script src="../../../prettify.js"></script>

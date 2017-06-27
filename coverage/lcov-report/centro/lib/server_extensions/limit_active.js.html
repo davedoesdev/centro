@@ -148,7 +148,43 @@
 103
 104
 105
-106</td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+106
+107
+108
+109
+110
+111
+112
+113
+114
+115
+116
+117
+118
+119
+120
+121
+122
+123
+124
+125
+126
+127
+128
+129
+130</td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -194,6 +230,12 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">17x</span>
@@ -231,6 +273,12 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">17x</span>
@@ -253,16 +301,28 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">"use strict";
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">/**
+ * Centro extension for limiting the number of active subscriptions,
+ * publications and connections.
+ *
+ * @module centro-js/lib/server_extensions/limit_active
+ */
+"use strict";
 &nbsp;
-exports.limit_active_subscriptions = function (config, pipeline)
+/**
+ * Limit the total number of active subscriptions.
+ *
+ * @param {Object} config - Configuration options.
+ * @param {integer} config.max_subscriptions - Maximum number of active subscriptions.
+ */
+exports.limit_active_subscriptions = function (config)
 {
     var count = 0;
     
     return {
         pre_connect: function (info)
         {
-            pipeline(info.mqserver, 'subscribe_requested', function (topic, cb, next)
+            this.pipeline(info.mqserver, 'subscribe_requested', function (topic, cb, next)
             {
                 if ((count &gt;= config.max_subscriptions) &amp;&amp;
                     !this.subs.has(topic))
@@ -278,7 +338,7 @@ exports.limit_active_subscriptions = function (config, pipeline)
                 });
             });
 &nbsp;
-            pipeline(info.mqserver, 'unsubscribe_requested', function (topic, cb, next)
+            this.pipeline(info.mqserver, 'unsubscribe_requested', function (topic, cb, next)
             {
                 next(topic, function (err, n)
                 {
@@ -287,7 +347,7 @@ exports.limit_active_subscriptions = function (config, pipeline)
                 });
             });
 &nbsp;
-            pipeline(info.mqserver, 'unsubscribe_all_requested', function (cb, next)
+            this.pipeline(info.mqserver, 'unsubscribe_all_requested', function (cb, next)
             {
                 next(function (err, n)
                 {
@@ -299,14 +359,20 @@ exports.limit_active_subscriptions = function (config, pipeline)
     };
 };
 &nbsp;
-exports.limit_active_publications = function (config, pipeline)
+/**
+ * Limit the total number of active publications.
+ *
+ * @param {Object} config - Configuration options.
+ * @param {integer} config.max_publications - Maximum number of active publications.
+ */
+exports.limit_active_publications = function (config)
 {
     var count = 0;
 &nbsp;
     return {
         pre_connect: function (info)
         {
-            pipeline(info.mqserver, 'publish_requested', function (topic, stream, options, cb, next)
+            this.pipeline(info.mqserver, 'publish_requested', function (topic, stream, options, cb, next)
             {
                 if (count &gt;= config.max_publications)
                 {
@@ -336,6 +402,12 @@ exports.limit_active_publications = function (config, pipeline)
     };
 };
 &nbsp;
+/**
+ * Limit the total number of active connections.
+ *
+ * @param {Object} config - Configuration options.
+ * @param {integer} config.max_connections - Maximum number of active connections.
+ */
 exports.limit_active_connections = function (config)
 {
     var count = 0;
@@ -364,7 +436,7 @@ exports.limit_active_connections = function (config)
 </div><!-- /wrapper -->
 <div class='footer quiet pad2 space-top1 center small'>
   Code coverage
-  generated by <a href="http://istanbul-js.org/" target="_blank">istanbul</a> at Tue Jun 13 2017 21:57:51 GMT+0100 (BST)
+  generated by <a href="http://istanbul-js.org/" target="_blank">istanbul</a> at Tue Jun 27 2017 23:27:11 GMT+0100 (BST)
 </div>
 </div>
 <script src="../../../prettify.js"></script>

@@ -27,7 +27,7 @@
       <div class='fl pad1y space-right2'>
         <span class="strong">100% </span>
         <span class="quiet">Branches</span>
-        <span class='fraction'>8/8</span>
+        <span class='fraction'>7/7</span>
       </div>
       <div class='fl pad1y space-right2'>
         <span class="strong">100% </span>
@@ -121,9 +121,43 @@
 76
 77
 78
-79</td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+79
+80
+81
+82
+83
+84
+85
+86
+87
+88
+89
+90
+91
+92
+93
+94
+95
+96
+97
+98
+99
+100
+101
+102</td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -141,6 +175,12 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">17x</span>
 <span class="cline-any cline-yes">17x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -175,6 +215,13 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">4x</span>
@@ -188,7 +235,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">8x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">4x</span>
@@ -199,16 +245,27 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">"use strict";
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">/**
+ * Centro extension for limiting how long message streams can be open.
+ *
+ * @module centro-js/lib/server_extensions/timeout
+ */
+"use strict";
 &nbsp;
 var url = require('url');
 &nbsp;
-exports.timeout_publish_streams = function (config, pipeline)
+/**
+ * Limit how long a client can take to publish a message.
+ *
+ * @param {Object} config - Configuration options.
+ * @param {integer} config.timeout - Time limit in milliseconds.
+ */
+exports.timeout_publish_streams = function (config)
 {
     return {
         pre_connect: function (info)
         {
-            pipeline(info.mqserver, 'publish_requested', function (topic, duplex, options, cb, next)
+            this.pipeline(info.mqserver, 'publish_requested', function (topic, duplex, options, cb, next)
             {
                 var t = setTimeout(function ()
                 {
@@ -225,12 +282,18 @@ exports.timeout_publish_streams = function (config, pipeline)
     };
 };
 &nbsp;
-exports.timeout_message_streams = function (config, pipeline)
+/**
+ * Limit how long a client can take to read a message.
+ *
+ * @param {Object} config - Configuration options.
+ * @param {integer} config.timeout - Time limit in milliseconds.
+ */
+exports.timeout_message_streams = function (config)
 {
     return {
         pre_connect: function (info)
         {
-            pipeline(info.mqserver, 'message', function (stream, info, multiplex, cb, next)
+            this.pipeline(info.mqserver, 'message', function (stream, info, multiplex, cb, next)
             {
                 var t = setTimeout(function ()
                 {
@@ -253,19 +316,25 @@ exports.timeout_message_streams = function (config, pipeline)
     };
 };
 &nbsp;
-exports.timeout_http_publish_requests = function (config, pipeline)
+/**
+ * Limit how long the HTTP transport allows a client to take to publish a
+ * message.
+ *
+ * @param {Object} config - Configuration options.
+ * @param {integer} config.http_publish_timeout - Time limit in milliseconds.
+ */
+exports.timeout_http_publish_requests = function (config)
 {
     return {
         transport_ready: function (tconfig, ops)
         {
             var cfg = Object.assign({}, config, tconfig);
 &nbsp;
-            if (cfg.http_publish_timeout &amp;&amp; ops.server)
+            if (cfg.http_publish_timeout &amp;&amp; ops.server &amp;&amp; ops.pub_pathname)
             {
                 ops.server.on('request', function (req)
                 {
-                    if (!ops.pub_pathname ||
-                        (url.parse(req.url).pathname === ops.pub_pathname))
+                    if (url.parse(req.url).pathname === ops.pub_pathname)
                     {
                         req.setTimeout(cfg.http_publish_timeout, function ()
                         {
@@ -283,7 +352,7 @@ exports.timeout_http_publish_requests = function (config, pipeline)
 </div><!-- /wrapper -->
 <div class='footer quiet pad2 space-top1 center small'>
   Code coverage
-  generated by <a href="http://istanbul-js.org/" target="_blank">istanbul</a> at Tue Jun 13 2017 21:57:51 GMT+0100 (BST)
+  generated by <a href="http://istanbul-js.org/" target="_blank">istanbul</a> at Tue Jun 27 2017 23:27:11 GMT+0100 (BST)
 </div>
 </div>
 <script src="../../../prettify.js"></script>

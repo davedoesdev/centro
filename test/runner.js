@@ -2707,7 +2707,7 @@ module.exports = function (config, connect, options)
                 clients[0].on('error', function (err)
                 {
                     expect(err.message).to.be.oneOf(is_transport('tcp') ?
-                            ['write EPIPE', 'read ECONNRESET'] :
+                            ['write EPIPE', 'read ECONNRESET', 'write ECONNRESET'] :
                             ['write after end']);
                 });
 
