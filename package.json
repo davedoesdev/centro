@@ -68,7 +68,9 @@
     "rimraf": "~2.6.1",
     "eventsource": "~1.0.1",
     "removeNPMAbsolutePaths": "~0.0.3",
-    "documentation": "davedoesdev/documentation#flex-default-theme"
+    "documentation": "davedoesdev/documentation#flex-default-theme",
+    "matic": "~0.5.2",
+    "jade": "~1.11.0"
   },
   "engines": {
     "node": ">=4"

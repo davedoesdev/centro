@@ -10,4 +10,3 @@ toc:
   - centro-js/lib/server_transports/http
   - centro-js/lib/server_transports/in-mem
   - name: Extensions
-#- authz token

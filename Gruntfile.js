@@ -71,6 +71,10 @@ module.exports = function (grunt)
 
             serve_documentation: {
                 cmd: './node_modules/.bin/documentation serve -w -c documentation.yml index.js lib/server_transports/*.js lib/server_extensions/*.js'
+            },
+
+            default_schema: {
+                cmd: 'mkdir -p docs/schema/schemas && node -p \'JSON.stringify(require("./lib/server_config.js").default_authz_token_schema, null, 2)\' > docs/schema/schemas/default_authz_token.schema.json && cd docs/schema && ../../node_modules/.bin/matic'
             }
         }
     });
@@ -83,7 +87,8 @@ module.exports = function (grunt)
     grunt.registerTask('keys', 'exec:keys');
     grunt.registerTask('test', 'mochaTest');
     grunt.registerTask('docs', ['exec:prep_documentation',
-                                'exec:documentation']);
+                                'exec:documentation',
+                                'exec:default_schema']);
     grunt.registerTask('serve_docs', ['exec:prep_documentation',
                                       'exec:serve_documentation']);
     grunt.registerTask('dist', 'exec:webpack');

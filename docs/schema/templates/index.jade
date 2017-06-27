@@ -1,0 +1,34 @@
+include templates/mixins/indexFolders
+
+doctype html
+head
+  include templates/includes/css
+html
+  body.index
+    article
+      header
+        h1 JSON Schema for Centro authorization tokens
+
+        p
+          | Centro clients must present to a Centro server a signed JSON Web
+          | Token conforming to the schema described below, unless it's
+          | connecting using a transport that's been configured for
+          | ANONYMOUS_MODE. Tokens must be signed using the private key from a
+          | keypair added to the authorize-jwt keystore on the server.
+
+      section
+        h2 schema descriptions
+
+        ul
+          each file, name in files
+            if typeof file === 'string'
+              li
+                a(href=name)= name
+
+        each folder, name in files
+          if typeof folder === 'object'
+            h2= name
+            ul
+              mixin indexFolders(folder, 3)
+
+      include templates/includes/footer
