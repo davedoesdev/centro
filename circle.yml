@@ -4,7 +4,7 @@ dependencies:
 
 test:
   override:
-    - if [ $CIRCLE_NODE_INDEX -ne 0 ]; then rm -rf node_modules && npm install; fi
+    - if [ $CIRCLE_NODE_INDEX -ne 0 ]; then echo removing node_modules && rm -rf node_modules && npm install; fi
     - npm run ci-coverage-$(node -p 'process.versions.node.split(".")[0]'):
         parallel: true
         timeout: 1200
