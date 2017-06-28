@@ -19,8 +19,8 @@
   "main": "index.js",
   "scripts": {
     "test": "grunt lint test",
-    "travis-coverage-4": "grunt lint keys coverage coveralls",
-    "travis-coverage-6": "grunt lint check_dist keys coverage coveralls"
+    "ci-coverage-4": "grunt lint keys coverage coveralls",
+    "ci-coverage-6": "grunt lint check_dist keys coverage coveralls"
   },
   "directories": {
     "test": "test",
