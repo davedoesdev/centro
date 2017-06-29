@@ -2711,7 +2711,17 @@ module.exports = function (config, connect, options)
                             ['write after end']);
                 });
 
-                clients[0].publish('foo').write('bar');
+                var s = clients[0].publish('foo');
+
+                if (is_transport('http'))
+                {
+                    s.on('error', function (err)
+                    {
+                        expect(err.message).to.equal('socket hang up');
+                    });
+                }
+
+                s.write('bar');
 
                 if (!options.relay)
                 {
