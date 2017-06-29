@@ -7,6 +7,6 @@ dependencies:
 
 test:
   override:
-    - npm run ci-coverage-$(node -p 'process.versions.node.split(".")[0]'):
+    - ./test/test.sh:
         parallel: true
         timeout: 1200
