@@ -5812,7 +5812,14 @@ module.exports = function (config, connect, options)
 
                                 state.onpub = check;
                                 
-                                restore();
+                                // Other backoff events might be pending so
+                                // we don't want an intermediate drain.
+                                // This wouldn't happen for real drains since
+                                // event handlers are called synchronously
+                                // in a for loop. Or at least it would be the
+                                // backoff event handler's fault if it provoked
+                                // a drain event with others pending.
+                                process.nextTick(restore);
                             });
 
                             get_info().clients[0].subscribe('bar', gotmsg, function (err)
