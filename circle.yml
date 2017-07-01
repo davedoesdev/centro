@@ -7,6 +7,6 @@ dependencies:
 
 test:
   override:
-    - ./test/test.sh:
+    - ./test/ci-test.sh:
         parallel: true
         timeout: 1200

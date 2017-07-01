@@ -112,6 +112,11 @@ module.exports = function (config, connect, options)
 
         function on_before(cb)
         {
+            if (this && this.timeout)
+            {
+                this.timeout(10000);
+            }
+
             var ths = this;
 
             presence_topics.clear();
@@ -229,6 +234,11 @@ module.exports = function (config, connect, options)
 
         function on_after(cb3)
         {
+            if (this && this.timeout)
+            {
+                this.timeout(10000);
+            }
+
             function cb2(err)
             {
                 if (err)
