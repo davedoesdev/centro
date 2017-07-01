@@ -46,7 +46,7 @@ module.exports = function (grunt)
             },
 
             coveralls: {
-                cmd: 'cat coverage/lcov.info | coveralls'
+                cmd: 'cat coverage/lcov.info | ./node_modules/.bin/coveralls'
             },
 
             webpack: {

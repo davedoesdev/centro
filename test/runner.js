@@ -114,7 +114,7 @@ module.exports = function (config, connect, options)
         {
             if (this && this.timeout)
             {
-                this.timeout(10000);
+                this.timeout(20000);
             }
 
             var ths = this;
@@ -236,7 +236,7 @@ module.exports = function (config, connect, options)
         {
             if (this && this.timeout)
             {
-                this.timeout(10000);
+                this.timeout(20000);
             }
 
             function cb2(err)
