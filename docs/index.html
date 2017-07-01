@@ -3368,6 +3368,19 @@ supported because when a connection drops, the server forgets all about it.</p>
                 </tr>
               
                 <tr>
+                  <td class='break-word'><span class='code bold'>config.destroy_after_end_delay</span> <code class='quiet'>integer</code>
+                  
+                    (default <code>500</code>)
+                  </td>
+                  <td class='break-word'><span>Amount of time (in milliseconds) to wait between 
+<a href="https://nodejs.org/api/http.html#http_response_end_data_encoding_callback">end</a>
+ing a response and 
+<a href="https://nodejs.org/api/http.html#http_message_destroy_error">destroy</a>
+ing the connection, if an error occurs which means the connection can't be re-used. If you don't want the connection forcibly destroyed, set this to a negative value.
+</span></td>
+                </tr>
+              
+                <tr>
                   <td class='break-word'><span class='code bold'>config.http</span> <code class='quiet'><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>?</code>
                   </td>
                   <td class='break-word'><span>If present then this is used in preference to 

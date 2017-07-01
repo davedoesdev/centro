@@ -497,12 +497,12 @@ module.exports = function (config, connect, options)
                 {
                     if (server._connids.size === 0)
                     {
-                        empty();
+                        return empty();
                     }
 
                     if (options.relay)
                     {
-                        for (var dstroy of server._connids.values())
+                        for (var dstroy of Array.from(server._connids.values()))
                         {
                             dstroy();
                         }
