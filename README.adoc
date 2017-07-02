@@ -2,7 +2,7 @@
 :prewrap!:
 :toc:
 :toclevels: 3
-:toc-placement: macro
+:toc-placement: preamble
 
 Centro is a Node.js module for publishing and subscribing to messages over a
 network. It includes code for running a server and clients which connect to a
@@ -22,8 +22,6 @@ Clients can connect to the server using https://github.com/primus/primus[Primus]
 (Websockets), TCP, HTTP or in-memory streams.
 
 API documentation is available http://rawgit.davedoesdev.com/davedoesdev/centro/master/docs/index.html[here].
-
-toc::[]
 
 == Example
 
