@@ -432,7 +432,7 @@ published:
 </html>
 ----
 <1> Some CSS is required to lay this out nicely. It's available in
-link:test/example/example.css[].
+link:test/example/browser/example.css[].
 <2> Load Primus.
 <3> Load the Centro client code.
 <4> Load script to make the example work (see below).
