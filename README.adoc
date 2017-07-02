@@ -84,7 +84,7 @@ You should generate a keypair, add the public key to ``authorize-jwt``'s
 keystore and sign your tokens with the private key.
 
 Here's a program which generates a keypair using https://github.com/quartzjer/ursa[ursa], adds the public key to Centro's keystore with the identifier
-`http://davedoesdev.com`, and writes the private key to `priv_key.pem`:
+`\http://davedoesdev.com`, and writes the private key to `priv_key.pem`:
 
 [source,javascript]
 .add_key.js
@@ -122,7 +122,7 @@ authorize_jwt(
 <4> You can use `couchdb` but you'll have to set up your own http://couchdb.apache.org/[CouchDB] server.
 <5> We're going to update the keystore.
 <6> We're not interested in changes to the keystore -- we're just going to update the public key and exit.
-<7> Associate the public key with `http://davedoesdev.com`.
+<7> Associate the public key with `\http://davedoesdev.com`.
 <8> The private key is not stored in the keystore but needs to be available when you want to sign authorization tokens. Here we write it to disk but this is just an example -- you probably want a more secure way of storing it.
 <9> https://pouchdb.com/[PouchDB]-based keystores update a master database and then replicate changes to reader databases. Here we `deploy()` the master database to let any active reader databases know we're done updating. 
 
