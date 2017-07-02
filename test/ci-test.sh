@@ -20,5 +20,3 @@ tail -n 100 "$CIRCLE_ARTIFACTS/test.log"
 if [ $node_ver = $check_ver ]; then
   ./node_modules/.bin/grunt coveralls
 fi
-
-cp coverage/lcov.info "$CIRCLE_ARTIFACTS"
