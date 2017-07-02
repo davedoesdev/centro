@@ -129,7 +129,7 @@ authorize_jwt(
 Then you need to make a JWT, using the private key to sign it.
 
 The `iss` claim in the token should be the unique issuer ID associated with
-`http://davedoesdev.com` in Centro's keystore. You can use the
+`\http://davedoesdev.com` in Centro's keystore. You can use the
 https://github.com/davedoesdev/pub-keystore#pubkeystoreprototypeget_pub_key_by_uriuri-cb[`get_pub_key_by_uri`] method to retrieve the issuer ID.
 Clients which use tokens with different issuer IDs can't send messages to each
 other.
