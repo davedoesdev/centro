@@ -666,6 +666,9 @@ containing the message's topic and unique ID.
 <7> Message data arrives in `data` events and we accumulate it here.
 <8> When all a message's data has been received, we get an `end` event. In this example, we display the message's topic and data.
 
+Further details of how messages are delivered using server-sent events are
+available http://rawgit.davedoesdev.com/davedoesdev/centro/master/docs/index.html#centro-jslibserver_transportshttp[here].
+
 === In-memory client
 
 The `in-mem` transport lets you connect from the server process itself without
