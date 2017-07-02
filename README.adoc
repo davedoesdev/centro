@@ -938,7 +938,7 @@ fn main() {
 
 Here are the same example clients written in Clojure. To run them, change
 directory to link:test/example/clojure/publish[] or
-link:test/example/clojure/subscribe[] and run `lein run`.
+link:test/example/clojure/subscribe[] and type `lein run`.
 
 [source,clojure]
 .publish.clj
@@ -999,7 +999,7 @@ link:test/example/clojure/subscribe[] and run `lein run`.
 
 Here are the same example clients written in Elixir. To build them, change
 directory to link:test/example/elixir/apps/publish[] or
-link:test/example/elixir/apps/subscribe[] and run `mix escript.build`.
+link:test/example/elixir/apps/subscribe[] and type `mix escript.build`.
 
 [source,elixir]
 .publish.ex
