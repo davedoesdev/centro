@@ -189,7 +189,7 @@ fs.readFile(path.join(__dirname, 'priv_key.pem'), function (err, priv_key) <1>
 <1> Read the private key. This is just an example -- you should have a more secure way of storing private keys.
 <2> Set token expiry to 24 hours.
 <3> Open the keystore for reading.
-<4> Retrieve the issuer ID for `http://davedoesdev.com`.
+<4> Retrieve the issuer ID for `\http://davedoesdev.com`.
 <5> Use the issuer ID in the token.
 <6> Allow clients using this token to subscribe and publish to any topic.
 <7> Supply the expiry time and private key for signing.
