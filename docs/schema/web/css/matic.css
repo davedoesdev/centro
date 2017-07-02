@@ -1,0 +1,107 @@
+* {
+  margin: 0;
+  padding: 0;
+}
+article {
+  padding: 40px;
+}
+article > header {
+  border-bottom: 1px solid #002633;
+  padding: 0 0 20px 0;
+  margin: 0 0 7px 0;
+}
+footer {
+  border-top: 1px solid #002633;
+  padding: 20px 0 0 0;
+  margin: 7px 0 0 0;
+}
+.container {
+  font-size: 24px;
+  font-weight: bold;
+  display: block;
+}
+.container.top {
+  padding: 0 0 7px 0;
+}
+.container.bot {
+  padding: 7px 0 0 0;
+}
+.required {
+  color: #ad0000;
+  position: absolute;
+  font-size: 8px;
+  left: -10px;
+  top: 1px;
+  text-shadow: 0.5px 0.5px #002633;
+}
+dl {
+  float: left;
+  width: 100%;
+}
+dt {
+  font-weight: bold;
+  position: relative;
+  color: #004d66;
+  clear: left;
+  float: left;
+  margin: 0 0 7px 3px;
+}
+dt.parent {
+  color: #09c;
+  cursor: pointer;
+}
+dd {
+  display: inline-block;
+  overflow: hidden;
+  margin: 0 0 7px 3px;
+  float: left;
+}
+dd.new-block {
+  clear: left;
+  display: block;
+  padding: 0 0 0 17px;
+}
+dd:last-child {
+  margin-bottom: 0;
+}
+dd p {
+  margin: 0;
+}
+.index ul {
+  padding: 0;
+}
+li {
+  clear: left;
+  overflow: hidden;
+  padding: 7px;
+  border-radius: 3px;
+  position: relative;
+}
+li:nth-child(odd) {
+  background: #eee;
+}
+li:nth-child(even) {
+  background: #ddd;
+}
+h1 {
+  color: #09c;
+  margin: 0 0 7px 0;
+  font-size: 24px;
+}
+h2 {
+  color: #09c;
+  line-height: 180%;
+  float: left;
+  text-transform: capitalize;
+}
+h3,
+h4,
+h5,
+h6 {
+  color: #09c;
+  line-height: 140%;
+  padding: 0 0 7px 0;
+}
+p {
+  margin: 0 0 7px 0;
+}
