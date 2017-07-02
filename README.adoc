@@ -805,7 +805,7 @@ es.addEventListener('data', function (e)
 
 Here are the same example clients written in Rust. To run them, change directory
 to link:test/example/rust/publish[] or link:test/example/rust/subscribe[] and
-run `cargo run`.
+type `cargo run`.
 
 [source,rust]
 .publish.rs
