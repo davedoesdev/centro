@@ -124,7 +124,6 @@ module.exports = function (config, connect, options)
 
             function start2()
             {
-            console.log("start2");
                 server = new centro.CentroServer(config);
 
                 server.on('pre_connect', function (info)
@@ -152,7 +151,6 @@ module.exports = function (config, connect, options)
 
                 server.on('ready', function ()
                 {
-                console.log("ready");
                     if (options.anon)
                     {
                         if (ths && ths.test_should_skip)
@@ -167,7 +165,6 @@ module.exports = function (config, connect, options)
                     server.authz.keystore.add_pub_key(uri, priv_key.toPublicPem('utf8'),
                     function (err, the_issuer_id, the_rev)
                     {
-                    console.log("added pub key1");
                         if (err)
                         {
                             return cb(err);
@@ -180,7 +177,6 @@ module.exports = function (config, connect, options)
                         server.authz.keystore.add_pub_key(uri2, priv_key2.toPublicPem('utf8'),
                         function (err, the_issuer_id, the_rev)
                         {
-                    console.log("added pub key2");
                             if (err)
                             {
                                 return cb(err);
