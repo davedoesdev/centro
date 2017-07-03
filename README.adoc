@@ -3,7 +3,6 @@
 :toc:
 :toclevels: 3
 :toc-placement: preamble
-:source-highlighter: pygments
 
 Centro is a Node.js module for publishing and subscribing to messages over a
 network. It includes code for running a server and clients which connect to a
