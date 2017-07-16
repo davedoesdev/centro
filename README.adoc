@@ -83,8 +83,10 @@ is described http://rawgit.davedoesdev.com/davedoesdev/centro/master/docs/schema
 You should generate a keypair, add the public key to ``authorize-jwt``'s
 keystore and sign your tokens with the private key.
 
-Here's a program which generates a keypair using https://github.com/quartzjer/ursa[ursa], adds the public key to Centro's keystore with the identifier
-`\http://davedoesdev.com`, and writes the private key to `priv_key.pem`:
+Here's a program which generates a keypair using
+https://github.com/davedoesdev/node-jsjws[jsjws], adds the public key to
+Centro's keystore with the identifier `\http://davedoesdev.com`, and writes the
+private key to `priv_key.pem`:
 
 [source,javascript]
 .add_key.js
@@ -94,9 +96,9 @@ var uri = 'http://davedoesdev.com', <1>
     assert = require('assert'),
     path = require('path'),
     fs = require('fs'),
-    ursa = require('ursa'),
-    priv_key = ursa.generatePrivateKey(2048, 65537), <2>
-    pub_key = priv_key.toPublicPem('utf8'); <3>
+    jsjws = require('jsjws'),
+    priv_key = jsjws.generatePrivateKey(2048, 65537),
+    pub_key = priv_key.toPublicPem();
 
 authorize_jwt(
 {
@@ -117,7 +119,7 @@ authorize_jwt(
 });
 ----
 <1> Unique identifier for the keypair.
-<2> Generate the keypair.
+<2> Generate the keypair. You could also https://github.com/juliangruber/keypair[keypair] or `openssl` on the command line, for example.
 <3> Get the public key in PEM form.
 <4> You can use `couchdb` but you'll have to set up your own http://couchdb.apache.org/[CouchDB] server.
 <5> We're going to update the keystore.
@@ -150,8 +152,7 @@ var uri = 'http://davedoesdev.com',
     jsjws = require('jsjws'),
     assert = require('assert'),
     path = require('path'),
-    fs = require('fs'),
-    ursa = require('ursa');
+    fs = require('fs');
 
 fs.readFile(path.join(__dirname, 'priv_key.pem'), function (err, priv_key) <1>
 {
@@ -181,7 +182,7 @@ fs.readFile(path.join(__dirname, 'priv_key.pem'), function (err, priv_key) <1>
                     subscribe: { allow: ['#'], disallow: [] },
                     publish: { allow: ['#'], disallow: [] }
                 }
-            }, expiry, ursa.createPrivateKey(priv_key))); <7>
+            }, expiry, jsjws.createPrivateKey(priv_key))); <7>
         });
     });
 });

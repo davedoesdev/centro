@@ -6,7 +6,6 @@ var centro = require('..'),
     CentroServer = centro.CentroServer,
     util = require('util'),
     crypto = require('crypto'),
-    ursa = require('ursa'),
     jsjws = require('jsjws'),
     expect = require('chai').expect,
     async = require('async'),
@@ -90,7 +89,7 @@ module.exports = function (config, connect, options)
     function run(config)
     {
         /* jshint validthis: true */
-        this.timeout((config.test_timeout || 20000) *
+        this.timeout((config.test_timeout || 60000) *
                      (is_transport('primus') ? 10 : 1));
 
         var server, clients,
@@ -114,7 +113,7 @@ module.exports = function (config, connect, options)
         {
             if (this && this.timeout)
             {
-                this.timeout(20000);
+                this.timeout(60000);
             }
 
             var ths = this;
@@ -161,7 +160,7 @@ module.exports = function (config, connect, options)
                         return cb();
                     }
 
-                    priv_key = ursa.generatePrivateKey(2048, 65537);
+                    priv_key = jsjws.generatePrivateKey(2048, 65537);
                     server.authz.keystore.add_pub_key(uri, priv_key.toPublicPem('utf8'),
                     function (err, the_issuer_id, the_rev)
                     {
@@ -173,7 +172,7 @@ module.exports = function (config, connect, options)
                         issuer_id = the_issuer_id;
                         rev = the_rev;
 
-                        priv_key2 = ursa.generatePrivateKey(2048, 65537);
+                        priv_key2 = jsjws.generatePrivateKey(2048, 65537);
                         server.authz.keystore.add_pub_key(uri2, priv_key2.toPublicPem('utf8'),
                         function (err, the_issuer_id, the_rev)
                         {
@@ -236,7 +235,7 @@ module.exports = function (config, connect, options)
         {
             if (this && this.timeout)
             {
-                this.timeout(20000);
+                this.timeout(60000);
             }
 
             function cb2(err)
@@ -3179,7 +3178,7 @@ module.exports = function (config, connect, options)
                     clients[0].mux.carrier.on('end', end);
                     clients[1].mux.carrier.on('end', end2);
 
-                    priv_key = ursa.generatePrivateKey(2048, 65537);
+                    priv_key = jsjws.generatePrivateKey(2048, 65537);
                     server.authz.keystore.add_pub_key(uri, priv_key.toPublicPem('utf8'),
                     function (err, the_issuer_id, the_rev)
                     {
@@ -3198,6 +3197,8 @@ module.exports = function (config, connect, options)
                     var called = false,
                         old_rev = rev;
 
+                    priv_key = jsjws.generatePrivateKey(2048, 65537);
+
                     function snbc()
                     {
                         done(new Error('should not be called'));
@@ -3210,7 +3211,7 @@ module.exports = function (config, connect, options)
                         clients[0].mux.carrier.removeListener('end', snbc);
                         clients[1].mux.carrier.removeListener('end', snbc);
                         done();
-                    }, 1000);
+                    }, 2000);
 
                     server.on('disconnect', snbc);
                     clients[0].mux.carrier.on('end', snbc);
@@ -3229,7 +3230,6 @@ module.exports = function (config, connect, options)
                         listeners[0].apply(this, arguments);
                     });
 
-                    priv_key = ursa.generatePrivateKey(2048, 65537);
                     server.authz.keystore.add_pub_key(uri, priv_key.toPublicPem('utf8'),
                     function (err, the_issuer_id, the_rev)
                     {

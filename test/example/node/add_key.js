@@ -3,9 +3,9 @@ var uri = 'http://davedoesdev.com',
     assert = require('assert'),
     path = require('path'),
     fs = require('fs'),
-    ursa = require('ursa'),
-    priv_key = ursa.generatePrivateKey(2048, 65537),
-    pub_key = priv_key.toPublicPem('utf8');
+    jsjws = require('jsjws'),
+    priv_key = jsjws.generatePrivateKey(2048, 65537),
+    pub_key = priv_key.toPublicPem();
 
 authorize_jwt(
 {

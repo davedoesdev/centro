@@ -3,8 +3,7 @@ var uri = 'http://davedoesdev.com',
     jsjws = require('jsjws'),
     assert = require('assert'),
     path = require('path'),
-    fs = require('fs'),
-    ursa = require('ursa');
+    fs = require('fs');
 
 fs.readFile(path.join(__dirname, 'priv_key.pem'), function (err, priv_key)
 {
@@ -34,7 +33,7 @@ fs.readFile(path.join(__dirname, 'priv_key.pem'), function (err, priv_key)
                     subscribe: { allow: ['#'], disallow: [] },
                     publish: { allow: ['#'], disallow: [] }
                 }
-            }, expiry, ursa.createPrivateKey(priv_key)));
+            }, expiry, jsjws.createPrivateKey(priv_key)));
         });
     });
 });
