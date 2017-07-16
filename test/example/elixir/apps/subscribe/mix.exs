@@ -34,7 +34,7 @@ defmodule Subscribe.Mixfile do
   # Type "mix help deps" for more examples and options
   defp deps do
     [
-      {:eventsource_ex, git: "https://github.com/cwc/eventsource_ex"},
+      {:eventsource_ex, "~> 0.0.1"},
       {:poison, "~> 3.1.0"},
       {:httpoison, "~> 0.11.2", override: true}
     ]
