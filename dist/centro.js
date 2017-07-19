@@ -34826,6 +34826,7 @@ module.exports = {
 	"bugs": {
 		"url": "https://github.com/indutny/elliptic/issues"
 	},
+	"bundleDependencies": false,
 	"dependencies": {
 		"bn.js": "^4.4.0",
 		"brorand": "^1.0.1",
@@ -34835,6 +34836,7 @@ module.exports = {
 		"minimalistic-assert": "^1.0.0",
 		"minimalistic-crypto-utils": "^1.0.0"
 	},
+	"deprecated": false,
 	"description": "EC cryptography",
 	"devDependencies": {
 		"brfs": "^1.4.3",

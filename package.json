@@ -1,7 +1,7 @@
 {
   "name": "centro-js",
   "description": "Pub-sub and work queue service on Primus or TCP. Supports wildcards, streams and back-pressure. Just Node and a filesystem required.",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "homepage": "https://github.com/davedoesdev/centro",
   "author": {
     "name": "David Halls",
@@ -18,8 +18,8 @@
   "license": "MIT",
   "main": "index.js",
   "scripts": {
-    "test": "grunt lint keys test",
-    "coverage": "grunt lint keys coverage"
+    "test": "node --napi-modules ./node_modules/.bin/grunt lint keys test",
+    "coverage": "node --napi-modules ./node_modules/.bin/grunt lint keys coverage"
   },
   "directories": {
     "test": "test",
@@ -39,7 +39,7 @@
     "mqlobber": "~5.0.4",
     "mqlobber-access-control": "~4.0.3",
     "qlobber-fsq": "~7.1.1",
-    "authorize-jwt": "~3.0.1",
+    "authorize-jwt": "~3.1.0",
     "primus": "~7.0.2",
     "primus-backpressure": "~1.0.1",
     "frame-stream": "~1.1.1",
@@ -58,17 +58,16 @@
     "chai": "~4.1.0",
     "nyc": "~11.0.3",
     "coveralls": "~2.13.1",
-    "jsjws": "~3.0.2",
+    "jsjws": "~3.1.1",
     "ws": "~3.0.0",
     "fastest-writable": "~1.1.0",
     "webpack": "3.3.0",
     "json-loader": "~0.5.4",
     "rimraf": "~2.6.1",
-    "eventsource": "~1.0.4",
+    "eventsource": "~1.0.5",
     "removeNPMAbsolutePaths": "~0.0.3",
     "documentation": "davedoesdev/documentation#flex-default-theme",
-    "matic": "~0.5.2",
-    "jade": "~1.11.0"
+    "matic": "~0.5.2"
   },
   "engines": {
     "node": ">=8"

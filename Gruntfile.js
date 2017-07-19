@@ -34,7 +34,7 @@ module.exports = function (grunt)
 
         exec: {
             cover: {
-                cmd: "./node_modules/.bin/nyc -x Gruntfile.js -x 'test/**' ./node_modules/.bin/grunt test"
+                cmd: "./node_modules/.bin/nyc -x Gruntfile.js -x 'test/**' node --napi-modules ./node_modules/.bin/grunt test"
             },
 
             cover_report: {
@@ -73,8 +73,12 @@ module.exports = function (grunt)
                 cmd: './node_modules/.bin/documentation serve -w -c documentation.yml index.js lib/server_transports/*.js lib/server_extensions/*.js'
             },
 
+            prep_matic: {
+                cmd: 'if [ ! -e node_modules/matic/node_modules ]; then npm explore matic -- npm install; fi'
+            },
+
             default_schema: {
-                cmd: 'mkdir -p docs/schema/schemas && node -p \'JSON.stringify(require("./lib/server_config.js").default_authz_token_schema, null, 2)\' > docs/schema/schemas/default_authz_token.schema.json && cd docs/schema && ../../node_modules/.bin/matic'
+                cmd: 'mkdir -p docs/schema/schemas && node --napi-modules -p \'JSON.stringify(require("./lib/server_config.js").default_authz_token_schema, null, 2)\' > docs/schema/schemas/default_authz_token.schema.json && cd docs/schema && ../../node_modules/.bin/matic'
             }
         }
     });
@@ -88,6 +92,7 @@ module.exports = function (grunt)
     grunt.registerTask('test', 'mochaTest');
     grunt.registerTask('docs', ['exec:prep_documentation',
                                 'exec:documentation',
+                                'exec:prep_matic',
                                 'exec:default_schema']);
     grunt.registerTask('serve_docs', ['exec:prep_documentation',
                                       'exec:serve_documentation']);
