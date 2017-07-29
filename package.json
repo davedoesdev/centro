@@ -1,7 +1,7 @@
 {
   "name": "centro-js",
   "description": "Pub-sub and work queue service on Primus or TCP. Supports wildcards, streams and back-pressure. Just Node and a filesystem required.",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "homepage": "https://github.com/davedoesdev/centro",
   "author": {
     "name": "David Halls",
