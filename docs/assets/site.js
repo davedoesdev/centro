@@ -93,18 +93,8 @@ function showHashTarget(targetId) {
   }
 }
 
-function scrollIntoView(targetId) {
-  if (targetId) {
-    var hashTarget = document.getElementById(targetId);
-    if (hashTarget) {
-      hashTarget.scrollIntoView();
-    }
-  }
-}
-
 window.addEventListener('hashchange', function () {
   showHashTarget(location.hash.substring(1));
-  scrollIntoView(location.hash.substring(1));
 });
 
 showHashTarget(location.hash.substring(1));
@@ -149,20 +139,23 @@ Split(['#split-left', '#split-right'], {
 
 // Chrome doesn't remember scroll position properly so do it ourselves.
 
-window.addEventListener('beforeunload', function () {
+function updateState() {
   history.replaceState({
     left_top: split_left.scrollTop,
     right_top: split_right.scrollTop
   }, document.title);
-});
+}
 
-window.addEventListener('load', function () {
+split_left.addEventListener('scroll', updateState);
+split_right.addEventListener('scroll', updateState);
+
+function loadState() {
   if (history.state) {
-    if (history.state.left_top) {
-      split_left.scrollTop = history.state.left_top;
-    }
-    if (history.state.right_top) {
-      split_right.scrollTop = history.state.right_top;
-    }
+    split_left.scrollTop = history.state.left_top;
+    split_right.scrollTop = history.state.right_top;
   }
-});
+  updateState();
+}
+
+window.addEventListener('load', loadState);
+window.addEventListener('popstate', loadState);
