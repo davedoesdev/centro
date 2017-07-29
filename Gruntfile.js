@@ -74,7 +74,7 @@ module.exports = function (grunt)
             },
 
             prep_matic: {
-                cmd: 'if [ ! -e node_modules/matic/node_modules ]; then npm explore matic -- npm install; fi'
+                cmd: 'if [ ! -e node_modules/matic/node_modules/jade ]; then npm explore matic -- npm install; fi'
             },
 
             default_schema: {
