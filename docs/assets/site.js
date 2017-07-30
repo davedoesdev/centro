@@ -146,9 +146,6 @@ function updateState() {
   }, document.title);
 }
 
-split_left.addEventListener('scroll', updateState);
-split_right.addEventListener('scroll', updateState);
-
 function loadState() {
   if (history.state) {
     split_left.scrollTop = history.state.left_top;
@@ -157,5 +154,11 @@ function loadState() {
   updateState();
 }
 
-window.addEventListener('load', loadState);
+window.addEventListener('load', function ()
+{
+    loadState();
+    split_left.addEventListener('scroll', updateState);
+    split_right.addEventListener('scroll', updateState);
+});
+
 window.addEventListener('popstate', loadState);
