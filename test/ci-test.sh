@@ -11,11 +11,12 @@ if [ $node_ver = $check_ver ]; then
   ./node_modules/.bin/grunt check_dist
 fi
 
-if ! npm run coverage >& "$CIRCLE_ARTIFACTS/test.log"; then
-  tail -n 1000 "$CIRCLE_ARTIFACTS/test.log"
-  exit 1
-fi
-tail -n 100 "$CIRCLE_ARTIFACTS/test.log"
+#if ! npm run coverage >& "$CIRCLE_ARTIFACTS/test.log"; then
+#  tail -n 1000 "$CIRCLE_ARTIFACTS/test.log"
+#  exit 1
+#fi
+#tail -n 100 "$CIRCLE_ARTIFACTS/test.log"
+npm run coverage
 
 if [ $node_ver = $check_ver ]; then
   ./node_modules/.bin/grunt coveralls
