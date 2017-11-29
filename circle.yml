@@ -8,7 +8,7 @@ dependencies:
     - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-6 20
     - g++ --version
     - rm -rf node_modules
-    - npm install
+    - npm install --build-from-source
 
 test:
   override:
