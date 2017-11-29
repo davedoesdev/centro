@@ -3,6 +3,7 @@ dependencies:
     - case $CIRCLE_NODE_INDEX in 0) NODE_VERSION=8 ;; esac; nvm install $NODE_VERSION && nvm alias default $NODE_VERSION
   override:
     - rm -rf node_modules
+    - g++ --version
     - npm install
 
 test:
