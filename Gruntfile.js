@@ -1,5 +1,20 @@
 "use strict";
 
+var path = require('path'),
+    mod_path = path.join('.', 'node_modules'),
+    bin_path = path.join(mod_path, '.bin'),
+    nyc_path = path.join(bin_path, 'nyc'),
+    grunt_path;
+
+if (process.platform === 'win32')
+{
+    grunt_path = path.join(mod_path, 'grunt', 'bin', 'grunt');
+}
+else
+{
+    grunt_path = path.join(bin_path, 'grunt');
+}
+
 module.exports = function (grunt)
 {
     grunt.initConfig(
@@ -34,15 +49,15 @@ module.exports = function (grunt)
 
         exec: {
             cover: {
-                cmd: "./node_modules/.bin/nyc -x Gruntfile.js -x 'test/**' node --napi-modules ./node_modules/.bin/grunt test"
+                cmd: nyc_path + " -x Gruntfile.js -x \"" + path.join('test', '**') + "\" node --napi-modules " + grunt_path + " test"
             },
 
             cover_report: {
-                cmd: "./node_modules/.bin/nyc report -r lcov"
+                cmd: nyc_path + ' report -r lcov'
             },
 
             cover_check: {
-                cmd: './node_modules/.bin/nyc check-coverage --statements 100 --branches 100 --functions 100 --lines 100'
+                cmd: nyc_path + ' check-coverage --statements 100 --branches 100 --functions 100 --lines 100'
             },
 
             coveralls: {
@@ -89,6 +104,8 @@ module.exports = function (grunt)
 
     grunt.registerTask('lint', 'jshint');
     grunt.registerTask('keys', 'exec:keys');
+    grunt.registerTask('dist', 'exec:webpack');
+    grunt.registerTask('check_dist', 'exec:check_dist');
     grunt.registerTask('test', 'mochaTest');
     grunt.registerTask('docs', ['exec:prep_documentation',
                                 'exec:documentation',
@@ -96,8 +113,6 @@ module.exports = function (grunt)
                                 'exec:default_schema']);
     grunt.registerTask('serve_docs', ['exec:prep_documentation',
                                       'exec:serve_documentation']);
-    grunt.registerTask('dist', 'exec:webpack');
-    grunt.registerTask('check_dist', 'exec:check_dist');
     grunt.registerTask('coverage', ['exec:cover',
                                     'exec:cover_report',
                                     'exec:cover_check']);

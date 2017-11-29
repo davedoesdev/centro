@@ -264,12 +264,12 @@ module.exports = function (config, connect, options)
                 {
                     if (config.fsq)
                     {
-                        expect(server.fsq._stopped).to.equal(false);
+                        expect(server.fsq.stopped).to.equal(false);
                         config.fsq.stop_watching(cb2);
                     }
                     else
                     {
-                        expect(server.fsq._stopped).to.equal(true);
+                        expect(server.fsq.stopped).to.equal(true);
                         cb2();
                     }
                 });
@@ -6349,12 +6349,12 @@ module.exports = function (config, connect, options)
 
         describe('null allowed algorithms', function ()
         {
-            allowed_algs.call(this, null);
+            allowed_algs.call(this, null, "Cannot read property 'concat' of null");
         });
 
         describe('undefined allowed algorithms', function ()
         {
-            allowed_algs.call(this, undefined, 'Object prototype may only be an Object or null: undefined');
+            allowed_algs.call(this, undefined, "Cannot read property 'concat' of undefined");
         });
     });
 };

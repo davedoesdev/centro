@@ -35,8 +35,7 @@ defmodule Subscribe.Mixfile do
   defp deps do
     [
       {:eventsource_ex, "~> 0.0.1"},
-      {:poison, "~> 3.1.0"},
-      {:httpoison, "~> 0.11.2", override: true}
+      {:poison, "~> 3.1.0"}
     ]
   end
 end
