@@ -4787,7 +4787,7 @@ module.exports = function (config, connect, options)
                         }
                     });
 
-                    it('should be able to filter handlers', function (done)
+                    it.only('should be able to filter handlers', function (done)
                     {
                         if ((is_transport('tcp') && !config.noDelay) || config.fsq)
                         {
@@ -4810,7 +4810,10 @@ module.exports = function (config, connect, options)
 
                         get_info().server.fsq.filters.unshift(function (info, handlers, cb)
                         {
-                            count += 1;
+                            if (!info.existing)
+                            {
+                                count += 1;
+                            }
                             console.log('FLT', info);
                             cb(null, true, handlers);
                         });
