@@ -4815,6 +4815,16 @@ module.exports = function (config, connect, options)
                             cb(null, true, handlers);
                         });
 
+                        var done1 = false, done2 = false;
+
+                        function check()
+                        {
+                            if (done1 && done2)
+                            {
+                                done();
+                            }
+                        }
+
                         get_info().clients[0].subscribe('foo.*', function (s, info, ack)
                         {
                             if (info.topic === 'foo.bar')
@@ -4840,7 +4850,11 @@ module.exports = function (config, connect, options)
                                     }
 
                                     ack_bar = ack;
-                                    read_all(s);
+                                    read_all(s, function ()
+                                    {
+                                        done1 = true;
+                                        check();
+                                    });
                                 };
 
                                 return this.publish('foo.foo', function (err)
@@ -4856,7 +4870,8 @@ module.exports = function (config, connect, options)
                             {
                                 expect(v.toString()).to.equal('hello');
                                 ack_bar();
-                                done();
+                                done2 = true;
+                                check();
                             });
                         }, function (err)
                         {
