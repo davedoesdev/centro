@@ -996,6 +996,11 @@ module.exports = function (config, connect, options)
             {
                 it('should not send ack message if prefix not recognised', function (done)
                 {
+                    clients[0].on('warning', function (err)
+                    {
+                        expect(err.message).to.equal('carrier stream ended before end message received');
+                    });
+
                     server.once('warning', function (err)
                     {
                         expect(err.message).to.equal('unknown prefix on ack topic: foo');
@@ -4806,6 +4811,7 @@ module.exports = function (config, connect, options)
                         get_info().server.fsq.filters.unshift(function (info, handlers, cb)
                         {
                             count += 1;
+                            console.log('FLT', info);
                             cb(null, true, handlers);
                         });
 
