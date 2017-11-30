@@ -4787,7 +4787,7 @@ module.exports = function (config, connect, options)
                         }
                     });
 
-                    it.only('should be able to filter handlers', function (done)
+                    it('should be able to filter handlers', function (done)
                     {
                         if ((is_transport('tcp') && !config.noDelay) || config.fsq)
                         {
