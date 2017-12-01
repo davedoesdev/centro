@@ -4814,7 +4814,6 @@ module.exports = function (config, connect, options)
                             {
                                 count += 1;
                             }
-                            console.log('FLT', info);
                             cb(null, true, handlers);
                         });
 
@@ -4832,7 +4831,6 @@ module.exports = function (config, connect, options)
                         {
                             if (info.topic === 'foo.bar')
                             {
-                            console.log("B1");
                                 expect(count).to.equal(1);
 
                                 on_delay = function (info)
