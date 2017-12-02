@@ -435,7 +435,7 @@ module.exports = function (config, connect, options)
 
                         c.on('warning', function (err)
                         {
-                            console.error(err.message);
+                            console.warn(err.message);
                         });
                     });
                 }, function (err, cs)
@@ -494,13 +494,25 @@ module.exports = function (config, connect, options)
 
                 async.each(clients, function (c, cb)
                 {
+                    var called = false;
+
+                    function cb2()
+                    {
+                        if (!called)
+                        {
+                            cb();
+                            called = true;
+                        }
+                    }
+
                     if (!c ||
                         c.mux.carrier._readableState.ended ||
                         c.mux.carrier.destroyed)
                     {
                         return cb();
                     }
-                    c.mux.carrier.on('end', cb);
+                    c.mux.carrier.on('close', cb2);
+                    c.mux.carrier.on('end', cb2);
                     c.mux.carrier.end();
                 }, function ()
                 {
@@ -1024,7 +1036,10 @@ module.exports = function (config, connect, options)
 
                             clients[0]._matcher.add('foo', function (s, info, done)
                             {
-                                done();
+                                read_all(s, function ()
+                                {
+                                    done();
+                                });
                             });
 
                             mqserver.fsq.publish('foo',
@@ -2439,11 +2454,14 @@ module.exports = function (config, connect, options)
                         if ((typeof ignore_server !== 'number') &&
                             !is_transport('primus'))
                         {
-                            if (is_transport('tls'))
+                            if (is_transport('tls') ||
+                                (process.platform === 'win32'))
                             {
                                 expect(errors[0].message).to.be.oneOf([
                                     msg,
-                                    'carrier stream finished before duplex finished'
+                                    'carrier stream finished before duplex finished',
+                                    'write ECONNABORTED',
+                                    'read ECONNRESET'
                                 ]);
                             }
                             else
@@ -2460,7 +2478,9 @@ module.exports = function (config, connect, options)
                                 'carrier stream ended before end message received',
                                 'carrier stream finished before duplex finished',
                                 'stream.push() after EOF',
-                                'unexpected response'
+                                'unexpected response',
+                                'write ECONNABORTED',
+                                'read ECONNRESET'
                             ]);
                         }
 
@@ -2471,28 +2491,28 @@ module.exports = function (config, connect, options)
                                 return false;
                             }
 
-                            if (errors[0].message === 'socket hang up')
+                            if ((errors[0].message === 'socket hang up') ||
+                                (errors[0].message === 'read ECONNRESET'))
                             {
                                 for (var i = 1; i < errors.length - 1; i += 1)
                                 {
-                                    expect(errors[i].message).to.equal('socket hang up');
+                                    expect(errors[i].message).to.equal(errors[0].message);
                                 }
 
-                                if (errors[errors.length - 1].message === 'socket hang up')
+                                if (errors[errors.length - 1].message === errors[0].message)
                                 {
                                     return false;
                                 }
 
                                 expect(errors[errors.length - 1].message).to.equal('carrier stream ended before end message received');
                             }
-                            else
+                            else if (errors.length > 2)
                             {
-                                if (errors.length > 2)
-                                {
-                                    done(new Error('too many errors'));
-                                    return false;
-                                }
-
+                                done(new Error('too many errors'));
+                                return false;
+                            }
+                            else 
+                            {
                                 var ur_index = errors[0].message === 'unexpected response' ? 0 : 1;
 
                                 expect(errors[ur_index].message).to.equal('unexpected response');
@@ -2514,6 +2534,7 @@ module.exports = function (config, connect, options)
                                 'write EPIPE',
                                 'carrier stream ended before end message received',
                                 'carrier stream finished before duplex finished',
+                                'read ECONNRESET'
                             ]);
                         }
                     }
@@ -3580,14 +3601,15 @@ module.exports = function (config, connect, options)
                     }
                 });
 
-                if (is_transport('tcp'))
+                if (is_transport('tcp') || options.relay)
                 {
                     clients[0].on('error', function (err)
                     {
                         expect(err.message).to.be.oneOf(
                             ['write EPIPE',
                              'read ECONNRESET',
-                             'write ECONNRESET']);
+                             'write ECONNRESET',
+                             'write ECONNABORTED']);
                     });
                 }
 
@@ -3604,6 +3626,19 @@ module.exports = function (config, connect, options)
                 {
                     expect(err.message).to.equal('server error');
                     connections.values().next().value.destroy();
+                }).on('error', function (err)
+                {
+                    expect(err.message).to.be.oneOf([
+                        'carrier stream finished before duplex finished',
+                        'carrier stream ended before end message received',
+                        'read ECONNRESET',
+                        'write ECONNABORTED'
+                    ]);
+                    var c = connections.values().next().value;
+                    if (c)
+                    {
+                        c.destroy();
+                    }
                 }).end(new Buffer(128 * 1024));
             });
 
@@ -3712,7 +3747,9 @@ module.exports = function (config, connect, options)
                         expect(err.message).to.be.oneOf([
                             'carrier stream finished before duplex finished',
                             'write EPIPE',
-                            'write after end'
+                            'write after end',
+                            'write ECONNABORTED',
+                            'read ECONNRESET'
                         ]);
                     });
 
@@ -4382,7 +4419,7 @@ module.exports = function (config, connect, options)
             });
 
             it('should cancel authorization',
-               expect_error('cancelled', is_transport('tcp') ? 1 : true, 401, 0, function (done)
+               expect_error('cancelled', true, 401, 0, function (done)
                {
                    server.removeAllListeners('authz_start');
                    server.removeAllListeners('authz_end');
@@ -4736,6 +4773,11 @@ module.exports = function (config, connect, options)
                 var ccoe = require('../lib/server_extensions/close_conn_on_error'),
                     ext = attach_extension(ccoe.close_conn_on_error);
 
+                clients[0].on('error', function (err)
+                {
+                    expect(err.message).to.equal('read ECONNRESET');
+                });
+
                 server.once('disconnect', function ()
                 {
                     detach_extension(ext);
@@ -4850,6 +4892,8 @@ module.exports = function (config, connect, options)
                                         return;
                                     }
 
+                                    on_delay = null;
+
                                     ack_bar = ack;
                                     read_all(s, function ()
                                     {
@@ -4898,7 +4942,10 @@ module.exports = function (config, connect, options)
                         {
                             on_delay: function (info)
                             {
-                                on_delay(info);
+                                if (on_delay)
+                                {
+                                    on_delay(info);
+                                }
                             }
                         });
                 }
@@ -5342,7 +5389,10 @@ module.exports = function (config, connect, options)
                             var s = get_info().clients[0].publish('foo');
                             s.on('error', function (err)
                             {
-                                expect(err.message).to.equal('socket hang up');
+                                expect(err.message).to.be.oneOf([
+                                    'socket hang up',
+                                    'read ECONNRESET'
+                                ]);
                                 get_info().detach_extension(ths.centro_test_ltc);
                                 done();
                             });
@@ -5396,7 +5446,10 @@ module.exports = function (config, connect, options)
                        {
                            if (is_transport('tls'))
                            {
-                               expect(conn_error.message).to.equal('socket hang up');
+                               expect(conn_error.message).to.be.oneOf([
+                                   'socket hang up',
+                                   'read ECONNRESET'
+                               ]);
                            }
                            get_info().detach_extension(this.centro_test_ltc); 
                            done();
@@ -5697,7 +5750,8 @@ module.exports = function (config, connect, options)
                                 'read ECONNRESET',
                                 'carrier stream finished before duplex finished',
                                 'carrier stream ended before end message received',
-                                'write EPIPE'
+                                'write EPIPE',
+                                'write ECONNABORTED'
                             ]);
                         });
 
@@ -5710,7 +5764,8 @@ module.exports = function (config, connect, options)
                                     'carrier stream finished before duplex finished',
                                     'write after end',
                                     'read ECONNRESET',
-                                    'write EPIPE'
+                                    'write EPIPE',
+                                    'write ECONNABORTED'
                                 ]);
                             }
                             else

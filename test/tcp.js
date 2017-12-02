@@ -19,8 +19,21 @@ function connect(config, server, cb)
     }, client_config), function ()
     {
         this.removeListener('error', cb);
+        var conn_err = null;
+        this.on('error', function (err)
+        {
+            conn_err = err;
+        });
         this.setNoDelay(true);
-        cb(null, centro.stream_auth(this, config));
+        var c = centro.stream_auth(this, config);
+        if (conn_err)
+        {
+            process.nextTick(function ()
+            {
+                c.emit('error', conn_err);
+            });
+        }
+        cb(null, c);
     }).on('error', cb);
 }
 

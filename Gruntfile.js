@@ -4,15 +4,18 @@ var path = require('path'),
     mod_path = path.join('.', 'node_modules'),
     bin_path = path.join(mod_path, '.bin'),
     nyc_path = path.join(bin_path, 'nyc'),
-    grunt_path;
+    grunt_path,
+    keys_path;
 
 if (process.platform === 'win32')
 {
     grunt_path = path.join(mod_path, 'grunt', 'bin', 'grunt');
+    keys_path = path.join('.', 'test', 'keys.cmd');
 }
 else
 {
     grunt_path = path.join(bin_path, 'grunt');
+    keys_path = path.join('.', 'test', 'keys.sh');
 }
 
 module.exports = function (grunt)
@@ -40,8 +43,7 @@ module.exports = function (grunt)
                    'test/read_frame-error.js',
                    'test/connect-after-close.js',
                    'test/pipeline.js',
-                   'test/sep-auth-no-config.js',
-                   'test/example/example.js' ],
+                   'test/sep-auth-no-config.js' ],
             options: {
                 bail: true
             }
@@ -73,7 +75,7 @@ module.exports = function (grunt)
             },
 
             keys: {
-                cmd: './test/keys.sh'
+                cmd: keys_path
             },
 
             prep_documentation: {

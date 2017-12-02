@@ -102,8 +102,31 @@ describe('server errors', function ()
         server.on('error', function (err)
         {
             expect(err.message).to.equal('dummy');
-            done();
+            this.close(done);
         });
+    });
+
+    it('should close automatically on create transport authorizer errors', function (done)
+    {
+        var server = new CentroServer(
+        {
+            ANONYMOUS_MODE: true,
+            transport: {
+                authorize_config: {
+                    authorize: function (config, cb)
+                    {
+                        cb(new Error('dummy'));
+                    }
+                }
+            }
+        });
+
+        server.on('error', function (err)
+        {
+            expect(err.message).to.equal('dummy');
+        });
+
+        server.on('close', done);
     });
 
     it('should be able to close immediately (with transport)', function (done)
@@ -162,6 +185,4 @@ describe('server errors', function ()
             setTimeout(done, 2000);
         });
     });
-
-
 });
