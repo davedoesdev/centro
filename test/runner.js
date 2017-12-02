@@ -2455,13 +2455,15 @@ module.exports = function (config, connect, options)
                             !is_transport('primus'))
                         {
                             if (is_transport('tls') ||
+                                is_transport('net') ||
                                 (process.platform === 'win32'))
                             {
                                 expect(errors[0].message).to.be.oneOf([
                                     msg,
                                     'carrier stream finished before duplex finished',
                                     'write ECONNABORTED',
-                                    'read ECONNRESET'
+                                    'read ECONNRESET',
+                                    'write EPIPE'
                                 ]);
                             }
                             else
@@ -3632,7 +3634,9 @@ module.exports = function (config, connect, options)
                         'carrier stream finished before duplex finished',
                         'carrier stream ended before end message received',
                         'read ECONNRESET',
-                        'write ECONNABORTED'
+                        'write ECONNABORTED',
+                        'write ECONNRESET',
+                        'write EPIPE'
                     ]);
                     var c = connections.values().next().value;
                     if (c)
