@@ -2475,6 +2475,7 @@ module.exports = function (config, connect, options)
                         {
                             expect(errors[0].message).to.be.oneOf(
                             [
+                                msg,
                                 'socket hang up',
                                 'write EPIPE',
                                 'carrier stream ended before end message received',
