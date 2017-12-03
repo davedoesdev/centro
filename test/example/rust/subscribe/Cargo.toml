@@ -4,11 +4,11 @@ version = "0.1.0"
 authors = ["David Halls <dahalls@gmail.com>"]
 
 [dependencies]
-reqwest = "~0.6.2"
-eventsource = "~0.2.0"
-serde = "~1.0.7"
-serde_derive = "~1.0.7"
-serde_json = "~1.0.2"
+reqwest = "~0.8.1"
+eventsource = "~0.3.0"
+serde = "~1.0.23"
+serde_derive = "~1.0.23"
+serde_json = "~1.0.7"
 encoding = "~0.2.33"
-log = "~0.3.7"
-env_logger = "~0.4.2"
+log = "~0.3.8"
+env_logger = "~0.4.3"

@@ -7,14 +7,14 @@ extern crate env_logger;
 
 fn main() {
     env_logger::init().expect("Failed to init logger");
-    let url_str = "http://localhost:8802/centro/v1/publish";
+    let url_str = "http://localhost:8802/centro/v2/publish";
     let token = env::var("CENTRO_TOKEN").expect("no token");
     let topic = env::args().nth(1).expect("no topic");
     let url = Url::parse_with_params(url_str, &[
         ("authz_token", token),
         ("topic", topic)])
         .expect("Failed to parse url");
-    let response = Client::new().expect("Couldn't create client")
+    let response = Client::new()
         .post(url)
         .body(reqwest::Body::new(io::stdin()))
         .send()

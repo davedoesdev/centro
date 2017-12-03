@@ -21,7 +21,7 @@ function connect()
         messages.scrollTop = messages.scrollHeight;
     }
 
-    var base_url = 'http://localhost:8802/centro/v1/',
+    var base_url = 'http://localhost:8802/centro/v2/',
         source = new EventSource(base_url +
                                  'subscribe?authz_token=' + params.get('token') +
                                  '&topic=' + encodeURIComponent(params.get('subscribe')));

@@ -61,14 +61,14 @@ where T: serde::Deserialize<'a> {
 
 fn main() {
     env_logger::init().expect("Failed to init logger");
-    let url_str = "http://localhost:8802/centro/v1/subscribe";
+    let url_str = "http://localhost:8802/centro/v2/subscribe";
     let token = env::var("CENTRO_TOKEN").expect("no token");
     let token_params = vec![("authz_token", token)];
     let topic_params = env::args().skip(1).map(|topic| ("topic", topic));
     let url = Url::parse_with_params(url_str,
         token_params.into_iter().chain(topic_params))
         .expect("Failed to parse url");
-    let client = Client::new(url).expect("Failed to start EventSource");
+    let client = Client::new(url);
     for event in client {
         let ev = event.expect("Failed to read event");
         if let Some(ref evtype) = ev.event_type {

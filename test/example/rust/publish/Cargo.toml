@@ -4,6 +4,6 @@ version = "0.1.0"
 authors = ["David Halls <dave@davedoesdev.com>"]
 
 [dependencies]
-reqwest = "~0.6.2"
-log = "~0.3.7"
-env_logger = "~0.4.2"
+reqwest = "~0.8.1"
+log = "~0.3.8"
+env_logger = "~0.4.3"

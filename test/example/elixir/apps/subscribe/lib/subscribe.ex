@@ -1,7 +1,7 @@
 defmodule Subscribe do
   def main(topics) do
     {:ok, _} = EventsourceEx.new(
-      "http://localhost:8802/centro/v1/subscribe?" <>
+      "http://localhost:8802/centro/v2/subscribe?" <>
       URI.encode_query([{"authz_token", System.get_env("CENTRO_TOKEN")} |
                         (for topic <- topics, do: {"topic", topic})]),
       stream_to: self())

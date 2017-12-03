@@ -21,12 +21,12 @@
   (let [token (System/getenv "CENTRO_TOKEN")
         builder (.register (ClientBuilder/newBuilder) SseFeature)
         client (.build builder)
-        target (-> (.target client "http://localhost:8802/centro/v1/subscribe")
-                   (.queryParam "authz_token"(into-array Object [token]))
+        target (-> (.target client "http://localhost:8802/centro/v2/subscribe")
+                   (.queryParam "authz_token" (into-array Object [token]))
                    (.queryParam "topic" (into-array Object topics)))
         event-source (.build (EventSource/target target))]
     (.register event-source (OnStart.) "start" (into-array String []))
-    (.register event-source (OnData.) "data" (into-array String[]))
+    (.register event-source (OnData.) "data" (into-array String []))
     (.open event-source)
     (println "READY.")
     (loop []

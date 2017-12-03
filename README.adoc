@@ -40,7 +40,7 @@ Here's a server which listens on all transports.
 var centro = require('centro-js');
 
 var config = {
-    allowed_algs: ['PS256'], <1>
+    allowed_algs: ['PS256'], // <1>
     transports: [{
         server: 'tcp',
         config: { port: 8800 }
@@ -52,13 +52,13 @@ var config = {
         config: { port: 8802 }
     }, {
         server: 'in-mem',
-        authorize_config: { ANONYMOUS_MODE: true } <2>
+        authorize_config: { ANONYMOUS_MODE: true } // <2>
     }]
 };
 
 var server = new centro.CentroServer(config);
 
-server.on('ready', function () <3>
+server.on('ready', function () // <3>
 {
     console.log('READY.');
 });
@@ -91,30 +91,30 @@ private key to `priv_key.pem`:
 [source,javascript]
 .add_key.js
 ----
-var uri = 'http://davedoesdev.com', <1>
+var uri = 'http://davedoesdev.com', // <1>
     authorize_jwt = require('centro-js').authorize_jwt,
     assert = require('assert'),
     path = require('path'),
     fs = require('fs'),
     jsjws = require('jsjws'),
-    priv_key = jsjws.generatePrivateKey(2048, 65537),
-    pub_key = priv_key.toPublicPem();
+    priv_key = jsjws.generatePrivateKey(2048, 65537), // <2>
+    pub_key = priv_key.toPublicPem(); // <3>
 
 authorize_jwt(
 {
-    db_type: 'pouchdb', <4>
-    db_for_update: true, <5>
-    no_changes: true <6>
+    db_type: 'pouchdb', // <4>
+    db_for_update: true, // <5>
+    no_changes: true // <6>
 }, function (err, authz)
 {
     assert.ifError(err);
-    authz.keystore.add_pub_key(uri, pub_key, function (err) <7>
+    authz.keystore.add_pub_key(uri, pub_key, function (err) // <7>
     {
         assert.ifError(err);
-        fs.writeFile(path.join(__dirname, 'priv_key.pem'), <8>
+        authz.keystore.deploy(); // <8>
+        fs.writeFile(path.join(__dirname, 'priv_key.pem'), // <9>
                      priv_key.toPrivatePem(),
                      assert.ifError);
-        authz.keystore.deploy(); <9>
     });
 });
 ----
@@ -125,8 +125,8 @@ authorize_jwt(
 <5> We're going to update the keystore.
 <6> We're not interested in changes to the keystore -- we're just going to update the public key and exit.
 <7> Associate the public key with `\http://davedoesdev.com`.
-<8> The private key is not stored in the keystore but needs to be available when you want to sign authorization tokens. Here we write it to disk but this is just an example -- you probably want a more secure way of storing it.
-<9> https://pouchdb.com/[PouchDB]-based keystores update a master database and then replicate changes to reader databases. Here we `deploy()` the master database to let any active reader databases know we're done updating. 
+<8> https://pouchdb.com/[PouchDB]-based keystores update a master database and then replicate changes to reader databases. Here we `deploy()` the master database to let any active reader databases know we're done updating. 
+<9> The private key is not stored in the keystore but needs to be available when you want to sign authorization tokens. Here we write it to disk but this is just an example -- you probably want a more secure way of storing it.
 
 Then you need to make a JWT, using the private key to sign it.
 
@@ -154,14 +154,14 @@ var uri = 'http://davedoesdev.com',
     path = require('path'),
     fs = require('fs');
 
-fs.readFile(path.join(__dirname, 'priv_key.pem'), function (err, priv_key) <1>
+fs.readFile(path.join(__dirname, 'priv_key.pem'), function (err, priv_key) // <1>
 {
     assert.ifError(err);
 
     var expiry = new Date();
-    expiry.setHours(expiry.getHours() + 24); <2>
+    expiry.setHours(expiry.getHours() + 24); // <2>
 
-    authorize_jwt( <3>
+    authorize_jwt( // <3>
     {
         db_type: 'pouchdb',
         deploy_name: 'token',
@@ -170,19 +170,19 @@ fs.readFile(path.join(__dirname, 'priv_key.pem'), function (err, priv_key) <1>
     }, function (err, authz)
     {
         assert.ifError(err);
-        authz.keystore.get_pub_key_by_uri(uri, function (err, pub_key, issuer_id) <4>
+        authz.keystore.get_pub_key_by_uri(uri, function (err, pub_key, issuer_id) // <4>
         {
             assert.ifError(err);
             assert(pub_key);
             assert(issuer_id);
             console.log(new jsjws.JWT().generateJWTByKey({ alg: 'PS256' },
             {
-                iss: issuer_id, <5>
-                access_control: { <6>
+                iss: issuer_id, // <5>
+                access_control: { // <6>
                     subscribe: { allow: ['#'], disallow: [] },
                     publish: { allow: ['#'], disallow: [] }
                 }
-            }, expiry, jsjws.createPrivateKey(priv_key))); <7>
+            }, expiry, jsjws.createPrivateKey(priv_key))); // <7>
         });
     });
 });
@@ -221,20 +221,20 @@ var centro = require('centro-js'),
 
 function display_message(s, info)
 {
-    console.log('topic:', info.topic); <1>
-    s.pipe(process.stdout); <2>
+    console.log('topic:', info.topic); // <1>
+    s.pipe(process.stdout); // <2>
 }
 
-net.createConnection(8800, function () <3>
+net.createConnection(8800, function () // <3>
 {
-    centro.stream_auth(this, <4>
+    centro.stream_auth(this, // <4>
     {
-        token: process.env.CENTRO_TOKEN <5>
+        token: process.env.CENTRO_TOKEN // <5>
     }).on('ready', function ()
     {
         for (var topic of process.argv.slice(2))
         {
-            this.subscribe(topic, display_message, assert.ifError); <6>
+            this.subscribe(topic, display_message, assert.ifError); // <6>
         }
     });
 });
@@ -265,10 +265,10 @@ net.createConnection(8800, function ()
         token: process.env.CENTRO_TOKEN
     }).on('ready', function ()
     {
-        process.stdin.pipe(this.publish(process.argv[2], function (err) <1><2>
+        process.stdin.pipe(this.publish(process.argv[2], function (err) // <1><2>
         {
             assert.ifError(err);
-            conn.end(); <3>
+            conn.end(); // <3>
         }));
     });
 });
@@ -307,9 +307,9 @@ var centro = require('centro-js'),
     Primus = require('primus'),
     Socket = Primus.createSocket(
     {
-        pathname: '/centro/v' + centro.version + '/primus' <1>
+        pathname: '/centro/v' + centro.version + '/primus' // <1>
     }),
-    PrimusDuplex = require('primus-backpressure').PrimusDuplex; <2>
+    PrimusDuplex = require('primus-backpressure').PrimusDuplex; // <2>
 
 function display_message(s, info)
 {
@@ -317,18 +317,18 @@ function display_message(s, info)
     s.pipe(process.stdout);
 }
 
-centro.separate_auth( <3>
+centro.separate_auth( // <3>
 {
     token: process.env.CENTRO_TOKEN
 }, function (err, userpass, make_client)
 {
     assert.ifError(err);
 
-    var socket = new Socket('http://' + userpass + '@localhost:8801', <4>
-                            { strategy: false }), <5>
+    var socket = new Socket('http://' + userpass + '@localhost:8801', // <4>
+                            { strategy: false }), // <5>
         duplex = new PrimusDuplex(socket);
 
-    make_client(duplex).on('ready', function () <6>
+    make_client(duplex).on('ready', function () // <6>
     {
         for (var topic of process.argv.slice(2))
         {
@@ -386,13 +386,13 @@ When you run a Centro server with a Primus transport, Primus itself is made
 available over HTTP at the following path: 
 
 ====
-/centro/v1/primus/primus.js
+/centro/v2/primus/primus.js
 ====
 
 So on <<server,the example server>>, it's available at the following URL:
 
 ====
-http://localhost:8801/centro/v1/primus/primus.js
+http://localhost:8801/centro/v2/primus/primus.js
 ====
 
 Of course, the version number may change and the machine may be reachable via
@@ -413,7 +413,7 @@ published:
   <head>
     <title>Centro Example</title>
     <link href="example.css" rel="stylesheet" type="text/css"> <1>
-    <script src="http://localhost:8801/centro/v1/primus/primus.js"></script> <2>
+    <script src="http://localhost:8801/centro/v2/primus/primus.js"></script> <2>
     <script src="dist/centro.js"></script> <3>
     <script src="example_primus.js"></script> <4>
   </head>
@@ -445,13 +445,13 @@ link:test/example/browser/example.css[].
 <10> Displays messages received.
 
 Next we need to write the script which connects to the Centro server and
-subscribes to and published messages:
+subscribes to and publishes messages:
 
 [[primus-js]]
 [source,javascript]
 .example_primus.js
 ----
-var publish = function () { event.preventDefault(); }; <1>
+var publish = function () { event.preventDefault(); }; // <1>
 
 function connect()
 {
@@ -468,7 +468,7 @@ function connect()
         return div;
     }
 
-    function add_message(div) <2>
+    function add_message(div) // <2>
     {
         messages.appendChild(div);
         messages.scrollTop = messages.scrollHeight;
@@ -488,7 +488,7 @@ function connect()
 
         client.on('ready', function ()
         {
-            add_message(tag_text('status', 'open')); <3>
+            add_message(tag_text('status', 'open')); // <3>
             this.subscribe(params.get('subscribe'), function (s, info)
             {
                 centro.read_all(s, function (v)
@@ -497,20 +497,20 @@ function connect()
                     msg.className = 'message';
                     msg.appendChild(tag_text('topic', info.topic));
                     msg.appendChild(tag_text('data', v.toString()));
-                    add_message(msg); <4>
+                    add_message(msg); // <4>
                 });
             });
 
             publish = function ()
             {
                 event.preventDefault();
-                client.publish(topic.value).end(message.value); <5>
+                client.publish(topic.value).end(message.value); // <5>
             };
         });
 
         primus.on('close', function ()
         {
-            add_message(tag_text('status', 'closed')); <6>
+            add_message(tag_text('status', 'closed')); // <6>
         });
     });
 }
@@ -522,13 +522,15 @@ function connect()
 <5> When the user clicks the publish button, publish a message.
 <6> Display a message to say the connection stream to the server is closed.
 
+Load the example page using a URL like `file:///path/to/example_primus.html?subscribe=foo.*&token=XXX`
+
 ==== HTTP
 
 The Centro HTTP transport supports access using HTTP requests, without using
 the Centro client:
 
-`/centro/v1/publish?authz_token=XXX&topic=YYY`:: Publish a message (POST request, message content in request body)
-`/centro/v1/subscribe?authz_token=XXX&topic=YYY`:: Subscribe to messages (messages delivered using https://www.w3.org/TR/eventsource/[server-sent events])
+`/centro/v2/publish?authz_token=XXX&topic=YYY`:: Publish a message (POST request, message content in request body)
+`/centro/v2/subscribe?authz_token=XXX&topic=YYY`:: Subscribe to messages (messages delivered using https://www.w3.org/TR/eventsource/[server-sent events])
 
 The HTML for this example is the same as <<primus-html,Primus HTML>> except
 that we don't need the Primus client or the Centro client:
@@ -589,8 +591,8 @@ function connect()
         messages.scrollTop = messages.scrollHeight;
     }
 
-    var base_url = 'http://localhost:8802/centro/v1/',
-        source = new EventSource(base_url + <1>
+    var base_url = 'http://localhost:8802/centro/v2/',
+        source = new EventSource(base_url + // <1>
                                  'subscribe?authz_token=' + params.get('token') +
                                  '&topic=' + encodeURIComponent(params.get('subscribe')));
 
@@ -600,10 +602,10 @@ function connect()
         {
             event.preventDefault();
             var r = new XMLHttpRequest();
-            r.open('POST', base_url + <2>
+            r.open('POST', base_url + // <2>
                            'publish?authz_token=' + params.get('token') +
                            '&topic=' + encodeURIComponent(topic.value));
-            r.send(message.value); <3>
+            r.send(message.value); // <3>
         };
 
         add_message(tag_text('status', 'open'));
@@ -625,20 +627,20 @@ function connect()
 
     source.addEventListener('start', function (e)
     {
-        var info = JSON.parse(e.data); <4>
-        info.data = ''; <5>
-        msgs.set(info.id, info); <6>
+        var info = JSON.parse(e.data); // <4>
+        info.data = ''; // <5>
+        msgs.set(info.id, info); // <6>
     });
 
     source.addEventListener('data', function (e)
     {
         var info = JSON.parse(e.data);
-        msgs.get(info.id).data += info.data; <7>
+        msgs.get(info.id).data += info.data; // <7>
     });
 
     source.addEventListener('end', function (e)
     {
-        var info = msgs.get(JSON.parse(e.data).id); <8>
+        var info = msgs.get(JSON.parse(e.data).id); // <8>
 
         var msg = document.createElement('div');
         msg.className = 'message';
@@ -666,6 +668,8 @@ containing the message's topic and unique ID.
 <6> Messages can be interleaved so while we're accumulating data, we need to remember them by their unique IDs.
 <7> Message data arrives in `data` events and we accumulate it here.
 <8> When all a message's data has been received, we get an `end` event. In this example, we display the message's topic and data.
+
+Load the example page using a URL like `file:///path/to/example_sse.html?subscribe=foo.*&token=XXX`
 
 Further details of how messages are delivered using server-sent events are
 available http://rawgit.davedoesdev.com/davedoesdev/centro/master/docs/index.html#centro-jslibserver_transportshttp[here].
@@ -715,7 +719,7 @@ params = {
     'authz_token': os.environ['CENTRO_TOKEN'],
     'topic': sys.argv[1]
 }
-requests.post('http://localhost:8802/centro/v1/publish', <1>
+requests.post('http://localhost:8802/centro/v2/publish', # <1>
               params=params,
               data=sys.stdin.buffer).raise_for_status()
 ----
@@ -732,16 +736,16 @@ params = {
     'authz_token': os.environ['CENTRO_TOKEN'],
     'topic': sys.argv[1:]
 }
-response = requests.get('http://localhost:8802/centro/v1/subscribe', <1>
+response = requests.get('http://localhost:8802/centro/v2/subscribe', # <1>
                         params=params, stream=True)
 response.raise_for_status()
-client = sseclient.SSEClient(response) <2>
+client = sseclient.SSEClient(response) # <2>
 for event in client.events():
     if (event.event == 'start'):
         data = json.loads(event.data)
-        print('id:', data['id'], 'topic:', data['topic']) <3>
+        print('id:', data['id'], 'topic:', data['topic']) # <3>
     elif (event.event == 'data'):
-        sys.stdout.write(json.loads(event.data)['data'].encode('latin1')) <4> <5>
+        sys.stdout.write(json.loads(event.data)['data'].encode('latin1')) # <4> <5>
         sys.stdout.flush()
 ----
 <1> Make a long-running GET request to subscribe to messages.
@@ -764,12 +768,12 @@ or TCP.
 [source,javascript]
 .publish_http.js
 ----
-process.stdin.pipe(require('http').request( <1>
+process.stdin.pipe(require('http').request( // <1>
 {
     method: 'POST',
     hostname: 'localhost',
     port: 8802,
-    path: '/centro/v1/publish?' + require('querystring').stringify(
+    path: '/centro/v2/publish?' + require('querystring').stringify(
     {
         authz_token: process.env.CENTRO_TOKEN,
         topic: process.argv[2]
@@ -781,8 +785,8 @@ process.stdin.pipe(require('http').request( <1>
 [source,javascript]
 .subscribe_http.js
 ----
-var EventSource = require('eventsource'), <1>
-    es = new EventSource('http://localhost:8802/centro/v1/subscribe?' +
+var EventSource = require('eventsource'), // <1>
+    es = new EventSource('http://localhost:8802/centro/v2/subscribe?' +
                          require('querystring').stringify(
                          {
                              authz_token: process.env.CENTRO_TOKEN,
@@ -806,7 +810,7 @@ es.addEventListener('data', function (e)
 
 Here are the same example clients written in Rust. To run them, change directory
 to link:test/example/rust/publish[] or link:test/example/rust/subscribe[] and
-type `cargo run`.
+type `cargo run` plus the message topic.
 
 [source,rust]
 .publish.rs
@@ -820,14 +824,14 @@ extern crate env_logger;
 
 fn main() {
     env_logger::init().expect("Failed to init logger");
-    let url_str = "http://localhost:8802/centro/v1/publish";
+    let url_str = "http://localhost:8802/centro/v2/publish";
     let token = env::var("CENTRO_TOKEN").expect("no token");
     let topic = env::args().nth(1).expect("no topic");
     let url = Url::parse_with_params(url_str, &[
         ("authz_token", token),
         ("topic", topic)])
         .expect("Failed to parse url");
-    let response = Client::new().expect("Couldn't create client")
+    let response = Client::new()
         .post(url)
         .body(reqwest::Body::new(io::stdin()))
         .send()
@@ -907,14 +911,14 @@ where T: serde::Deserialize<'a> {
 
 fn main() {
     env_logger::init().expect("Failed to init logger");
-    let url_str = "http://localhost:8802/centro/v1/subscribe";
+    let url_str = "http://localhost:8802/centro/v2/subscribe";
     let token = env::var("CENTRO_TOKEN").expect("no token");
     let token_params = vec![("authz_token", token)];
     let topic_params = env::args().skip(1).map(|topic| ("topic", topic));
     let url = Url::parse_with_params(url_str,
         token_params.into_iter().chain(topic_params))
         .expect("Failed to parse url");
-    let client = Client::new(url).expect("Failed to start EventSource");
+    let client = Client::new(url);
     for event in client {
         let ev = event.expect("Failed to read event");
         if let Some(ref evtype) = ev.event_type {
@@ -939,7 +943,8 @@ fn main() {
 
 Here are the same example clients written in Clojure. To run them, change
 directory to link:test/example/clojure/publish[] or
-link:test/example/clojure/subscribe[] and type `lein run`.
+link:test/example/clojure/subscribe[] and type `lein run` plus the message
+topic.
 
 [source,clojure]
 .publish.clj
@@ -951,7 +956,7 @@ link:test/example/clojure/subscribe[] and type `lein run`.
 (defn -main
   "Publish message to example Centro server"
   [topic]
-  (client/post "http://localhost:8802/centro/v1/publish"
+  (client/post "http://localhost:8802/centro/v2/publish"
     {:query-params {"authz_token" (System/getenv "CENTRO_TOKEN")
                     "topic" topic}
      :body System/in}))
@@ -983,12 +988,12 @@ link:test/example/clojure/subscribe[] and type `lein run`.
   (let [token (System/getenv "CENTRO_TOKEN")
         builder (.register (ClientBuilder/newBuilder) SseFeature)
         client (.build builder)
-        target (-> (.target client "http://localhost:8802/centro/v1/subscribe")
-                   (.queryParam "authz_token"(into-array Object [token]))
+        target (-> (.target client "http://localhost:8802/centro/v2/subscribe")
+                   (.queryParam "authz_token" (into-array Object [token]))
                    (.queryParam "topic" (into-array Object topics)))
         event-source (.build (EventSource/target target))]
     (.register event-source (OnStart.) "start" (into-array String []))
-    (.register event-source (OnData.) "data" (into-array String[]))
+    (.register event-source (OnData.) "data" (into-array String []))
     (.open event-source)
     (println "READY.")
     (loop []
@@ -1000,14 +1005,15 @@ link:test/example/clojure/subscribe[] and type `lein run`.
 
 Here are the same example clients written in Elixir. To build them, change
 directory to link:test/example/elixir/apps/publish[] or
-link:test/example/elixir/apps/subscribe[] and type `mix escript.build`.
+link:test/example/elixir/apps/subscribe[] and type `mix escript.build` plus the
+message topic.
 
 [source,elixir]
 .publish.ex
 ----
 defmodule Publish do
   def main([topic | _]) do
-    HTTPoison.post!("http://localhost:8802/centro/v1/publish",
+    HTTPoison.post!("http://localhost:8802/centro/v2/publish",
                     {:stream, IO.stream(:stdio, 100)},
                     [],
                     params: %{authz_token: System.get_env("CENTRO_TOKEN"),
@@ -1022,7 +1028,7 @@ end
 defmodule Subscribe do
   def main(topics) do
     {:ok, _} = EventsourceEx.new(
-      "http://localhost:8802/centro/v1/subscribe?" <>
+      "http://localhost:8802/centro/v2/subscribe?" <>
       URI.encode_query([{"authz_token", System.get_env("CENTRO_TOKEN")} |
                         (for topic <- topics, do: {"topic", topic})]),
       stream_to: self())
