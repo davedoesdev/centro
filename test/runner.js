@@ -3955,7 +3955,7 @@ module.exports = function (config, connect, options)
                 {
                     if (clients[0].last_error && server.last_warning)
                     {
-                        expect(server.last_warning.message).to.equal('unsupported version: 1');
+                        expect(server.last_warning.message).to.equal('unsupported version: 2');
                         if (!(is_transport('primus') || is_transport('tls')) ||
                             ((clients[0].last_error.message !== 'carrier stream ended before end message received') &&
                              (clients[0].last_error.message !== 'carrier stream finished before duplex finished')))
