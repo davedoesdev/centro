@@ -5630,7 +5630,8 @@ module.exports = function (config, connect, options)
                                     'carrier stream finished before duplex finished',
                                     'write after end',
                                     'read ECONNRESET',
-                                    'write EPIPE'
+                                    'write EPIPE',
+                                    'write ECANCELED'
                                 ]);
                             }
                             else
