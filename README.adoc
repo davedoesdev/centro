@@ -1,4 +1,4 @@
-= centro{nbsp}{nbsp}{nbsp}image:https://circleci.com/gh/davedoesdev/centro.svg?style=svg[Build Status,link=https://circleci.com/gh/davedoesdev/centro] image:https://coveralls.io/repos/github/davedoesdev/centro/badge.svg[Coverage Status,link=https://coveralls.io/github/davedoesdev/centro] image:https://img.shields.io/npm/v/centro-js.svg[NPM version,link=https://www.npmjs.com/package/centro-js]
+= centro{nbsp}{nbsp}{nbsp}image:https://circleci.com/gh/davedoesdev/centro.svg?style=svg[Build Status,link=https://circleci.com/gh/davedoesdev/centro] image:https://ci.appveyor.com/api/projects/status/pu8lp7rsjxswy9t0?svg=true[Build Status,link=https://ci.appveyor.com/project/davedoesdev/centro] image:https://coveralls.io/repos/github/davedoesdev/centro/badge.svg[Coverage Status,link=https://coveralls.io/github/davedoesdev/centro] image:https://img.shields.io/npm/v/centro-js.svg[NPM version,link=https://www.npmjs.com/package/centro-js]
 :prewrap!:
 :toc:
 :toclevels: 3
