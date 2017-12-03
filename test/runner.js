@@ -5617,7 +5617,8 @@ module.exports = function (config, connect, options)
                                 'write after end',
                                 'read ECONNRESET',
                                 'carrier stream finished before duplex finished',
-                                'carrier stream ended before end message received'
+                                'carrier stream ended before end message received',
+                                'write ECANCELED'
                             ]);
                         });
 
