@@ -3491,7 +3491,7 @@ module.exports = function (config, connect, options)
 
             it('should be able to time-out message streams', function (done)
             {
-                this.timeout(8000);
+                this.timeout(60000);
 
                 var timeout = require('../lib/server_extensions/timeout'),
                     tms = attach_extension(timeout.timeout_message_streams,
