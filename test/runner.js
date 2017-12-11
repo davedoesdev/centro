@@ -782,6 +782,183 @@ module.exports = function (config, connect, options)
             });
         });
 
+        describe('access control (no single messages)', function ()
+        {
+            setup(1,
+            {
+                access_control: {
+                    publish: {
+                        allow: ['foo'],
+                        disallow: [],
+                        disallow_single: true
+                    },
+                    subscribe: {
+                        allow: ['foo'],
+                        disallow: []
+                    }
+                }
+            });
+
+            it('should be able to disallow publishing messages to single subscriber', function (done)
+            {
+                var warnings = [], blocked = [];
+
+                function warning(err)
+                {
+                    var msg = err.message;
+                    if ((msg !== 'carrier stream finished before duplex finished') &&
+                        (msg !== 'carrier stream ended before end message received'))
+                    {
+                        warnings.push(msg);
+                    }
+                }
+                server.on('warning', warning);
+
+                function regblock(info)
+                {
+                    info.access_control.once('publish_blocked',
+                    function (topic, mqserver)
+                    {
+                        expect(mqserver).to.equal(info.mqserver);
+                        blocked.push('publish ' + topic);
+                    });
+                }
+
+                clients[0].subscribe('foo', function (s, info)
+                {
+                    expect(info.topic).to.equal('foo');
+                    expect(info.single).to.equal(false);
+
+                    read_all(s, function (v)
+                    {
+                        expect(v.toString()).to.equal('bar');
+                        server.removeListener('warning', warning);
+                        var topic = get_info().connections.values().next().value.prefixes[0] + 'foo',
+                            expected_warnings = ['blocked publish (single) to topic: ' + topic];
+                        if (options.relay)
+                        {
+                            expected_warnings.push('server error');
+                        }
+                        expected_warnings.push('unexpected data');
+                        expect(warnings).to.eql(expected_warnings);
+                        expect(blocked).to.eql(['publish ' + topic]);
+                        done();
+                    });
+                }, function (err)
+                {
+                    if (err) { return done(err); }
+
+                    for (var info of connections.values())
+                    {
+                        regblock(info);
+                    }
+
+                    if (options.relay)
+                    {
+                        server.once('pre_connect', regblock);
+                    }
+
+                    clients[0].publish('foo', {single: true}, function (err)
+                    {
+                        expect(err.message).to.equal('server error');
+                        clients[0].publish('foo', function (err)
+                        {
+                            if (err) { return done(err); }
+                        }).end('bar');
+                    }).end('bar');
+                });
+            });
+        });
+
+        describe('access control (no multi messages)', function ()
+        {
+            setup(1,
+            {
+                access_control: {
+                    publish: {
+                        allow: ['foo'],
+                        disallow: [],
+                        disallow_multi: true
+                    },
+                    subscribe: {
+                        allow: ['foo'],
+                        disallow: []
+                    }
+                }
+            });
+
+            it('should be able to disallow publishing messages to multiple subscribers', function (done)
+            {
+                var warnings = [], blocked = [];
+
+                function warning(err)
+                {
+                    var msg = err.message;
+                    if ((msg !== 'carrier stream finished before duplex finished') &&
+                        (msg !== 'carrier stream ended before end message received'))
+                    {
+                        warnings.push(msg);
+                    }
+                }
+                server.on('warning', warning);
+
+                function regblock(info)
+                {
+                    info.access_control.once('publish_blocked',
+                    function (topic, mqserver)
+                    {
+                        expect(mqserver).to.equal(info.mqserver);
+                        blocked.push('publish ' + topic);
+                    });
+                }
+
+                clients[0].subscribe('foo', function (s, info, ack)
+                {
+                    expect(info.topic).to.equal('foo');
+                    expect(info.single).to.equal(true);
+
+                    read_all(s, function (v)
+                    {
+                        expect(v.toString()).to.equal('bar');
+                        server.removeListener('warning', warning);
+                        var topic = get_info().connections.values().next().value.prefixes[0] + 'foo',
+                            expected_warnings = ['blocked publish (multi) to topic: ' + topic];
+                        if (options.relay)
+                        {
+                            expected_warnings.push('server error');
+                        }
+                        expected_warnings.push('unexpected data');
+                        expect(warnings).to.eql(expected_warnings);
+                        expect(blocked).to.eql(['publish ' + topic]);
+                        ack();
+                        done();
+                    });
+                }, function (err)
+                {
+                    if (err) { return done(err); }
+
+                    for (var info of connections.values())
+                    {
+                        regblock(info);
+                    }
+
+                    if (options.relay)
+                    {
+                        server.once('pre_connect', regblock);
+                    }
+
+                    clients[0].publish('foo', function (err)
+                    {
+                        expect(err.message).to.equal('server error');
+                        clients[0].publish('foo', {single: true}, function (err)
+                        {
+                            if (err) { return done(err); }
+                        }).end('bar');
+                    }).end('bar');
+                });
+            });
+        });
+
         describe('large message', function ()
         {
             setup(1,

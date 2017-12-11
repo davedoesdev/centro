@@ -1,7 +1,7 @@
 {
   "name": "centro-js",
   "description": "Pub-sub and work queue service on Primus or TCP. Supports wildcards, streams and back-pressure. Just Node and a filesystem required.",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "homepage": "https://github.com/davedoesdev/centro",
   "author": {
     "name": "David Halls",
@@ -38,7 +38,7 @@
   ],
   "dependencies": {
     "mqlobber": "~6.0.0",
-    "mqlobber-access-control": "~5.0.0",
+    "mqlobber-access-control": "~5.1.0",
     "qlobber-fsq": "~10.0.4",
     "authorize-jwt": "~4.0.1",
     "primus": "~7.1.0",

@@ -50,6 +50,14 @@
                 "type": "string",
                 "maxLength": 32768
               }
+            },
+            "disallow_single": {
+              "description": "If true then clients cannot publish messages to a single subscriber",
+              "type": "boolean"
+            },
+            "disallow_multi": {
+              "description": "If true then clients cannot publish messages to multiple subscribers",
+              "type": "boolean"
             }
           }
         },
