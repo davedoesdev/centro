@@ -2665,7 +2665,8 @@ module.exports = function (config, connect, options)
                                 'stream.push() after EOF',
                                 'unexpected response',
                                 'write ECONNABORTED',
-                                'read ECONNRESET'
+                                'read ECONNRESET',
+                                'write ECONNRESET'
                             ]);
                         }
 
