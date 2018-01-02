@@ -75,6 +75,11 @@ module.exports = function (config, connect, options)
     config.max_topic_length = undefined;
     config.max_publications = undefined;
 
+    if (process.env.SPLIT_TOPIC_AT)
+    {
+        config.split_topic_at = parseInt(process.env.SPLIT_TOPIC_AT);
+    }
+
     function is_transport(n)
     {
         if (n === 'tcp')

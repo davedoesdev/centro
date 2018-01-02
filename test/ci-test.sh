@@ -16,6 +16,7 @@ fi
 #  exit 1
 #fi
 #tail -n 100 "$CIRCLE_ARTIFACTS/test.log"
+SPLIT_TOPIC_AT=150 # CircleCI runs on aufs which has max file name length 242
 npm run coverage
 
 if [ $node_ver = $check_ver ]; then
