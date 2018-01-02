@@ -1262,7 +1262,7 @@ module.exports = function (config, connect, options)
                         expect(info.single).to.equal(single);
                         if (ttl)
                         {
-                            expect(info.expires).to.be.below(new Date().getTime() / 1000 + ttl);
+                            expect(info.expires).to.be.at.most(new Date().getTime() / 1000 + ttl);
                         }
                         read_all(s, function (v)
                         {
@@ -1551,7 +1551,7 @@ module.exports = function (config, connect, options)
                             read_all(s, function (v)
                             {
                                 expect(v.toString()).to.equal('someone left');
-                                expect(info.expires).to.be.below(new Date().getTime() / 1000 + 2);
+                                expect(info.expires).to.be.at.most(new Date().getTime() / 1000 + 2);
                                 clients[1].unsubscribe('leave.*', undefined, pdone(done));
                             });
                         }, function (err)
