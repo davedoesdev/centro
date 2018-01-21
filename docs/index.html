@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset='utf-8' />
-  <title>centro-js 2.1.1 | Documentation</title>
+  <title>centro-js 2.2.0 | Documentation</title>
   <meta name='viewport' content='width=device-width,initial-scale=1'>
   <link href='assets/bass.css' type='text/css' rel='stylesheet' />
   <link href='assets/style.css' type='text/css' rel='stylesheet' />
@@ -14,7 +14,7 @@
       <div id='split-left' class='overflow-auto fs0 height-viewport-100'>
         <div class='py1 px2'>
           <h3 class='mb0 no-anchor'>centro-js</h3>
-          <div class='mb1'><code>2.1.1</code></div>
+          <div class='mb1'><code>2.2.0</code></div>
           <input
             placeholder='Filter'
             id='filter-input'
@@ -411,6 +411,12 @@
                       </a></li>
                     
                       <li><a
+                        href='#centro-jslibserver_extensionsfilterdummy_data_event'
+                        class='regular pre-open'>
+                        .dummy_data_event
+                      </a></li>
+                    
+                      <li><a
                         href='#centro-jslibserver_extensionsfilterdelaycallback'
                         class='regular pre-open'>
                         .delayCallback
@@ -779,7 +785,7 @@ multi-transport. Just Node and a filesystem required.</p>
 you supply.</p>
 
 
-  <div class='pre p1 fill-light mt0'>separate_auth(config: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>?, cb: centro-js/lib/client.authzCallback)</div>
+  <div class='pre p1 fill-light mt0'>separate_auth(config: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>?, cb: centro-js/lib/client.authzCallback)</div>
   
   
 
@@ -796,7 +802,7 @@ you supply.</p>
       
         <div class='space-bottom0'>
           <div>
-            <span class='code bold'>config</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>?)</code>
+            <span class='code bold'>config</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>?)</code>
 	    Configuration options. This supports all the options supported by 
 <a href="https://github.com/davedoesdev/mqlobber#mqlobberclientstream-options">MQlobberClient</a>
  as well as the following:
@@ -817,7 +823,7 @@ you supply.</p>
             <tbody class='mt1'>
               
                 <tr>
-  <td class='break-word'><span class='code bold'>config.token</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a> | <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array">Array</a>&#x3C;<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>>)?</code>
+  <td class='break-word'><span class='code bold'>config.token</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a> | <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array">Array</a>&#x3C;<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>>)?</code>
   </td>
   <td class='break-word'><span>JSON Web Token(s) to present to the server. If the transport you're going to use is configured for 
 <code>ANONYMOUS_MODE</code>
@@ -904,7 +910,7 @@ you supply.</p>
 data as a stream header (currently all except Primus and HTTP).</p>
 
 
-  <div class='pre p1 fill-light mt0'>stream_auth(stream: <a href="https://nodejs.org/api/stream.html#stream_class_stream_duplex_1">stream.Duplex</a>, config: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>?): MQlobberClient</div>
+  <div class='pre p1 fill-light mt0'>stream_auth(stream: <a href="https://nodejs.org/api/stream.html#stream_class_stream_duplex_1">stream.Duplex</a>, config: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>?): MQlobberClient</div>
   
   
 
@@ -930,7 +936,7 @@ data as a stream header (currently all except Primus and HTTP).</p>
       
         <div class='space-bottom0'>
           <div>
-            <span class='code bold'>config</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>?)</code>
+            <span class='code bold'>config</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>?)</code>
 	    Configuration options. This supports all the options supported by 
 <a href="https://github.com/davedoesdev/mqlobber#mqlobberclientstream-options">MQlobberClient</a>
  as well as the following:
@@ -951,7 +957,7 @@ data as a stream header (currently all except Primus and HTTP).</p>
             <tbody class='mt1'>
               
                 <tr>
-  <td class='break-word'><span class='code bold'>config.token</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a> | <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array">Array</a>&#x3C;<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>>)?</code>
+  <td class='break-word'><span class='code bold'>config.token</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a> | <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array">Array</a>&#x3C;<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>>)?</code>
   </td>
   <td class='break-word'><span>JSON Web Token(s) to present to the server. If the transport you're going to use is configured for 
 <code>ANONYMOUS_MODE</code>
@@ -1038,11 +1044,11 @@ data as a stream header (currently all except Primus and HTTP).</p>
   <p>Callback type for HTTP Basic Authentication data.</p>
 
 
-  <div class='pre p1 fill-light mt0'>authzCallback(err: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error">Error</a>?, userpass: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>, cb: streamCallback)</div>
+  <div class='pre p1 fill-light mt0'>authzCallback(err: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Error">Error</a>?, userpass: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>, cb: streamCallback)</div>
   
     <p>
       Type:
-      <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/function">Function</a>
+      <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Statements/function">Function</a>
     </p>
   
   
@@ -1060,7 +1066,7 @@ data as a stream header (currently all except Primus and HTTP).</p>
       
         <div class='space-bottom0'>
           <div>
-            <span class='code bold'>err</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error">Error</a>?)</code>
+            <span class='code bold'>err</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Error">Error</a>?)</code>
 	    Error, if one occurred.
 
           </div>
@@ -1069,7 +1075,7 @@ data as a stream header (currently all except Primus and HTTP).</p>
       
         <div class='space-bottom0'>
           <div>
-            <span class='code bold'>userpass</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>)</code>
+            <span class='code bold'>userpass</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>)</code>
 	    Authentication data in the form 
 <code>centro:&#x3C;tokens></code>
  where 
@@ -1131,7 +1137,7 @@ data as a stream header (currently all except Primus and HTTP).</p>
   
     <p>
       Type:
-      <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/function">Function</a>
+      <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Statements/function">Function</a>
     </p>
   
   
@@ -1229,7 +1235,7 @@ data as a stream header (currently all except Primus and HTTP).</p>
       
         <div class='space-bottom0'>
           <div>
-            <span class='code bold'>subscriptions</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array">Array</a>&#x3C;<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>&#x3C;<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>, <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Boolean">boolean</a>>>?)</code>
+            <span class='code bold'>subscriptions</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array">Array</a>&#x3C;<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>&#x3C;<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>, <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean">boolean</a>>>?)</code>
 	    For each authorization token you supplied to 
 <a href="#centro-jslibclientseparate_auth">centro-js/lib/client.separate_auth</a>
  or 
@@ -1347,7 +1353,7 @@ data as a stream header (currently all except Primus and HTTP).</p>
 clients.</p>
 
 
-  <div class='pre p1 fill-light mt0'>new CentroServer(config: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</div>
+  <div class='pre p1 fill-light mt0'>new CentroServer(config: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</div>
   
   
     <p>
@@ -1371,7 +1377,7 @@ clients.</p>
       
         <div class='space-bottom0'>
           <div>
-            <span class='code bold'>config</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</code>
+            <span class='code bold'>config</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</code>
 	    Configuration options. This supports all the options supported by 
 <a href="https://github.com/davedoesdev/mqlobber#mqlobberserverfsq-stream-options">MQlobberServer</a>
  and 
@@ -1394,7 +1400,7 @@ clients.</p>
             <tbody class='mt1'>
               
                 <tr>
-  <td class='break-word'><span class='code bold'>config.transport</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a> | <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)?</code>
+  <td class='break-word'><span class='code bold'>config.transport</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a> | <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)?</code>
   </td>
   <td class='break-word'><span>Specifies which transport to load into the server. This should be either the transport's name or its configuration, with its name in the 
 <code>server</code>
@@ -1405,7 +1411,7 @@ clients.</p>
 
               
                 <tr>
-  <td class='break-word'><span class='code bold'>config.transports</span> <code class='quiet'><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array">Array</a>&#x3C;(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a> | <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)>?</code>
+  <td class='break-word'><span class='code bold'>config.transports</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array">Array</a>&#x3C;(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a> | <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)>?</code>
   </td>
   <td class='break-word'><span>Specifies multiple transports to load into the server.
 </span></td>
@@ -1414,7 +1420,7 @@ clients.</p>
 
               
                 <tr>
-  <td class='break-word'><span class='code bold'>config.authorize</span> <code class='quiet'><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/function">Function</a>?</code>
+  <td class='break-word'><span class='code bold'>config.authorize</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Statements/function">Function</a>?</code>
   </td>
   <td class='break-word'><span>Function for creating an object which can authorize 
 <a href="http://self-issued.info/docs/draft-ietf-oauth-json-web-token.html">JSON Web Tokens</a>
@@ -1431,7 +1437,7 @@ clients.</p>
 
               
                 <tr>
-  <td class='break-word'><span class='code bold'>config.authorize_config</span> <code class='quiet'><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>?</code>
+  <td class='break-word'><span class='code bold'>config.authorize_config</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>?</code>
   </td>
   <td class='break-word'><span>Configuration specific to 
 <code>config.authorize</code>
@@ -1442,7 +1448,7 @@ clients.</p>
 
               
                 <tr>
-  <td class='break-word'><span class='code bold'>config.allowed_algs</span> <code class='quiet'><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array">Array</a>&#x3C;<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>></code>
+  <td class='break-word'><span class='code bold'>config.allowed_algs</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array">Array</a>&#x3C;<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>></code>
   </td>
   <td class='break-word'><span>Which JWT algorithms are allowed. Clients which present tokens which aren't signed with one of these algorithms are rejected. You must supply this list.
 </span></td>
@@ -1465,7 +1471,7 @@ clients.</p>
 
               
                 <tr>
-  <td class='break-word'><span class='code bold'>config.fsq_config</span> <code class='quiet'><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>?</code>
+  <td class='break-word'><span class='code bold'>config.fsq_config</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>?</code>
   </td>
   <td class='break-word'><span>Configuration specific to 
 <code>config.fsq</code>
@@ -1476,7 +1482,7 @@ clients.</p>
 
               
                 <tr>
-  <td class='break-word'><span class='code bold'>config.realm</span> <code class='quiet'><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></code>
+  <td class='break-word'><span class='code bold'>config.realm</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></code>
   
     (default <code>centro</code>)
   </td>
@@ -1729,7 +1735,7 @@ clients.</p>
   
     <p>
       Type:
-      <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array">Array</a>&#x3C;{close: centro-js/lib/server.closeCallback}>
+      <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array">Array</a>&#x3C;{close: centro-js/lib/server.closeCallback}>
     </p>
   
   
@@ -1836,7 +1842,7 @@ clients.</p>
   <p>Attach an extension to the server.</p>
 
 
-  <div class='pre p1 fill-light mt0'>attach_extension(ext: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>, config: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>?)</div>
+  <div class='pre p1 fill-light mt0'>attach_extension(ext: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>, config: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>?)</div>
   
   
 
@@ -1853,7 +1859,7 @@ clients.</p>
       
         <div class='space-bottom0'>
           <div>
-            <span class='code bold'>ext</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</code>
+            <span class='code bold'>ext</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</code>
 	    Extension to attach.
 
           </div>
@@ -1862,7 +1868,7 @@ clients.</p>
       
         <div class='space-bottom0'>
           <div>
-            <span class='code bold'>config</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>?)</code>
+            <span class='code bold'>config</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>?)</code>
 	    Configuration to pass to the extension.
 
           </div>
@@ -1915,11 +1921,11 @@ clients.</p>
   <p>Callback type for server or transport close.</p>
 
 
-  <div class='pre p1 fill-light mt0'>closeCallback(err: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error">Error</a>?)</div>
+  <div class='pre p1 fill-light mt0'>closeCallback(err: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Error">Error</a>?)</div>
   
     <p>
       Type:
-      <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/function">Function</a>
+      <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Statements/function">Function</a>
     </p>
   
   
@@ -1937,7 +1943,7 @@ clients.</p>
       
         <div class='space-bottom0'>
           <div>
-            <span class='code bold'>err</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error">Error</a>?)</code>
+            <span class='code bold'>err</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Error">Error</a>?)</code>
 	    Error, if one occurred.
 
           </div>
@@ -1980,11 +1986,11 @@ clients.</p>
   <p>Callback type for cancelling authorization.</p>
 
 
-  <div class='pre p1 fill-light mt0'>cancelCallback(err: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error">Error</a>?)</div>
+  <div class='pre p1 fill-light mt0'>cancelCallback(err: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Error">Error</a>?)</div>
   
     <p>
       Type:
-      <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/function">Function</a>
+      <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Statements/function">Function</a>
     </p>
   
   
@@ -2002,7 +2008,7 @@ clients.</p>
       
         <div class='space-bottom0'>
           <div>
-            <span class='code bold'>err</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error">Error</a>?)</code>
+            <span class='code bold'>err</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Error">Error</a>?)</code>
 	    Error which led to cancelling the authorization, if available.
 
           </div>
@@ -2049,7 +2055,7 @@ clients.</p>
   
     <p>
       Type:
-      <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/function">Function</a>
+      <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Statements/function">Function</a>
     </p>
   
   
@@ -2114,7 +2120,7 @@ clients.</p>
   
     <p>
       Type:
-      <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/function">Function</a>
+      <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Statements/function">Function</a>
     </p>
   
   
@@ -2235,7 +2241,7 @@ and is ready to accept connections.</p>
       
         <div class='space-bottom0'>
           <div>
-            <span class='code bold'>config</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</code>
+            <span class='code bold'>config</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</code>
 	    Configuration you gave to the transport when constructing 
 <a href="#centro-jslibservercentroserver">CentroServer</a>
 .
@@ -2246,7 +2252,7 @@ and is ready to accept connections.</p>
       
         <div class='space-bottom0'>
           <div>
-            <span class='code bold'>ops</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</code>
+            <span class='code bold'>ops</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</code>
 	    Operations you can perform on the transport, including:
 
           </div>
@@ -2334,7 +2340,7 @@ connects.</p>
       
         <div class='space-bottom0'>
           <div>
-            <span class='code bold'>obj</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</code>
+            <span class='code bold'>obj</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</code>
 	    What's being authorized. This is either a HTTP request (with a 
 <code>url</code>
  property) or a stream.
@@ -2345,7 +2351,7 @@ connects.</p>
       
         <div class='space-bottom0'>
           <div>
-            <span class='code bold'>config</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</code>
+            <span class='code bold'>config</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</code>
 	    Configuration you gave to the transport when constructing 
 <a href="#centro-jslibservercentroserver">CentroServer</a>
 .
@@ -2407,7 +2413,7 @@ connects.</p>
       
         <div class='space-bottom0'>
           <div>
-            <span class='code bold'>err</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>?)</code>
+            <span class='code bold'>err</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>?)</code>
 	    <code>null</code>
  if client was accepted otherwise cause of rejection.
 
@@ -2417,7 +2423,7 @@ connects.</p>
       
         <div class='space-bottom0'>
           <div>
-            <span class='code bold'>token_infos</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array">Array</a>&#x3C;{payload: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>, uri: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>, rev: rev}>?)</code>
+            <span class='code bold'>token_infos</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array">Array</a>&#x3C;{payload: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>, uri: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>, rev: rev}>?)</code>
 	    For each authorization token the client presented, its payload, issuer URI and public key revision (see 
 <a href="https://github.com/davedoesdev/authorize-jwt">authorize-jwt</a>
 ).
@@ -2428,7 +2434,7 @@ connects.</p>
       
         <div class='space-bottom0'>
           <div>
-            <span class='code bold'>tokens</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array">Array</a>&#x3C;{string}>?)</code>
+            <span class='code bold'>tokens</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array">Array</a>&#x3C;{string}>?)</code>
 	    The raw authorization tokens.
 
           </div>
@@ -2437,7 +2443,7 @@ connects.</p>
       
         <div class='space-bottom0'>
           <div>
-            <span class='code bold'>obj</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>?)</code>
+            <span class='code bold'>obj</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>?)</code>
 	    What was authorized. This is either a HTTP request (with a 
 <code>url</code>
  property) or a stream.
@@ -2448,7 +2454,7 @@ connects.</p>
       
         <div class='space-bottom0'>
           <div>
-            <span class='code bold'>config</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>?)</code>
+            <span class='code bold'>config</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>?)</code>
 	    Configuration you gave to the transport when constructing 
 <a href="#centro-jslibservercentroserver">CentroServer</a>
 .
@@ -2512,7 +2518,7 @@ has been authorized but handshake data has not yet been received.</p>
       
         <div class='space-bottom0'>
           <div>
-            <span class='code bold'>info</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</code>
+            <span class='code bold'>info</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</code>
 	    Information about the connection.
 
           </div>
@@ -2551,7 +2557,7 @@ has been authorized but handshake data has not yet been received.</p>
 
               
                 <tr>
-  <td class='break-word'><span class='code bold'>info.connid</span> <code class='quiet'><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></code>
+  <td class='break-word'><span class='code bold'>info.connid</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></code>
   </td>
   <td class='break-word'><span>Unique ID for the connection.
 </span></td>
@@ -2560,7 +2566,7 @@ has been authorized but handshake data has not yet been received.</p>
 
               
                 <tr>
-  <td class='break-word'><span class='code bold'>info.prefixes</span> <code class='quiet'><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array">Array</a>&#x3C;<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>></code>
+  <td class='break-word'><span class='code bold'>info.prefixes</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array">Array</a>&#x3C;<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>></code>
   </td>
   <td class='break-word'><span>For each authorization token the client presented, a prefix which 
 <code>info.access_control</code>
@@ -2589,7 +2595,7 @@ has been authorized but handshake data has not yet been received.</p>
 
               
                 <tr>
-  <td class='break-word'><span class='code bold'>info.token_infos</span> <code class='quiet'><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array">Array</a>&#x3C;{payload: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>, uri: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>, rev: rev}></code>
+  <td class='break-word'><span class='code bold'>info.token_infos</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array">Array</a>&#x3C;{payload: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>, uri: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>, rev: rev}></code>
   </td>
   <td class='break-word'><span>For each authorization token the client presented, its payload, issuer URI and public key revision (see 
 <a href="https://github.com/davedoesdev/authorize-jwt">authorize-jwt</a>
@@ -2717,7 +2723,7 @@ has been authorized but handshake data has not yet been received.</p>
       
         <div class='space-bottom0'>
           <div>
-            <span class='code bold'>connid</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>)</code>
+            <span class='code bold'>connid</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>)</code>
 	    Unique ID for the connection.
 
           </div>
@@ -2778,7 +2784,7 @@ is connected. After the event is emitted, the connection is destroyed.</p>
       
         <div class='space-bottom0'>
           <div>
-            <span class='code bold'>connid</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>)</code>
+            <span class='code bold'>connid</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>)</code>
 	    Unique ID for the connection.
 
           </div>
@@ -2931,7 +2937,7 @@ clients connected.</p>
       
         <div class='space-bottom0'>
           <div>
-            <span class='code bold'>err</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</code>
+            <span class='code bold'>err</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</code>
 	    The error which occurred.
 
           </div>
@@ -2940,7 +2946,7 @@ clients connected.</p>
       
         <div class='space-bottom0'>
           <div>
-            <span class='code bold'>obj</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</code>
+            <span class='code bold'>obj</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</code>
 	    The object which originally raised the error.
 
           </div>
@@ -3001,7 +3007,7 @@ to <code>console.error</code>.</p>
       
         <div class='space-bottom0'>
           <div>
-            <span class='code bold'>err</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</code>
+            <span class='code bold'>err</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</code>
 	    The non-fatal error which occurred.
 
           </div>
@@ -3010,7 +3016,7 @@ to <code>console.error</code>.</p>
       
         <div class='space-bottom0'>
           <div>
-            <span class='code bold'>obj</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</code>
+            <span class='code bold'>obj</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</code>
 	    The object which originally raised the error.
 
           </div>
@@ -3094,7 +3100,7 @@ to <code>console.error</code>.</p>
       
         <div class='space-bottom0'>
           <div>
-            <span class='code bold'>config</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</code>
+            <span class='code bold'>config</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</code>
 	    Configuration options. This supports all the options supported by 
 <code>Primus.createServer</code>
  and 
@@ -3128,7 +3134,7 @@ to <code>console.error</code>.</p>
 
               
                 <tr>
-  <td class='break-word'><span class='code bold'>config.pathname</span> <code class='quiet'><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></code>
+  <td class='break-word'><span class='code bold'>config.pathname</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></code>
   
     (default <code>/centro/v1/primus</code>)
   </td>
@@ -3139,7 +3145,7 @@ to <code>console.error</code>.</p>
 
               
                 <tr>
-  <td class='break-word'><span class='code bold'>config.primus_transport</span> <code class='quiet'><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>?</code>
+  <td class='break-word'><span class='code bold'>config.primus_transport</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>?</code>
   </td>
   <td class='break-word'><span>Primus transformer-specific configuration.
 </span></td>
@@ -3148,7 +3154,7 @@ to <code>console.error</code>.</p>
 
               
                 <tr>
-  <td class='break-word'><span class='code bold'>config.primus</span> <code class='quiet'><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>?</code>
+  <td class='break-word'><span class='code bold'>config.primus</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>?</code>
   </td>
   <td class='break-word'><span>If present then this is used in preference to 
 <code>config</code>
@@ -3217,7 +3223,7 @@ to <code>console.error</code>.</p>
       
         <div class='space-bottom0'>
           <div>
-            <span class='code bold'>config</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</code>
+            <span class='code bold'>config</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</code>
 	    Configuration options. This supports all the options supported by 
 <a href="https://nodejs.org/api/net.html#net_server_listen_options_callback">net.Server#listen</a>
 , 
@@ -3255,7 +3261,7 @@ to <code>console.error</code>.</p>
 
               
                 <tr>
-  <td class='break-word'><span class='code bold'>config.noDelay</span> <code class='quiet'><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Boolean">boolean</a>?</code>
+  <td class='break-word'><span class='code bold'>config.noDelay</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean">boolean</a>?</code>
   </td>
   <td class='break-word'><span>If present then 
 <a href="https://nodejs.org/api/net.html#net_socket_setnodelay_nodelay">setNoDelay</a>
@@ -3266,7 +3272,7 @@ to <code>console.error</code>.</p>
 
               
                 <tr>
-  <td class='break-word'><span class='code bold'>config.tcp</span> <code class='quiet'><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>?</code>
+  <td class='break-word'><span class='code bold'>config.tcp</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>?</code>
   </td>
   <td class='break-word'><span>If present then this is used in preference to 
 <code>config</code>
@@ -3385,7 +3391,7 @@ supported because when a connection drops, the server forgets all about it.</p>
       
         <div class='space-bottom0'>
           <div>
-            <span class='code bold'>config</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</code>
+            <span class='code bold'>config</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</code>
 	    Configuration options. This supports all the options supported by 
 <a href="https://nodejs.org/api/net.html#net_server_listen_options_callback">net.Server#listen</a>
 , 
@@ -3423,7 +3429,7 @@ supported because when a connection drops, the server forgets all about it.</p>
 
               
                 <tr>
-  <td class='break-word'><span class='code bold'>config.pathname</span> <code class='quiet'><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></code>
+  <td class='break-word'><span class='code bold'>config.pathname</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></code>
   
     (default <code>/centro/v1/</code>)
   </td>
@@ -3462,7 +3468,7 @@ ing the connection, if an error occurs which means the connection can't be re-us
 
               
                 <tr>
-  <td class='break-word'><span class='code bold'>config.http</span> <code class='quiet'><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>?</code>
+  <td class='break-word'><span class='code bold'>config.http</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>?</code>
   </td>
   <td class='break-word'><span>If present then this is used in preference to 
 <code>config</code>
@@ -3551,7 +3557,7 @@ overhead (the messages aren't copied).</p>
       
         <div class='space-bottom0'>
           <div>
-            <span class='code bold'>config</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</code>
+            <span class='code bold'>config</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</code>
 	    Configuration options. This supports all the options supported by stream.Duplex as well as the following:
 
           </div>
@@ -3570,7 +3576,7 @@ overhead (the messages aren't copied).</p>
             <tbody class='mt1'>
               
                 <tr>
-  <td class='break-word'><span class='code bold'>config.in-mem</span> <code class='quiet'><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>?</code>
+  <td class='break-word'><span class='code bold'>config.in-mem</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>?</code>
   </td>
   <td class='break-word'><span>If present then this is used in preference to 
 <code>config</code>
@@ -3615,11 +3621,11 @@ overhead (the messages aren't copied).</p>
   <p>Callback type for connecting to in-memory transport.</p>
 
 
-  <div class='pre p1 fill-light mt0'>connectCallback(err: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error">Error</a>?, stream: <a href="https://nodejs.org/api/stream.html#stream_class_stream_duplex_1">stream.Duplex</a>)</div>
+  <div class='pre p1 fill-light mt0'>connectCallback(err: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Error">Error</a>?, stream: <a href="https://nodejs.org/api/stream.html#stream_class_stream_duplex_1">stream.Duplex</a>)</div>
   
     <p>
       Type:
-      <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/function">Function</a>
+      <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Statements/function">Function</a>
     </p>
   
   
@@ -3637,7 +3643,7 @@ overhead (the messages aren't copied).</p>
       
         <div class='space-bottom0'>
           <div>
-            <span class='code bold'>err</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error">Error</a>?)</code>
+            <span class='code bold'>err</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Error">Error</a>?)</code>
 	    Error, if one occurred.
 
           </div>
@@ -3759,7 +3765,7 @@ overhead (the messages aren't copied).</p>
   <p>Attach behaviour to the <a href="https://github.com/davedoesdev/mqlobber#mqlobberservereventsbackoff">backoff</a> event.</p>
 
 
-  <div class='pre p1 fill-light mt0'>backoff(config: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</div>
+  <div class='pre p1 fill-light mt0'>backoff(config: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</div>
   
   
 
@@ -3776,7 +3782,7 @@ overhead (the messages aren't copied).</p>
       
         <div class='space-bottom0'>
           <div>
-            <span class='code bold'>config</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</code>
+            <span class='code bold'>config</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</code>
 	    Configuration options.
 
           </div>
@@ -3795,7 +3801,7 @@ overhead (the messages aren't copied).</p>
             <tbody class='mt1'>
               
                 <tr>
-  <td class='break-word'><span class='code bold'>config.close_conn</span> <code class='quiet'><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Boolean">boolean</a>?</code>
+  <td class='break-word'><span class='code bold'>config.close_conn</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean">boolean</a>?</code>
   </td>
   <td class='break-word'><span>Close connection when a 
 <code>backoff</code>
@@ -3806,7 +3812,7 @@ overhead (the messages aren't copied).</p>
 
               
                 <tr>
-  <td class='break-word'><span class='code bold'>config.delay_responses</span> <code class='quiet'><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Boolean">boolean</a>?</code>
+  <td class='break-word'><span class='code bold'>config.delay_responses</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean">boolean</a>?</code>
   </td>
   <td class='break-word'><span>When a 
 <code>backoff</code>
@@ -3819,7 +3825,7 @@ overhead (the messages aren't copied).</p>
 
               
                 <tr>
-  <td class='break-word'><span class='code bold'>config.skip_message</span> <code class='quiet'><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Boolean">boolean</a>?</code>
+  <td class='break-word'><span class='code bold'>config.skip_message</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean">boolean</a>?</code>
   </td>
   <td class='break-word'><span>When a 
 <code>backoff</code>
@@ -3841,7 +3847,7 @@ overhead (the messages aren't copied).</p>
 
               
                 <tr>
-  <td class='break-word'><span class='code bold'>config.delay_message</span> <code class='quiet'><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Boolean">boolean</a>?</code>
+  <td class='break-word'><span class='code bold'>config.delay_message</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean">boolean</a>?</code>
   </td>
   <td class='break-word'><span>When a 
 <code>backoff</code>
@@ -3903,11 +3909,11 @@ overhead (the messages aren't copied).</p>
   <p>Callback type for dropping a message.</p>
 
 
-  <div class='pre p1 fill-light mt0'>skipCallback(info: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</div>
+  <div class='pre p1 fill-light mt0'>skipCallback(info: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</div>
   
     <p>
       Type:
-      <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/function">Function</a>
+      <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Statements/function">Function</a>
     </p>
   
   
@@ -3925,7 +3931,7 @@ overhead (the messages aren't copied).</p>
       
         <div class='space-bottom0'>
           <div>
-            <span class='code bold'>info</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</code>
+            <span class='code bold'>info</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</code>
 	    Metadata for the message. See 
 <a href="https://github.com/davedoesdev/mqlobber#mqlobberservereventsmessagestream-info-multiplex-done">MQlobber.events.message</a>
  for details.
@@ -3970,11 +3976,11 @@ overhead (the messages aren't copied).</p>
   <p>Callback type for postponing a message.</p>
 
 
-  <div class='pre p1 fill-light mt0'>delayCallback(info: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</div>
+  <div class='pre p1 fill-light mt0'>delayCallback(info: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</div>
   
     <p>
       Type:
-      <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/function">Function</a>
+      <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Statements/function">Function</a>
     </p>
   
   
@@ -3992,7 +3998,7 @@ overhead (the messages aren't copied).</p>
       
         <div class='space-bottom0'>
           <div>
-            <span class='code bold'>info</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</code>
+            <span class='code bold'>info</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</code>
 	    Metadata for the message. See 
 <a href="https://github.com/davedoesdev/mqlobber#mqlobberservereventsmessagestream-info-multiplex-done">MQlobber.events.message</a>
  for details.
@@ -4190,7 +4196,7 @@ overhead (the messages aren't copied).</p>
 to the message's recipients are under their high-water mark.</p>
 
 
-  <div class='pre p1 fill-light mt0'>delay_message_until_all_streams_under_hwm(config: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</div>
+  <div class='pre p1 fill-light mt0'>delay_message_until_all_streams_under_hwm(config: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</div>
   
   
 
@@ -4207,7 +4213,7 @@ to the message's recipients are under their high-water mark.</p>
       
         <div class='space-bottom0'>
           <div>
-            <span class='code bold'>config</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</code>
+            <span class='code bold'>config</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</code>
 	    Configuration options.
 
           </div>
@@ -4274,9 +4280,11 @@ to the message's recipients are under their high-water mark.</p>
 
   <p>Send messages at the rate that the fastest client connection can handle.
 Normally, messages are sent at the rate of the slowest client.</p>
+<p>You should <a href="#centro-jslibservercentroserverattach_extension">attach</a>
+this extension last but before <a href="#centro-jslibserver_extensionsfilterdummy_data_event">dummy_data_event</a>.</p>
 
 
-  <div class='pre p1 fill-light mt0'>fastest_writable(config: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>?)</div>
+  <div class='pre p1 fill-light mt0'>fastest_writable(config: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>?)</div>
   
   
 
@@ -4293,7 +4301,7 @@ Normally, messages are sent at the rate of the slowest client.</p>
       
         <div class='space-bottom0'>
           <div>
-            <span class='code bold'>config</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>?)</code>
+            <span class='code bold'>config</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>?)</code>
 	    Configuration option. This is passed to 
 <a href="https://github.com/davedoesdev/fastest-writable#fastestwritableoptions">FastestWritable</a>
  and also supports the following options:
@@ -4350,6 +4358,58 @@ Normally, messages are sent at the rate of the slowest client.</p>
       </div>
     </div>
   
+    <div class='border-bottom' id='centro-jslibserver_extensionsfilterdummy_data_event'>
+      <div class="clearfix small pointer toggle-sibling">
+        <div class="py1 contain">
+            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
+            <span class='code strong strong truncate'>dummy_data_event()</span>
+        </div>
+      </div>
+      <div class="clearfix display-none toggle-target">
+        <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+
+  <p>Emit an empty <code>data</code> event on a message stream after it's piped to a client
+connection. This enables the message stream immediately to determine when a
+connection is at full capacity. Otherwise, the message stream must read
+initial message data and write it to the connection in order to make this
+determination.</p>
+<p>You should <a href="#centro-jslibservercentroserverattach_extension">attach</a>
+this extension last.</p>
+
+
+  <div class='pre p1 fill-light mt0'>dummy_data_event()</div>
+  
+  
+
+  
+  
+  
+  
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</section>
+
+      </div>
+    </div>
+  
     <div class='border-bottom' id='centro-jslibserver_extensionsfilterdelaycallback'>
       <div class="clearfix small pointer toggle-sibling">
         <div class="py1 contain">
@@ -4365,11 +4425,11 @@ Normally, messages are sent at the rate of the slowest client.</p>
   <p>Callback type for postponing a message.</p>
 
 
-  <div class='pre p1 fill-light mt0'>delayCallback(info: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</div>
+  <div class='pre p1 fill-light mt0'>delayCallback(info: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</div>
   
     <p>
       Type:
-      <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/function">Function</a>
+      <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Statements/function">Function</a>
     </p>
   
   
@@ -4387,7 +4447,7 @@ Normally, messages are sent at the rate of the slowest client.</p>
       
         <div class='space-bottom0'>
           <div>
-            <span class='code bold'>info</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</code>
+            <span class='code bold'>info</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</code>
 	    Metadata for the message. See 
 <a href="https://github.com/davedoesdev/mqlobber#mqlobberservereventsmessagestream-info-multiplex-done">MQlobber.events.message</a>
  for details.
@@ -4432,11 +4492,11 @@ Normally, messages are sent at the rate of the slowest client.</p>
   <p>Callback type for creation of a <a href="https://github.com/davedoesdev/fastest-writable#fastestwritableoptions">FastestWritable</a> for a message stream.</p>
 
 
-  <div class='pre p1 fill-light mt0'>fastestWritableCallback(fw: FastestWritable, mqserver: MQlobberServer, stream: <a href="https://nodejs.org/api/stream.html#stream_class_stream_readable">stream.Readable</a>, info: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</div>
+  <div class='pre p1 fill-light mt0'>fastestWritableCallback(fw: FastestWritable, mqserver: MQlobberServer, stream: <a href="https://nodejs.org/api/stream.html#stream_class_stream_readable">stream.Readable</a>, info: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</div>
   
     <p>
       Type:
-      <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/function">Function</a>
+      <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Statements/function">Function</a>
     </p>
   
   
@@ -4483,7 +4543,7 @@ Normally, messages are sent at the rate of the slowest client.</p>
       
         <div class='space-bottom0'>
           <div>
-            <span class='code bold'>info</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</code>
+            <span class='code bold'>info</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</code>
 	    Metadata for the message. See 
 <a href="https://github.com/davedoesdev/mqlobber#mqlobberservereventsmessagestream-info-multiplex-done">MQlobber.events.message</a>
  for details.
@@ -4581,7 +4641,7 @@ Normally, messages are sent at the rate of the slowest client.</p>
   <p>Attach behaviour to the <a href="https://github.com/davedoesdev/mqlobber#mqlobberservereventsfull">full</a> event.</p>
 
 
-  <div class='pre p1 fill-light mt0'>full(config: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</div>
+  <div class='pre p1 fill-light mt0'>full(config: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</div>
   
   
 
@@ -4598,7 +4658,7 @@ Normally, messages are sent at the rate of the slowest client.</p>
       
         <div class='space-bottom0'>
           <div>
-            <span class='code bold'>config</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</code>
+            <span class='code bold'>config</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</code>
 	    Configuration options.
 
           </div>
@@ -4617,7 +4677,7 @@ Normally, messages are sent at the rate of the slowest client.</p>
             <tbody class='mt1'>
               
                 <tr>
-  <td class='break-word'><span class='code bold'>config.close_conn</span> <code class='quiet'><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Boolean">boolean</a>?</code>
+  <td class='break-word'><span class='code bold'>config.close_conn</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean">boolean</a>?</code>
   </td>
   <td class='break-word'><span>Close connection when a 
 <code>full</code>
@@ -4628,7 +4688,7 @@ Normally, messages are sent at the rate of the slowest client.</p>
 
               
                 <tr>
-  <td class='break-word'><span class='code bold'>config.skip_message</span> <code class='quiet'><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Boolean">boolean</a>?</code>
+  <td class='break-word'><span class='code bold'>config.skip_message</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean">boolean</a>?</code>
   </td>
   <td class='break-word'><span>When a 
 <code>full</code>
@@ -4650,7 +4710,7 @@ Normally, messages are sent at the rate of the slowest client.</p>
 
               
                 <tr>
-  <td class='break-word'><span class='code bold'>config.delay_message</span> <code class='quiet'><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Boolean">boolean</a>?</code>
+  <td class='break-word'><span class='code bold'>config.delay_message</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean">boolean</a>?</code>
   </td>
   <td class='break-word'><span>When a 
 <code>full</code>
@@ -4712,11 +4772,11 @@ Normally, messages are sent at the rate of the slowest client.</p>
   <p>Callback type for dropping a message.</p>
 
 
-  <div class='pre p1 fill-light mt0'>skipCallback(info: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</div>
+  <div class='pre p1 fill-light mt0'>skipCallback(info: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</div>
   
     <p>
       Type:
-      <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/function">Function</a>
+      <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Statements/function">Function</a>
     </p>
   
   
@@ -4734,7 +4794,7 @@ Normally, messages are sent at the rate of the slowest client.</p>
       
         <div class='space-bottom0'>
           <div>
-            <span class='code bold'>info</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</code>
+            <span class='code bold'>info</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</code>
 	    Metadata for the message. See 
 <a href="https://github.com/davedoesdev/mqlobber#mqlobberservereventsmessagestream-info-multiplex-done">MQlobber.events.message</a>
  for details.
@@ -4779,11 +4839,11 @@ Normally, messages are sent at the rate of the slowest client.</p>
   <p>Callback type for postponing a message.</p>
 
 
-  <div class='pre p1 fill-light mt0'>delayCallback(info: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</div>
+  <div class='pre p1 fill-light mt0'>delayCallback(info: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</div>
   
     <p>
       Type:
-      <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/function">Function</a>
+      <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Statements/function">Function</a>
     </p>
   
   
@@ -4801,7 +4861,7 @@ Normally, messages are sent at the rate of the slowest client.</p>
       
         <div class='space-bottom0'>
           <div>
-            <span class='code bold'>info</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</code>
+            <span class='code bold'>info</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</code>
 	    Metadata for the message. See 
 <a href="https://github.com/davedoesdev/mqlobber#mqlobberservereventsmessagestream-info-multiplex-done">MQlobber.events.message</a>
  for details.
@@ -4900,7 +4960,7 @@ publications and connections.</p>
   <p>Limit the total number of active subscriptions.</p>
 
 
-  <div class='pre p1 fill-light mt0'>limit_active_subscriptions(config: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</div>
+  <div class='pre p1 fill-light mt0'>limit_active_subscriptions(config: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</div>
   
   
 
@@ -4917,7 +4977,7 @@ publications and connections.</p>
       
         <div class='space-bottom0'>
           <div>
-            <span class='code bold'>config</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</code>
+            <span class='code bold'>config</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</code>
 	    Configuration options.
 
           </div>
@@ -4985,7 +5045,7 @@ publications and connections.</p>
   <p>Limit the total number of active publications.</p>
 
 
-  <div class='pre p1 fill-light mt0'>limit_active_publications(config: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</div>
+  <div class='pre p1 fill-light mt0'>limit_active_publications(config: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</div>
   
   
 
@@ -5002,7 +5062,7 @@ publications and connections.</p>
       
         <div class='space-bottom0'>
           <div>
-            <span class='code bold'>config</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</code>
+            <span class='code bold'>config</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</code>
 	    Configuration options.
 
           </div>
@@ -5070,7 +5130,7 @@ publications and connections.</p>
   <p>Limit the total number of active connections.</p>
 
 
-  <div class='pre p1 fill-light mt0'>limit_active_connections(config: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</div>
+  <div class='pre p1 fill-light mt0'>limit_active_connections(config: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</div>
   
   
 
@@ -5087,7 +5147,7 @@ publications and connections.</p>
       
         <div class='space-bottom0'>
           <div>
-            <span class='code bold'>config</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</code>
+            <span class='code bold'>config</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</code>
 	    Configuration options.
 
           </div>
@@ -5209,7 +5269,7 @@ total number of messages published by a connected client.</p>
   <p>Limit the total amount of data published by a connected client.</p>
 
 
-  <div class='pre p1 fill-light mt0'>limit_conn_published_data(config: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</div>
+  <div class='pre p1 fill-light mt0'>limit_conn_published_data(config: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</div>
   
   
 
@@ -5226,7 +5286,7 @@ total number of messages published by a connected client.</p>
       
         <div class='space-bottom0'>
           <div>
-            <span class='code bold'>config</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</code>
+            <span class='code bold'>config</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</code>
 	    Configuration options.
 
           </div>
@@ -5294,7 +5354,7 @@ total number of messages published by a connected client.</p>
   <p>Limit the number of messages published by a connected client.</p>
 
 
-  <div class='pre p1 fill-light mt0'>limit_conn_published_messages(config: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</div>
+  <div class='pre p1 fill-light mt0'>limit_conn_published_messages(config: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</div>
   
   
 
@@ -5311,7 +5371,7 @@ total number of messages published by a connected client.</p>
       
         <div class='space-bottom0'>
           <div>
-            <span class='code bold'>config</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</code>
+            <span class='code bold'>config</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</code>
 	    Configuration options
 
           </div>
@@ -5434,7 +5494,7 @@ transport supports.</p>
 the <a href="#centro-jslibserver_transportsin-mem">in-mem</a> transport.</p>
 
 
-  <div class='pre p1 fill-light mt0'>limit_transport_connections(config: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</div>
+  <div class='pre p1 fill-light mt0'>limit_transport_connections(config: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</div>
   
   
 
@@ -5451,7 +5511,7 @@ the <a href="#centro-jslibserver_transportsin-mem">in-mem</a> transport.</p>
       
         <div class='space-bottom0'>
           <div>
-            <span class='code bold'>config</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</code>
+            <span class='code bold'>config</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</code>
 	    Configuration options.
 
           </div>
@@ -5572,7 +5632,7 @@ the <a href="#centro-jslibserver_transportsin-mem">in-mem</a> transport.</p>
   <p>Limit the rate at which message data can be published by clients.</p>
 
 
-  <div class='pre p1 fill-light mt0'>throttle_publish_streams(config: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</div>
+  <div class='pre p1 fill-light mt0'>throttle_publish_streams(config: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</div>
   
   
 
@@ -5589,7 +5649,7 @@ the <a href="#centro-jslibserver_transportsin-mem">in-mem</a> transport.</p>
       
         <div class='space-bottom0'>
           <div>
-            <span class='code bold'>config</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</code>
+            <span class='code bold'>config</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</code>
 	    See 
 <a href="https://github.com/tjgq/node-stream-throttle">Throttle</a>
 .
@@ -5634,7 +5694,7 @@ the <a href="#centro-jslibserver_transportsin-mem">in-mem</a> transport.</p>
   <p>Limit the rate at which message data is sent to clients.</p>
 
 
-  <div class='pre p1 fill-light mt0'>throttle_message_streams(config: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</div>
+  <div class='pre p1 fill-light mt0'>throttle_message_streams(config: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</div>
   
   
 
@@ -5651,7 +5711,7 @@ the <a href="#centro-jslibserver_transportsin-mem">in-mem</a> transport.</p>
       
         <div class='space-bottom0'>
           <div>
-            <span class='code bold'>config</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</code>
+            <span class='code bold'>config</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</code>
 	    See 
 <a href="https://github.com/tjgq/node-stream-throttle">Throttle</a>
 .
@@ -5749,7 +5809,7 @@ the <a href="#centro-jslibserver_transportsin-mem">in-mem</a> transport.</p>
   <p>Limit how long a client can take to publish a message.</p>
 
 
-  <div class='pre p1 fill-light mt0'>timeout_publish_streams(config: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</div>
+  <div class='pre p1 fill-light mt0'>timeout_publish_streams(config: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</div>
   
   
 
@@ -5766,7 +5826,7 @@ the <a href="#centro-jslibserver_transportsin-mem">in-mem</a> transport.</p>
       
         <div class='space-bottom0'>
           <div>
-            <span class='code bold'>config</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</code>
+            <span class='code bold'>config</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</code>
 	    Configuration options.
 
           </div>
@@ -5834,7 +5894,7 @@ the <a href="#centro-jslibserver_transportsin-mem">in-mem</a> transport.</p>
   <p>Limit how long a client can take to read a message.</p>
 
 
-  <div class='pre p1 fill-light mt0'>timeout_message_streams(config: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</div>
+  <div class='pre p1 fill-light mt0'>timeout_message_streams(config: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</div>
   
   
 
@@ -5851,7 +5911,7 @@ the <a href="#centro-jslibserver_transportsin-mem">in-mem</a> transport.</p>
       
         <div class='space-bottom0'>
           <div>
-            <span class='code bold'>config</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</code>
+            <span class='code bold'>config</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</code>
 	    Configuration options.
 
           </div>
@@ -5920,7 +5980,7 @@ the <a href="#centro-jslibserver_transportsin-mem">in-mem</a> transport.</p>
 message.</p>
 
 
-  <div class='pre p1 fill-light mt0'>timeout_http_publish_requests(config: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</div>
+  <div class='pre p1 fill-light mt0'>timeout_http_publish_requests(config: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</div>
   
   
 
@@ -5937,7 +5997,7 @@ message.</p>
       
         <div class='space-bottom0'>
           <div>
-            <span class='code bold'>config</span> <code class='quiet'>(<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</code>
+            <span class='code bold'>config</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</code>
 	    Configuration options.
 
           </div>

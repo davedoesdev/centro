@@ -22,7 +22,7 @@
       <div class='fl pad1y space-right2'>
         <span class="strong">100% </span>
         <span class="quiet">Statements</span>
-        <span class='fraction'>28/28</span>
+        <span class='fraction'>37/37</span>
       </div>
       <div class='fl pad1y space-right2'>
         <span class="strong">100% </span>
@@ -32,12 +32,12 @@
       <div class='fl pad1y space-right2'>
         <span class="strong">100% </span>
         <span class="quiet">Functions</span>
-        <span class='fraction'>7/7</span>
+        <span class='fraction'>13/13</span>
       </div>
       <div class='fl pad1y space-right2'>
         <span class="strong">100% </span>
         <span class="quiet">Lines</span>
-        <span class='fraction'>28/28</span>
+        <span class='fraction'>36/36</span>
       </div>
     </div>
   </div>
@@ -163,7 +163,46 @@
 118
 119
 120
-121</td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+121
+122
+123
+124
+125
+126
+127
+128
+129
+130
+131
+132
+133
+134
+135
+136
+137
+138
+139
+140
+141
+142
+143
+144
+145
+146
+147
+148
+149
+150
+151
+152
+153
+154
+155
+156
+157
+158
+159
+160</td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -188,11 +227,11 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">111x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">142x</span>
+<span class="cline-any cline-yes">138x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">103x</span>
+<span class="cline-any cline-yes">100x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">85x</span>
+<span class="cline-any cline-yes">81x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">64x</span>
@@ -222,8 +261,10 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">17x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -254,6 +295,43 @@
 <span class="cline-any cline-yes">17x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">17x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">17x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">25x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">17x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">17x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">17x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">17x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">17x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -339,11 +417,13 @@ var FastestWritable = require('fastest-writable').FastestWritable,
  * Send messages at the rate that the fastest client connection can handle.
  * Normally, messages are sent at the rate of the slowest client.
  * 
+ * You should {@link centro-js/lib/server.CentroServer#attach_extension|attach}
+ * this extension last but before {@link centro-js/lib/server_extensions/filter.dummy_data_event|dummy_data_event}.
+ *
  * @param {Object} [config] - Configuration option. This is passed to {@link https://github.com/davedoesdev/fastest-writable#fastestwritableoptions|FastestWritable} and also supports the following options:
  * @param {centro-js/lib/server_extensions/filter.fastestWritableCallback} [config.on_fw] - Called with the {@link https://github.com/davedoesdev/fastest-writable#fastestwritableoptions|FastestWritable} object constructed for each message stream.
  */
 exports.fastest_writable = function (config)
-// must go last in pipeline
 {
     config = config || /* istanbul ignore next */ {};
 &nbsp;
@@ -382,6 +462,43 @@ exports.fastest_writable = function (config)
 };
 &nbsp;
 /**
+ * Emit an empty `data` event on a message stream after it's piped to a client
+ * connection. This enables the message stream immediately to determine when a
+ * connection is at full capacity. Otherwise, the message stream must read
+ * initial message data and write it to the connection in order to make this
+ * determination.
+ *
+ * You should {@link centro-js/lib/server.CentroServer#attach_extension|attach}
+ * this extension last.
+ */
+exports.dummy_data_event = function ()
+{
+    return {
+        pre_connect: function (info)
+        {
+            this.pipeline(info.mqserver, 'message', function (stream, info, multiplex, cb, next)
+            {
+                next(stream, info, function ()
+                {
+                    var duplex = multiplex.apply(this, arguments);
+&nbsp;
+                    duplex.on('pipe', function (src)
+                    {
+                        // We can't emit data event straight away because
+                        // pipe() calls resume after we return from here.
+                        process.nextTick(() =&gt; src.emit('data', ''));
+                    });
+&nbsp;
+                    return duplex;
+                }, cb);
+&nbsp;
+                //let [_, __, {num_handlers}] = next.orig_arguments;
+            });
+        }
+    };
+};
+&nbsp;
+/**
  * Callback type for postponing a message.
  *
  * @callback delayCallback
@@ -409,7 +526,7 @@ exports._fastestWritableCallback = function (fw, mqserver, stream, info) {};
 </div><!-- /wrapper -->
 <div class='footer quiet pad2 space-top1 center small'>
   Code coverage
-  generated by <a href="https://istanbul.js.org/" target="_blank">istanbul</a> at Mon Dec 11 2017 22:26:53 GMT+0000 (GMT)
+  generated by <a href="https://istanbul.js.org/" target="_blank">istanbul</a> at Sun Jan 21 2018 09:16:12 GMT+0000 (GMT)
 </div>
 </div>
 <script src="../../../prettify.js"></script>

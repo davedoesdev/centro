@@ -206,7 +206,8 @@ module.exports = function (config, connect, options)
                         (err.message !== 'This socket has been ended by the other party') &&
                         (err.message !== 'write after end') &&
                         (err.message !== 'backoff') &&
-                        (err.message !== 'This socket is closed.'))
+                        (err.message !== 'This socket is closed.') &&
+                        (err.message !== 'This socket is closed'))
                     {
                         console.warn(err.message);
                         this.last_warning = err;
@@ -2008,7 +2009,10 @@ module.exports = function (config, connect, options)
                         return;
                     }
 
-                    expect(err.message).to.equal('carrier stream ended before end message received');
+                    expect(err.message).to.be.oneOf([
+                        'carrier stream ended before end message received',
+                        'read ECONNRESET'
+                    ]);
                     done();
                 }
 
@@ -2927,9 +2931,11 @@ module.exports = function (config, connect, options)
 
                 clients[0].on('error', function (err)
                 {
-                    expect(err.message).to.be.oneOf(is_transport('tcp') ?
-                            ['write EPIPE', 'read ECONNRESET', 'write ECONNRESET'] :
-                            ['write after end']);
+                    expect(err.message).to.be.oneOf([
+                        'write EPIPE',
+                        'read ECONNRESET',
+                        'write ECONNRESET'
+                    ]);
                 });
 
                 var s = clients[0].publish('foo');
@@ -3787,7 +3793,9 @@ module.exports = function (config, connect, options)
                     }
                 });
 
-                if (is_transport('tcp') || options.relay)
+                if (is_transport('tcp') || 
+                    is_transport('primus') ||
+                    options.relay)
                 {
                     clients[0].on('error', function (err)
                     {
@@ -4963,7 +4971,11 @@ module.exports = function (config, connect, options)
 
                 clients[0].on('error', function (err)
                 {
-                    expect(err.message).to.equal('read ECONNRESET');
+                    expect(err.message).to.be.oneOf([
+                        'read ECONNRESET',
+                        'write ECONNRESET',
+                        'write EPIPE'
+                    ]);
                 });
 
                 server.once('disconnect', function ()
@@ -5162,13 +5174,6 @@ module.exports = function (config, connect, options)
 
                     it('should support setting custom data on message info and stream', function (done)
                     {
-                        get_info().server.fsq.filters.unshift(function (info, handlers, cb)
-                        {
-                            info.num_handlers = handlers.size;
-                            info.count = 0;
-                            cb(null, true, handlers);
-                        });
-
                         var message0_called = false,
                             message1_called = false,
                             laggard0_called = false,
@@ -5179,12 +5184,13 @@ module.exports = function (config, connect, options)
 
                         buf.fill('a');
 
-                        function check(msg_stream, info)
+                        function check(msg_stream, info, num_handlers)
                         {
                             expect(info.topic).to.equal(prefixes[0][0] + 'foo');
+                            info.count = info.count || 0;
                             info.count += 1;
 
-                            if (info.count === info.num_handlers)
+                            if (info.count === num_handlers)
                             {
                                 process.nextTick(function ()
                                 {
@@ -5205,7 +5211,7 @@ module.exports = function (config, connect, options)
                                 {
                                     laggard0_called = true;
                                 });
-                                check(msg_stream, info);
+                                check(msg_stream, info, multiplex.num_handlers);
                                 return duplex;
                             }, cb);
                         }
@@ -5221,7 +5227,7 @@ module.exports = function (config, connect, options)
                                 {
                                     laggard1_called = true;
                                 });
-                                check(msg_stream, info);
+                                check(msg_stream, info, multiplex.num_handlers);
                                 return null_stream;
                             }, cb);
                         }
@@ -5291,6 +5297,151 @@ module.exports = function (config, connect, options)
                                 if (err) { return done(err); }
                                 get_info().clients[0].publish('foo').end('bar');
                             });
+                        });
+                    });
+                }
+            }, config));
+        });
+
+        describe('initial message data (default behaviour)', function ()
+        {
+            run.call(this, Object.assign(
+            {
+                only: function (get_info)
+                {
+                    get_info().setup(1,
+                    {
+                        access_control: {
+                            publish: {
+                                allow: ['foo'],
+                                disallow: []
+                            },
+                            subscribe: {
+                                allow: ['foo', '#'],
+                                disallow: []
+                            }
+                        }
+                    });
+
+                    it('should read initial data from message by default', function (done)
+                    {
+                        let message_called = false,
+                            buf = new Buffer(100 * 1024);
+
+                        function message(msg_stream, info, multiplex, cb, next)
+                        {
+                            expect(message_called).to.equal(false);
+                            message_called = true;
+                            next(msg_stream, info, function ()
+                            {
+                                let ns = new NullStream();
+                                ns.write(buf);
+                                expect(ns._writableState.length).to.equal(100 * 1024);
+                                setTimeout(function ()
+                                {
+                                    expect(ns._writableState.length).to.be.above(100 * 1024);
+                                    cb(null, done);
+                                }, 2000);
+                                return ns;
+                            }, cb);
+                        }
+
+                        if (options.relay)
+                        {
+                            get_info().server.once('pre_connect', function (info)
+                            {
+                                this.pipeline(info.mqserver, 'message', message);
+                            });
+                        }
+                        else
+                        {
+                            for (let info of get_info().connections.values())
+                            {
+                                pipeline(info.mqserver, 'message', message);
+                            }
+                        }
+
+                        get_info().clients[0].subscribe('foo', function ()
+                        {
+                            done(new Error('should not be called'));
+                        }, function (err)
+                        {
+                            if (err) { return done(err); }
+                            get_info().clients[0].publish('foo').end('bar');
+                        });
+                    });
+                }
+            }, config));
+        });
+
+        describe('initial message data (dummy data event)', function ()
+        {
+            run.call(this, Object.assign(
+            {
+                only: function (get_info)
+                {
+                    get_info().setup(1,
+                    {
+                        access_control: {
+                            publish: {
+                                allow: ['foo'],
+                                disallow: []
+                            },
+                            subscribe: {
+                                allow: ['foo', '#'],
+                                disallow: []
+                            }
+                        }
+                    });
+
+                    it('should not read initial data from message', function (done)
+                    {
+                        let message_called = false,
+                            buf = new Buffer(100 * 1024);
+
+                        function message(msg_stream, info, multiplex, cb, next)
+                        {
+                            expect(message_called).to.equal(false);
+                            message_called = true;
+                            next(msg_stream, info, function ()
+                            {
+                                let ns = new NullStream();
+                                ns.write(buf);
+                                expect(ns._writableState.length).to.equal(100 * 1024);
+                                setTimeout(function ()
+                                {
+                                    expect(ns._writableState.length).to.equal(100 * 1024);
+                                    cb(null, done);
+                                }, 2000);
+                                return ns;
+                            }, cb);
+                        }
+
+                        if (options.relay)
+                        {
+                            get_info().server.once('pre_connect', function (info)
+                            {
+                                this.pipeline(info.mqserver, 'message', message);
+                            });
+                        }
+                        else
+                        {
+                            for (let info of get_info().connections.values())
+                            {
+                                pipeline(info.mqserver, 'message', message);
+                            }
+                        }
+
+                        var filter = require('../lib/server_extensions/filter');
+                        get_info().attach_extension(filter.dummy_data_event);
+
+                        get_info().clients[0].subscribe('foo', function ()
+                        {
+                            done(new Error('should not be called'));
+                        }, function (err)
+                        {
+                            if (err) { return done(err); }
+                            get_info().clients[0].publish('foo').end('bar');
                         });
                     });
                 }
@@ -5801,7 +5952,9 @@ module.exports = function (config, connect, options)
                                 'read ECONNRESET',
                                 'carrier stream finished before duplex finished',
                                 'carrier stream ended before end message received',
-                                'write ECANCELED'
+                                'write ECANCELED',
+                                'write EPIPE',
+                                'write ECONNRESET'
                             ]);
                         });
 
@@ -5815,7 +5968,8 @@ module.exports = function (config, connect, options)
                                     'write after end',
                                     'read ECONNRESET',
                                     'write EPIPE',
-                                    'write ECANCELED'
+                                    'write ECANCELED',
+                                    'write ECONNRESET'
                                 ]);
                             }
                             else

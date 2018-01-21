@@ -7457,7 +7457,7 @@ function unescapeJsonPointer(str) {
 /* WEBPACK VAR INJECTION */(function(global, process) {
 
 function oldBrowser () {
-  throw new Error('secure random number generation not supported by this browser\nuse chrome, FireFox or Internet Explorer 11')
+  throw new Error('Secure random number generation is not supported by this browser.\nUse Chrome, Firefox or Internet Explorer 11')
 }
 
 var Buffer = __webpack_require__(2).Buffer
@@ -22411,7 +22411,7 @@ Object.defineProperty(exports, '__esModule', { value: true });
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
-/* WEBPACK VAR INJECTION */(function(Buffer) {/*
+/* WEBPACK VAR INJECTION */(function(Buffer) {/**
 # mqlobber&nbsp;&nbsp;&nbsp;[![Build Status](https://travis-ci.org/davedoesdev/mqlobber.png)](https://travis-ci.org/davedoesdev/mqlobber) [![Build status](https://ci.appveyor.com/api/projects/status/wc5re7a30535s7vn?svg=true)](https://ci.appveyor.com/project/davedoesdev/mqlobber) [![Coverage Status](https://coveralls.io/repos/davedoesdev/mqlobber/badge.png?branch=master&service=github)](https://coveralls.io/r/davedoesdev/mqlobber?branch=master) [![NPM version](https://badge.fury.io/js/mqlobber.png)](http://badge.fury.io/js/mqlobber)
 
 Streaming message queue with pub-sub, work queues, wildcards and back-pressure.
@@ -22607,22 +22607,10 @@ messages via a server.
 
 @constructor
 
-@param {Duplex} stream Connection to a server. The server should use
-[`MQlobberServer`](#mqlobberserverfsq-stream-options) on its side of the
-connection. How the connection is made is up to the caller - it just has to
-supply a [`Duplex`](https://nodejs.org/dist/latest-v4.x/docs/api/stream.html#stream_class_stream_duplex). For example, [`net.Socket`](https://nodejs.org/dist/latest-v4.x/docs/api/net.html#net_class_net_socket) or [`PrimusDuplex`](https://github.com/davedoesdev/primus-backpressure#primusduplexmsg_stream-options).
+@param {Duplex} stream Connection to a server. The server should use [`MQlobberServer`](#mqlobberserverfsq-stream-options) on its side of the connection. How the connection is made is up to the caller - it just has to supply a [`Duplex`](https://nodejs.org/dist/latest-v4.x/docs/api/stream.html#stream_class_stream_duplex). For example, [`net.Socket`](https://nodejs.org/dist/latest-v4.x/docs/api/net.html#net_class_net_socket) or [`PrimusDuplex`](https://github.com/davedoesdev/primus-backpressure#primusduplexmsg_stream-options).
 
-@param {Object} [options] Configuration options. This is passed down to
-[`QlobberDedup`](https://github.com/davedoesdev/qlobber#qlobberdedupoptions)
-(which matches messages received from the server to handlers) and
-[`BPMux`](https://github.com/davedoesdev/bpmux#bpmuxcarrier-options)
-(which multiplexes message streams over the connection to the
-server). It also supports the following additional property:
-
-  - `{Buffer} [handshake_data]` Application-specific handshake data to send to
-    the server. The server-side [`MQlobberServer`](#mqlobberserverfsq-stream-options) object will
-    emit this as a [`handshake`](#mqlobberservereventshandshakehandshake_data-delay_handshake) event to its
-    application.
+@param {Object} [options] Configuration options. This is passed down to [`QlobberDedup`](https://github.com/davedoesdev/qlobber#qlobberdedupoptions) (which matches messages received from the server to handlers) and [`BPMux`](https://github.com/davedoesdev/bpmux#bpmuxcarrier-options) (which multiplexes message streams over the connection to the server). It also supports the following additional property:
+- `{Buffer} [handshake_data]` Application-specific handshake data to send to the server. The server-side [`MQlobberServer`](#mqlobberserverfsq-stream-options) object will emit this as a [`handshake`](#mqlobberservereventshandshakehandshake_data-delay_handshake) event to its application.
 
 @throws {Error} If an error occurs before initiating the multiplex with the server.
 */
@@ -22843,43 +22831,22 @@ util.inherits(MQlobberClient, EventEmitter);
 /**
 Subscribe to messages published to the server.
 
-@param {String} topic Which messages you're interested in receiving. Message
-topics are split into words using `.` as the separator. You can use `*` to match
-exactly one word in a topic or `#` to match zero or more words. For example,
-`foo.*` would match `foo.bar` whereas `foo.#` would match `foo`, `foo.bar` and
-`foo.bar.wup`. Note these are the default separator and wildcard characters.
-They can be changed on the server when [constructing the `QlobberFSQ` object]
-(https://github.com/davedoesdev/qlobber-fsq#qlobberfsqoptions) passed to
-[`MQlobberServer`](#mqlobberserverfsq-stream-options).
+@param {String} topic Which messages you're interested in receiving. Message topics are split into words using `.` as the separator. You can use `*` to match exactly one word in a topic or `#` to match zero or more words. For example, `foo.*` would match `foo.bar` whereas `foo.#` would match `foo`, `foo.bar` and `foo.bar.wup`. Note these are the default separator and wildcard characters.  They can be changed on the server when [constructing the `QlobberFSQ` object] (https://github.com/davedoesdev/qlobber-fsq#qlobberfsqoptions) passed to [`MQlobberServer`](#mqlobberserverfsq-stream-options).
 
-@param {Function} handler Function to call when a new message is received from
-the server due to its topic matching against `topic`. `handler` will be passed
-the following arguments:
+@param {Function} handler Function to call when a new message is received from the server due to its topic matching against `topic`. `handler` will be passed the following arguments:
+- `{Readable} stream` The message content as a [Readable](http://nodejs.org/api/stream.html#stream_class_stream_readable). Note that _all_ subscribers will receive the same stream for each message.
 
-  - `{Readable} stream` The message content as a [Readable](http://nodejs.org/api/stream.html#stream_class_stream_readable). Note that _all_ subscribers will
-    receive the same stream for each message.
+- `{Object} info` Metadata for the message, with the following properties:
+  - `{String} topic` Topic to which the message was published.
+  - `{Boolean} single` Whether this message is being given to _at most_ one handler (across all clients connected to all servers).
+  - `{Integer} expires` When the message expires (number of seconds after 1 January 1970 00:00:00 UTC). This is only present if the server's [`MQlobberServer`](#mqlobberserverfsq-stream-options) instance is configured with `send_expires` set to `true`.
+  - `{Integer} size` Size of the message in bytes. This is only present if the server's [`MQlobberServer`](#mqlobberserverfsq-stream-options) instance is configured with `send_size` set to `true`.
 
-  - `{Object} info` Metadata for the message, with the following properties:
+- `{Function} done` Function to call once you've handled the message. Note that calling this function is only mandatory if `info.single === true`, in order to clean up the message on the server. `done` takes one argument:
+  - `{Object} err` If an error occurred then pass details of the error, otherwise pass `null` or `undefined`.
 
-    - `{String} topic` Topic to which the message was published.
-    - `{Boolean} single` Whether this message is being given to _at most_ one 
-      handler (across all clients connected to all servers).
-    - `{Integer} expires` When the message expires (number of seconds after
-      1 January 1970 00:00:00 UTC). This is only present if the server's
-      [`MQlobberServer`](#mqlobberserverfsq-stream-options) instance is
-      configured with `send_expires` set to `true`.
-    - `{Integer} size` Size of the message in bytes. This is only present if the
-      server's [`MQlobberServer`](#mqlobberserverfsq-stream-options) instance is
-      configured with `send_size` set to `true`.
-
-  - `{Function} done` Function to call once you've handled the message. Note that calling this function is only mandatory if `info.single === true`, in order to clean up the message on the server. `done` takes one argument:
-
-    - `{Object} err` If an error occurred then pass details of the error, otherwise pass `null` or `undefined`.
-
-@param {Function} [cb] Optional function to call once the subscription has been
-registered with the server. This will be passed the following argument:
-
-  - `{Object} err` If an error occurred then details of the error, otherwise `null`.
+@param {Function} [cb] Optional function to call once the subscription has been registered with the server. This will be passed the following argument:
+- `{Object} err` If an error occurred then details of the error, otherwise `null`.
 
 @throws {Error} If an error occurs before sending the subscribe request to the server.
 */
@@ -22962,22 +22929,12 @@ MQlobberClient.prototype.subscribe = function (topic, handler, cb)
 /**
 Unsubscribe to messages published to the server.
 
-@param {String} [topic] Which messages you're no longer interested in receiving
-via the `handler` function. If `topic` is `undefined` then all handlers for all
-topics are unsubscribed.
+@param {String} [topic] Which messages you're no longer interested in receiving via the `handler` function. If `topic` is `undefined` then all handlers for all topics are unsubscribed.
 
-@param {Function} [handler] The function you no longer want to be called with
-messages published to the topic `topic`. This should be a function you've
-previously passed to [`subscribe`](#mqlobberclientprototypesubscribetopic-handler-cb).
-If you subscribed `handler` to a different topic then it will still be called
-for messages which match that topic. If `handler` is `undefined`, all handlers
-for the topic `topic` are unsubscribed.
+@param {Function} [handler] The function you no longer want to be called with messages published to the topic `topic`. This should be a function you've previously passed to [`subscribe`](#mqlobberclientprototypesubscribetopic-handler-cb).  If you subscribed `handler` to a different topic then it will still be called for messages which match that topic. If `handler` is `undefined`, all handlers for the topic `topic` are unsubscribed.
 
-@param {Function] [cb] Optional function to call once `handler` has been
-unsubscribed from `topic` on the server. This will be passed the following
-argument:
-
-  - `{Object} err` If an error occurred then details of the error, otherwise `null`.
+@param {Function} [cb] Optional function to call once `handler` has been unsubscribed from `topic` on the server. This will be passed the following argument:
+- `{Object} err` If an error occurred then details of the error, otherwise `null`.
 
 @throws {Error} If an error occurs before sending the unsubscribe request to the server.
 */
@@ -23111,26 +23068,15 @@ MQlobberClient.prototype.unsubscribe = function (topic, handler, cb)
 /**
 Publish a message to the server for interested clients to receive.
 
-@param {String} topic Message topic. The topic should be a series of words
-separated by `.` (or whatever you configured [`QlobberFSQ`](https://github.com/davedoesdev/qlobber-fsq#qlobberfsqoptions) with on the server).
+@param {String} topic Message topic. The topic should be a series of words separated by `.` (or whatever you configured [`QlobberFSQ`](https://github.com/davedoesdev/qlobber-fsq#qlobberfsqoptions) with on the server).
 
 @param {Object} [options] Optional settings for this publication:
+- `{Boolean} single` If `true` then the message will be given to _at most_ one handler (across all clients connected to all servers). If you don't specify this then all interested handlers (across all clients) will receive it.
 
-  - `{Boolean} single` If `true` then the message will be given to _at most_
-    one handler (across all clients connected to all servers). If you don't
-    specify this then all interested handlers (across all clients) will
-    receive it.
-
-  - `{Integer} ttl` Time-to-live (in seconds) for this message. If you don't
-    specify this then the default is taken from the
-    [`QlobberFSQ`](https://github.com/davedoesdev/qlobber-fsq#qlobberfsqoptions) instance on the server. In any case,
-    `QlobberFSQ`'s configured time-to-live is used to constrain `ttl`'s
-    maximum value.
+- `{Integer} ttl` Time-to-live (in seconds) for this message. If you don't specify this then the default is taken from the [`QlobberFSQ`](https://github.com/davedoesdev/qlobber-fsq#qlobberfsqoptions) instance on the server. In any case, `QlobberFSQ`'s configured time-to-live is used to constrain `ttl`'s maximum value.
     
-@param {Function] [cb] Optional function to call once the server has published
-the message. This will be passed the following argument:
-
-  - `{Object} err` If an error occurred then details of the error, otherwise `null`.
+@param {Function} [cb] Optional function to call once the server has published the message. This will be passed the following argument:
+- `{Object} err` If an error occurred then details of the error, otherwise `null`.
 
 @return {Writable} Stream to which to [write](https://nodejs.org/dist/latest-v4.x/docs/api/stream.html#stream_writable_write_chunk_encoding_callback) the message's data. Make sure you [`end`](https://nodejs.org/dist/latest-v4.x/docs/api/stream.html#stream_writable_end_chunk_encoding_callback) it when you're done.
 
@@ -23590,22 +23536,21 @@ Constructor for a `BPMux` object which multiplexes more than one [`stream.Duplex
 @param {Duplex} carrier The `Duplex` stream over which other `Duplex` streams will be multiplexed.
 
 @param {Object} [options] Configuration options. This is passed down to [`frame-stream`](https://github.com/rkusa/frame-stream). It also supports the following additional properties:
+- `{Object} [peer_multiplex_options]` When your `BPMux` object detects a new multiplexed stream from the peer on the carrier, it creates a new `Duplex` and emits a [`peer_multiplex`](#bpmuxeventspeer_multiplexduplex) event. When it creates the `Duplex`, it uses `peer_multiplex_options` to configure it with the following options:
 
-  - `{Object} [peer_multiplex_options]` When your `BPMux` object detects a new multiplexed stream from the peer on the carrier, it creates a new `Duplex` and emits a [`peer_multiplex`](#bpmuxeventspeer_multiplexduplex) event. When it creates the `Duplex`, it uses `peer_multiplex_options` to configure it with the following options:
+  - `{Integer} [max_write_size]` Maximum number of bytes to write to the `Duplex` at once, regardless of how many bytes the peer is free to receive. Defaults to 0 (no limit).
 
-    - `{Integer} [max_write_size]` Maximum number of bytes to write to the `Duplex` at once, regardless of how many bytes the peer is free to receive. Defaults to 0 (no limit).
+  - `{Boolean} [check_read_overflow]` Whether to check if more data than expected is being received. If `true` and the `Duplex`'s high-water mark for reading is exceeded then the `Duplex` emits an `error` event. This should not normally occur unless you add data yourself using [`readable.unshift`](http://nodejs.org/api/stream.html#stream_readable_unshift_chunk) &mdash; in which case you should set `check_read_overflow` to `false`. Defaults to `true`.
 
-    - `{Boolean} [check_read_overflow]` Whether to check if more data than expected is being received. If `true` and the `Duplex`'s high-water mark for reading is exceeded then the `Duplex` emits an `error` event. This should not normally occur unless you add data yourself using [`readable.unshift`](http://nodejs.org/api/stream.html#stream_readable_unshift_chunk) &mdash; in which case you should set `check_read_overflow` to `false`. Defaults to `true`.
+- `{Function} [parse_handshake_data(handshake_data)]` When a new stream is multiplexed, the `BPMux` objects at each end of the carrier exchange a handshake message. You can supply application-specific handshake data to add to the handshake message (see [`BPMux.prototype.multiplex`](#bpmuxprototypemultiplexoptions) and [`BPMux.events.handshake`](#bpmuxeventshandshakeduplex-handshake_data-delay_handshake)). By default, when handshake data from the peer is received, it's passed to your application as a raw [`Buffer`](https://nodejs.org/api/buffer.html#buffer_buffer). Use `parse_handshake_data` to specify a custom parser. It will receive the `Buffer` as an argument and should return a value which makes sense to your application.
+ 
+- `{Boolean} [coalesce_writes]` Whether to batch together writes to the carrier. When the carrier indicates it's ready to receive data, its spare capacity is shared equally between the multiplexed streams. By default, the data from each stream is written separately to the carrier. Specify `true` to write all the data to the carrier in a single write. Depending on the carrier, this can be more performant.
 
-  - `{Function} [parse_handshake_data(handshake_data)]` When a new stream is multiplexed, the `BPMux` objects at each end of the carrier exchange a handshake message. You can supply application-specific handshake data to add to the handshake message (see [`BPMux.prototype.multiplex`](#bpmuxprototypemultiplexoptions) and [`BPMux.events.handshake`](#bpmuxeventshandshakeduplex-handshake_data-delay_handshake)). By default, when handshake data from the peer is received, it's passed to your application as a raw [`Buffer`](https://nodejs.org/api/buffer.html#buffer_buffer). Use `parse_handshake_data` to specify a custom parser. It will receive the `Buffer` as an argument and should return a value which makes sense to your application.
-  
-  - `{Boolean} [coalesce_writes]` Whether to batch together writes to the carrier. When the carrier indicates it's ready to receive data, its spare capacity is shared equally between the multiplexed streams. By default, the data from each stream is written separately to the carrier. Specify `true` to write all the data to the carrier in a single write. Depending on the carrier, this can be more performant.
+- `{Boolean} [high_channels]` `BPMux` assigns unique channel numbers to multiplexed streams. By default, it assigns numbers in the range [0..2^31). If your application can synchronise the two `BPMux` instances on each end of the carrier stream so they never call [`multiplex`](https://github.com/davedoesdev/bpmux#bpmuxprototypemultiplexoptions) at the same time then you don't need to worry about channel number clashes. For example, one side of the carrier could always call [`multiplex`](https://github.com/davedoesdev/bpmux#bpmuxprototypemultiplexoptions) and the other listen for [`handshake`](https://github.com/davedoesdev/bpmux#bpmuxeventshandshakeduplex-handshake_data-delay_handshake) events. Or they could take it in turns. If you can't synchronise both sides of the carrier, you can get one side to use a different range by specifying `high_channels` as `true`. The `BPMux` with `high_channels` set to `true` will assign channel numbers in the range [2^31..2^32).
 
-  - `{Boolean} [high_channels]` `BPMux` assigns unique channel numbers to multiplexed streams. By default, it assigns numbers in the range [0..2^31). If your application can synchronise the two `BPMux` instances on each end of the carrier stream so they never call [`multiplex`](https://github.com/davedoesdev/bpmux#bpmuxprototypemultiplexoptions) at the same time then you don't need to worry about channel number clashes. For example, one side of the carrier could always call [`multiplex`](https://github.com/davedoesdev/bpmux#bpmuxprototypemultiplexoptions) and the other listen for [`handshake`](https://github.com/davedoesdev/bpmux#bpmuxeventshandshakeduplex-handshake_data-delay_handshake) events. Or they could take it in turns. If you can't synchronise both sides of the carrier, you can get one side to use a different range by specifying `high_channels` as `true`. The `BPMux` with `high_channels` set to `true` will assign channel numbers in the range [2^31..2^32).
+- `{Integer} [max_open]` Maximum number of multiplexed streams that can be open at a time. Defaults to 0 (no maximum).
 
-  - `{Integer} [max_open]` Maximum number of multiplexed streams that can be open at a time. Defaults to 0 (no maximum).
-
-  - `{Integer} [max_header_size]` `BPMux` adds a control header to each message it sends, which the receiver reads into memory. The header is of variable length &mdash; for example, handshake messages contain handshake data which can be supplied by the application. `max_header_size` is the maximum number of header bytes to read into memory. If a larger header is received, `BPMux` emits an `error` event. Defaults to 0 (no limit).
+- `{Integer} [max_header_size]` `BPMux` adds a control header to each message it sends, which the receiver reads into memory. The header is of variable length &mdash; for example, handshake messages contain handshake data which can be supplied by the application. `max_header_size` is the maximum number of header bytes to read into memory. If a larger header is received, `BPMux` emits an `error` event. Defaults to 0 (no limit).
 */
 function BPMux(carrier, options)
 {
@@ -24196,14 +24141,13 @@ BPMux.prototype._send = function ()
 Multiplex a new `stream.Duplex` over the carrier.
 
 @param {Object} [options] Configuration options:
-
-  - `{Buffer} [handshake_data]` Application-specific handshake data to send to the peer. When a new stream is multiplexed, the `BPMux` objects at each end of the carrier exchange a handshake message. You can optionally supply handshake data to add to the handshake message here. The peer application will receive this when its `BPMux` object emits a [`handshake`](#bpmuxeventshandshakeduplex-handshake_data-delay_handshake) event. Defaults to a zero-length `Buffer`.
+- `{Buffer} [handshake_data]` Application-specific handshake data to send to the peer. When a new stream is multiplexed, the `BPMux` objects at each end of the carrier exchange a handshake message. You can optionally supply handshake data to add to the handshake message here. The peer application will receive this when its `BPMux` object emits a [`handshake`](#bpmuxeventshandshakeduplex-handshake_data-delay_handshake) event. Defaults to a zero-length `Buffer`.
   
-  - `{Integer} [max_write_size]` Maximum number of bytes to write to the `Duplex` at once, regardless of how many bytes the peer is free to receive. Defaults to 0 (no limit).
+- `{Integer} [max_write_size]` Maximum number of bytes to write to the `Duplex` at once, regardless of how many bytes the peer is free to receive. Defaults to 0 (no limit).
 
-  - `{Boolean} [check_read_overflow]` Whether to check if more data than expected is being received. If `true` and the `Duplex`'s high-water mark for reading is exceeded then the `Duplex` emits an `error` event. This should not normally occur unless you add data yourself using [`readable.unshift`](http://nodejs.org/api/stream.html#stream_readable_unshift_chunk) &mdash; in which case you should set `check_read_overflow` to `false`. Defaults to `true`.
+- `{Boolean} [check_read_overflow]` Whether to check if more data than expected is being received. If `true` and the `Duplex`'s high-water mark for reading is exceeded then the `Duplex` emits an `error` event. This should not normally occur unless you add data yourself using [`readable.unshift`](http://nodejs.org/api/stream.html#stream_readable_unshift_chunk) &mdash; in which case you should set `check_read_overflow` to `false`. Defaults to `true`.
 
-  - `{Integer} [channel]` Unique number for the new stream. `BPMux` identifies each multiplexed stream by giving it a unique number, which it allocates automatically. If you want to do the allocation yourself, specify a channel number here. It's very unlikely you'll need to do this but the option is there. `Duplex` objects managed by `BPMux` expose a `get_channel` method to retrieve their channel number. Defaults to automatic allocation.
+- `{Integer} [channel]` Unique number for the new stream. `BPMux` identifies each multiplexed stream by giving it a unique number, which it allocates automatically. If you want to do the allocation yourself, specify a channel number here. It's very unlikely you'll need to do this but the option is there. `Duplex` objects managed by `BPMux` expose a `get_channel` method to retrieve their channel number. Defaults to automatic allocation.
   
 @return {Duplex} The new `Duplex` which is multiplexed over the carrier. This supports back-pressure using the stream [`readable`](https://nodejs.org/dist/latest-v4.x/docs/api/stream.html#stream_event_readable) event and [`write`](https://nodejs.org/dist/latest-v4.x/docs/api/stream.html#stream_writable_write_chunk_encoding_callback) method.
 
@@ -24398,14 +24342,13 @@ Creates a new qlobber.
 
 @constructor
 @param {Object} [options] Configures the qlobber. Use the following properties:
+- `{String} separator` The character to use for separating words in topics. Defaults to '.'. MQTT uses '/' as the separator, for example.
 
-  - `{String} separator` The character to use for separating words in topics. Defaults to '.'. MQTT uses '/' as the separator, for example.
+- `{String} wildcard_one` The character to use for matching exactly one word in a topic. Defaults to '*'. MQTT uses '+', for example.
 
-  - `{String} wildcard_one` The character to use for matching exactly one word in a topic. Defaults to '*'. MQTT uses '+', for example.
+- `{String} wildcard_some` The character to use for matching zero or more words in a topic. Defaults to '#'. MQTT uses '#' too.
 
-  - `{String} wildcard_some` The character to use for matching zero or more words in a topic. Defaults to '#'. MQTT uses '#' too.
-
-  - `{Boolean} cache_adds` Whether to cache topics when adding topic matchers. This will make adding multiple matchers for the same topic faster at the cost of extra memory usage. Defaults to `false`.
+- `{Boolean} cache_adds` Whether to cache topics when adding topic matchers. This will make adding multiple matchers for the same topic faster at the cost of extra memory usage. Defaults to `false`.
 */
 function Qlobber (options)
 {
@@ -24743,7 +24686,7 @@ Qlobber.prototype.remove = function (topic, val)
 Match a topic.
 
 @param {String} topic The topic to match against.
-@return {Array} List of values that matched the topic. This may contain duplicates.
+@return {Array} List of values that matched the topic. This may contain duplicates. Use a [`QlobberDedup`](#qlobberdedupoptions) if you don't want duplicates.
 */
 Qlobber.prototype.match = function (topic, ctx)
 {
@@ -25070,7 +25013,7 @@ function compile(schema, _meta) {
 function addSchema(schema, key, _skipValidation, _meta) {
   if (Array.isArray(schema)){
     for (var i=0; i<schema.length; i++) this.addSchema(schema[i], undefined, _skipValidation, _meta);
-    return;
+    return this;
   }
   var id = this._getId(schema);
   if (id !== undefined && typeof id != 'string')
@@ -30709,14 +30652,13 @@ Both sides of a Primus connection must use `PrimusDuplex` &mdash; create one for
 @param {Object} msg_stream The Primus client or spark you wish to exert back-pressure over.
 
 @param {Object} [options] Configuration options. This is passed onto `stream.Duplex` and can contain the following extra properties:
+- `{Function} [encode_data(chunk, encoding, start, end, internal)]` Optional encoding function for data passed to [`writable.write`](http://nodejs.org/api/stream.html#stream_writable_write_chunk_encoding_callback). `chunk` and `encoding` are as described in the `writable.write` documentation. The difference is that `encode_data` is synchronous (it must return the encoded data) and it should only encode data between the `start` and `end` positions in `chunk`. Defaults to a function which does `chunk.toString('base64', start, end)`. Note that `PrimusDuplex` may also pass some internal data through this function (always with `chunk` as a `Buffer`, `encoding=null` and `internal=true`).
 
-  - `{Function} [encode_data(chunk, encoding, start, end, internal)]` Optional encoding function for data passed to [`writable.write`](http://nodejs.org/api/stream.html#stream_writable_write_chunk_encoding_callback). `chunk` and `encoding` are as described in the `writable.write` documentation. The difference is that `encode_data` is synchronous (it must return the encoded data) and it should only encode data between the `start` and `end` positions in `chunk`. Defaults to a function which does `chunk.toString('base64', start, end)`. Note that `PrimusDuplex` may also pass some internal data through this function (always with `chunk` as a `Buffer`, `encoding=null` and `internal=true`).
+- `{Function} [decode_data(chunk, internal)]` Optional decoding function for data received on the Primus connection. The type of `chunk` will depend on how the peer `PrimusDuplex` encoded it. Defaults to a function which does `new Buffer(chunk, 'base64')`. If the data can't be decoded, return `null` (and optionally call `this.emit` to emit an error). Note that `PrimusDuplex` may also pass some internal data through this function (always with `internal=true`) &mdash; in which case you must return a `Buffer`.
 
-  - `{Function} [decode_data(chunk, internal)]` Optional decoding function for data received on the Primus connection. The type of `chunk` will depend on how the peer `PrimusDuplex` encoded it. Defaults to a function which does `new Buffer(chunk, 'base64')`. If the data can't be decoded, return `null` (and optionally call `this.emit` to emit an error). Note that `PrimusDuplex` may also pass some internal data through this function (always with `internal=true`) &mdash; in which case you must return a `Buffer`.
+- `{Integer} [max_write_size]` Maximum number of bytes to write onto the Primus connection at once, regardless of how many bytes the peer is free to receive. Defaults to 0 (no limit).
 
-  - `{Integer} [max_write_size]` Maximum number of bytes to write onto the Primus connection at once, regardless of how many bytes the peer is free to receive. Defaults to 0 (no limit).
-
-  - `{Boolean} [check_read_overflow]` Whether to check if more data than expected is being received. If `true` and the high-water mark for reading is exceeded then the `PrimusDuplex` object emits an `error` event. This should not normally occur unless you add data yourself using [`readable.unshift`](http://nodejs.org/api/stream.html#stream_readable_unshift_chunk) &mdash; in which case you should set `check_read_overflow` to `false`. Defaults to `true`.
+- `{Boolean} [check_read_overflow]` Whether to check if more data than expected is being received. If `true` and the high-water mark for reading is exceeded then the `PrimusDuplex` object emits an `error` event. This should not normally occur unless you add data yourself using [`readable.unshift`](http://nodejs.org/api/stream.html#stream_readable_unshift_chunk) &mdash; in which case you should set `check_read_overflow` to `false`. Defaults to `true`.
 */
 function PrimusDuplex(msg_stream, options)
 {
@@ -33896,7 +33838,7 @@ module.exports.makeKey = makeKey
 /* 183 */
 /***/ (function(module, exports) {
 
-module.exports = {"author":{"name":"Fedor Indutny","email":"fedor@indutny.com"},"bugs":{"url":"https://github.com/indutny/elliptic/issues"},"dependencies":{"bn.js":"^4.4.0","brorand":"^1.0.1","hash.js":"^1.0.0","hmac-drbg":"^1.0.0","inherits":"^2.0.1","minimalistic-assert":"^1.0.0","minimalistic-crypto-utils":"^1.0.0"},"description":"EC cryptography","devDependencies":{"brfs":"^1.4.3","coveralls":"^2.11.3","grunt":"^0.4.5","grunt-browserify":"^5.0.0","grunt-cli":"^1.2.0","grunt-contrib-connect":"^1.0.0","grunt-contrib-copy":"^1.0.0","grunt-contrib-uglify":"^1.0.1","grunt-mocha-istanbul":"^3.0.1","grunt-saucelabs":"^8.6.2","istanbul":"^0.4.2","jscs":"^2.9.0","jshint":"^2.6.0","mocha":"^2.1.0"},"files":["lib"],"homepage":"https://github.com/indutny/elliptic","keywords":["EC","Elliptic","curve","Cryptography"],"license":"MIT","main":"lib/elliptic.js","name":"elliptic","repository":{"type":"git","url":"git+ssh://git@github.com/indutny/elliptic.git"},"scripts":{"jscs":"jscs benchmarks/*.js lib/*.js lib/**/*.js lib/**/**/*.js test/index.js","jshint":"jscs benchmarks/*.js lib/*.js lib/**/*.js lib/**/**/*.js test/index.js","lint":"npm run jscs && npm run jshint","test":"npm run lint && npm run unit","unit":"istanbul test _mocha --reporter=spec test/index.js","version":"grunt dist && git add dist/"},"version":"6.4.0"}
+module.exports = {"author":{"name":"Fedor Indutny","email":"fedor@indutny.com"},"bugs":{"url":"https://github.com/indutny/elliptic/issues"},"bundleDependencies":false,"dependencies":{"bn.js":"^4.4.0","brorand":"^1.0.1","hash.js":"^1.0.0","hmac-drbg":"^1.0.0","inherits":"^2.0.1","minimalistic-assert":"^1.0.0","minimalistic-crypto-utils":"^1.0.0"},"deprecated":false,"description":"EC cryptography","devDependencies":{"brfs":"^1.4.3","coveralls":"^2.11.3","grunt":"^0.4.5","grunt-browserify":"^5.0.0","grunt-cli":"^1.2.0","grunt-contrib-connect":"^1.0.0","grunt-contrib-copy":"^1.0.0","grunt-contrib-uglify":"^1.0.1","grunt-mocha-istanbul":"^3.0.1","grunt-saucelabs":"^8.6.2","istanbul":"^0.4.2","jscs":"^2.9.0","jshint":"^2.6.0","mocha":"^2.1.0"},"files":["lib"],"homepage":"https://github.com/indutny/elliptic","keywords":["EC","Elliptic","curve","Cryptography"],"license":"MIT","main":"lib/elliptic.js","name":"elliptic","repository":{"type":"git","url":"git+ssh://git@github.com/indutny/elliptic.git"},"scripts":{"jscs":"jscs benchmarks/*.js lib/*.js lib/**/*.js lib/**/**/*.js test/index.js","jshint":"jscs benchmarks/*.js lib/*.js lib/**/*.js lib/**/**/*.js test/index.js","lint":"npm run jscs && npm run jshint","test":"npm run lint && npm run unit","unit":"istanbul test _mocha --reporter=spec test/index.js","version":"grunt dist && git add dist/"},"version":"6.4.0"}
 
 /***/ }),
 /* 184 */
