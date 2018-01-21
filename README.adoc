@@ -418,7 +418,7 @@ published:
     <script src="example_primus.js"></script> <4>
   </head>
   <body onload="connect()"> <5>
-    <form onsubmit="publish()"> <6>
+    <form onsubmit="publish(event)"> <6>
       <div id="input">
         <div>
           <label>topic: <input type="text" id="topic" autofocus></label> <7>
@@ -451,7 +451,7 @@ subscribes to and publishes messages:
 [source,javascript]
 .example_primus.js
 ----
-var publish = function () { event.preventDefault(); }; // <1>
+var publish = function (event) { event.preventDefault(); }; // <1>
 
 function connect()
 {
@@ -501,7 +501,7 @@ function connect()
                 });
             });
 
-            publish = function ()
+            publish = function (event)
             {
                 event.preventDefault();
                 client.publish(topic.value).end(message.value); // <5>
@@ -545,7 +545,7 @@ that we don't need the Primus client or the Centro client:
     <script src="example_sse.js"></script>
   </head>
   <body onload="connect()">
-    <form onsubmit="publish()">
+    <form onsubmit="publish(event)">
       <div id="input">
         <div>
           <label>topic: <input type="text" id="topic" autofocus></label>
@@ -568,7 +568,7 @@ https://www.w3.org/TR/XMLHttpRequest/[`XMLHttpRequest`]) to publish messages:
 [source,javascript]
 .example_sse.js
 ----
-var publish = function () { event.preventDefault(); };
+var publish = function (event) { event.preventDefault(); };
 
 function connect()
 {
@@ -598,7 +598,7 @@ function connect()
 
     source.onopen = function ()
     {
-        publish = function ()
+        publish = function (event)
         {
             event.preventDefault();
             var r = new XMLHttpRequest();
