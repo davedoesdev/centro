@@ -1,4 +1,4 @@
-var publish = function () { event.preventDefault(); };
+var publish = function (event) { event.preventDefault(); };
 
 function connect()
 {
@@ -48,7 +48,7 @@ function connect()
                 });
             });
 
-            publish = function ()
+            publish = function (event)
             {
                 event.preventDefault();
                 client.publish(topic.value).end(message.value);

@@ -5,7 +5,7 @@
     <script src="example_sse.js"></script>
   </head>
   <body onload="connect()">
-    <form onsubmit="publish()">
+    <form onsubmit="publish(event)">
       <div id="input">
         <div>
           <label>topic: <input type="text" id="topic" autofocus></label>

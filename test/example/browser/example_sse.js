@@ -1,4 +1,4 @@
-var publish = function () { event.preventDefault(); };
+var publish = function (event) { event.preventDefault(); };
 
 function connect()
 {
@@ -28,7 +28,7 @@ function connect()
 
     source.onopen = function ()
     {
-        publish = function ()
+        publish = function (event)
         {
             event.preventDefault();
             var r = new XMLHttpRequest();
