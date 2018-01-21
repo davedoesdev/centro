@@ -4974,7 +4974,8 @@ module.exports = function (config, connect, options)
                     expect(err.message).to.be.oneOf([
                         'read ECONNRESET',
                         'write ECONNRESET',
-                        'write EPIPE'
+                        'write EPIPE',
+                        'write ECONNABORTED'
                     ]);
                 });
 
