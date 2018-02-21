@@ -18,6 +18,10 @@ All messages are stored in a directory on the server machine's filesystem so no
 external services are required. You can run multiple server instances on the
 same directory, for example one per CPU core.
 
+Extra options (via https://github.com/davedoesdev/qlobber-fsq[qlobber-fsq]) are
+available to use shared memory on a single server machine or a distributed file
+system for multiple server machines.
+
 Clients can connect to the server using https://github.com/primus/primus[Primus]
 (Websockets), TCP, HTTP or in-memory streams.
 
