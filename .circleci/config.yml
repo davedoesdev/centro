@@ -1,4 +1,10 @@
 version: 2
+workflows:
+  version: 2
+  test:
+    jobs:
+      - test-9.8.0
+      - test-8.10.0
 jobs:
   test-9.8.0: &test-template
     docker:
