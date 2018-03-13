@@ -9,9 +9,5 @@ module.exports = {
         path: path.join(__dirname, './dist'),
         library: 'centro'
     },
-    module: {
-        loaders: [
-            { test: /\.json$/, loader: 'json-loader' }
-        ]
-    }
+    performance: { hints: false }
 };

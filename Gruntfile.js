@@ -67,11 +67,11 @@ module.exports = function (grunt)
             },
 
             webpack: {
-                cmd: 'rm -f ./node_modules/removeNPMAbsolutePaths/test/data/malformed/module/package.json && ./node_modules/.bin/removeNPMAbsolutePaths node_modules && ./node_modules/.bin/webpack'
+                cmd: 'rm -f ./node_modules/removeNPMAbsolutePaths/test/data/malformed/module/package.json && ./node_modules/.bin/removeNPMAbsolutePaths node_modules && ./node_modules/.bin/webpack --mode production'
             },
 
             check_dist: {
-                cmd: 'rm -f ./node_modules/removeNPMAbsolutePaths/test/data/malformed/module/package.json && ./node_modules/.bin/removeNPMAbsolutePaths node_modules && ./node_modules/.bin/webpack --config webpack.check.config && diff -u dist/centro.js dist/check.js && rm -f dist/check.js'
+                cmd: 'rm -f ./node_modules/removeNPMAbsolutePaths/test/data/malformed/module/package.json && ./node_modules/.bin/removeNPMAbsolutePaths node_modules && ./node_modules/.bin/webpack --mode production --config webpack.check.config && diff -u dist/centro.js dist/check.js && rm -f dist/check.js'
             },
 
             keys: {

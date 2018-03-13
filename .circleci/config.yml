@@ -1,8 +1,8 @@
 version: 2
 jobs:
-  build:
+  test-9.8.0: &test-template
     docker:
-      - image: circleci/node:8.9.3
+      - image: circleci/node:9.8.0
         environment:
           CXX: g++-6
     steps:
@@ -17,3 +17,7 @@ jobs:
       - run:
           name: test
           command: ./test/ci-test.sh
+  test-8.10.0:
+    <<: *test-template
+    docker:
+      - image: circleci/node:8.10.0
