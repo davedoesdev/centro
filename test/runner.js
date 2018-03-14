@@ -2589,7 +2589,7 @@ module.exports = function (config, connect, options)
                     res.on('end', function ()
                     {
                         c.emit('error', err);
-                        ths.finalize(true); // otherwise Primus closes after a timeout
+                        ths.terminate(); // otherwise Primus closes after a timeout
                     });
 
                     res.on('readable', function ()
@@ -2646,6 +2646,7 @@ module.exports = function (config, connect, options)
                             {
                                 expect(errors[0].message).to.be.oneOf([
                                     msg,
+                                    'carrier stream ended before end message received',
                                     'carrier stream finished before duplex finished',
                                     'write ECONNABORTED',
                                     'read ECONNRESET',
@@ -2696,20 +2697,26 @@ module.exports = function (config, connect, options)
 
                                 expect(errors[errors.length - 1].message).to.equal('carrier stream ended before end message received');
                             }
-                            else if (errors.length > 2)
+                            else if (errors.length < 4)
+                            {
+                                return false;
+                            }
+                            else if (errors.length > 4)
                             {
                                 done(new Error('too many errors'));
                                 return false;
                             }
-                            else 
+                            else
                             {
-                                var ur_index = errors[0].message === 'unexpected response' ? 0 : 1;
-
-                                expect(errors[ur_index].message).to.equal('unexpected response');
-                                expect(errors[ur_index].statusCode).to.equal(code);
-                                expect(errors[ur_index].authenticate).to.equal(
+                                var ur_index = 0;
+                                expect(errors[0].message).to.equal('unexpected response');
+                                expect(errors[0].statusCode).to.equal(code);
+                                expect(errors[0].authenticate).to.equal(
                                     code == 401 ? 'Basic realm="centro"' : undefined);
-                                expect(errors[ur_index].data).to.equal('{"error":"' + msg + '"}');
+                                expect(errors[0].data).to.equal('{"error":"' + msg + '"}');
+                                expect(errors[1].message).to.equal('WebSocket was closed before the connection was established');
+                                expect(errors[2].message).to.equal('WebSocket was closed before the connection was established');
+                                expect(errors[3].message).to.equal('carrier stream ended before end message received');
                             }
                         }
                         else if (errors.length > 2)
@@ -4099,11 +4106,15 @@ module.exports = function (config, connect, options)
 
                         s.write('bar');
 
-                        clients[1].publish('bar', function (err)
+                        // give time for publish above to connect
+                        setTimeout(function ()
                         {
-                            expect(err.message).to.equal('server error');
-                            s.end();
-                        }).end('bar2');
+                            clients[1].publish('bar', function (err)
+                            {
+                                expect(err.message).to.equal('server error');
+                                s.end();
+                            }).end('bar2');
+                        }, 500);
                     });
                 });
             });
@@ -5940,6 +5951,7 @@ module.exports = function (config, connect, options)
                         get_info().clients[0].on('warning', function (err)
                         {
                             expect(err.message).to.be.oneOf([
+                                'write EPIPE',
                                 'write after end',
                                 'carrier stream ended before end message received',
                                 'carrier stream finished before duplex finished',
@@ -5971,7 +5983,8 @@ module.exports = function (config, connect, options)
                                     'read ECONNRESET',
                                     'write EPIPE',
                                     'write ECANCELED',
-                                    'write ECONNRESET'
+                                    'write ECONNRESET',
+                                    'server error'
                                 ]);
                             }
                             else
@@ -6082,6 +6095,7 @@ module.exports = function (config, connect, options)
                         get_info().clients[0].on('warning', function (err)
                         {
                             expect(err.message).to.be.oneOf([
+                                'write EPIPE',
                                 'write after end',
                                 'carrier stream ended before end message received',
                                 'carrier stream finished before duplex finished'
