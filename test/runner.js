@@ -3908,7 +3908,8 @@ module.exports = function (config, connect, options)
                                     'server error',
                                     'write after end',
                                     'carrier stream ended before end message received',
-                                    'carrier stream finished before duplex finished'
+                                    'carrier stream finished before duplex finished',
+                                    'read ECONNRESET'
                                 ]);
                                 got_error = true;
                                 check();
