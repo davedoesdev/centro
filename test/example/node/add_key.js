@@ -1,5 +1,5 @@
 var uri = 'http://davedoesdev.com',
-    authorize_jwt = require('centro-js').authorize_jwt,
+    authorize_jwt = require('../../..').authorize_jwt,
     assert = require('assert'),
     path = require('path'),
     fs = require('fs'),

@@ -1,4 +1,4 @@
-var centro = require('centro-js');
+var centro = require('../../..');
 
 var config = {
     allowed_algs: ['PS256'],

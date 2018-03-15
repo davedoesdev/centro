@@ -1,4 +1,4 @@
-var centro = require('centro-js'),
+var centro = require('../../..'),
     assert = require('assert'),
     Primus = require('primus'),
     Socket = Primus.createSocket(
