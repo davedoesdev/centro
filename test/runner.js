@@ -3874,7 +3874,10 @@ module.exports = function (config, connect, options)
 
                     clients[0].on('error', function (err)
                     {
-                        expect(err.message).to.equal('write after end');
+                        expect(err.message).to.be.oneOf([
+                            'write after end',
+                            'read ECONNRESET'
+                        ]);
                     });
 
                     if (close_conn)
