@@ -837,7 +837,7 @@ you supply.</p>
   <td class='break-word'><span class='code bold'>config.max_subscriptions</span> <code class='quiet'>integer?</code>
   </td>
   <td class='break-word'><span>If the server returns pre-subscription data (see the 
-<a href="centro-js/lib/client.event:ready">ready</a>
+<a href="#centro-jslibclienteventmqlobberclientready">ready</a>
  event), emit an 
 <code>error</code>
  event if there are more entries than this maximum. If not specified, no limit is applied.
@@ -850,7 +850,7 @@ you supply.</p>
   <td class='break-word'><span class='code bold'>config.max_topic_length</span> <code class='quiet'>integer?</code>
   </td>
   <td class='break-word'><span>If the server returns pre-subscription data (see the 
-<a href="centro-js/lib/client.event:ready">ready</a>
+<a href="#centro-jslibclienteventmqlobberclientready">ready</a>
  event), emit an 
 <code>error</code>
  event if one of the topics exceeds this length. If not specified, no limit is applied.
@@ -971,7 +971,7 @@ data as a stream header (currently all except Primus and HTTP).</p>
   <td class='break-word'><span class='code bold'>config.max_subscriptions</span> <code class='quiet'>integer?</code>
   </td>
   <td class='break-word'><span>If the server returns pre-subscription data (see the 
-<a href="centro-js/lib/client.event:ready">ready</a>
+<a href="#centro-jslibclienteventmqlobberclientready">ready</a>
  event), emit an 
 <code>error</code>
  event if there are more entries than this maximum. If not specified, no limit is applied.
@@ -984,7 +984,7 @@ data as a stream header (currently all except Primus and HTTP).</p>
   <td class='break-word'><span class='code bold'>config.max_topic_length</span> <code class='quiet'>integer?</code>
   </td>
   <td class='break-word'><span>If the server returns pre-subscription data (see the 
-<a href="centro-js/lib/client.event:ready">ready</a>
+<a href="#centro-jslibclienteventmqlobberclientready">ready</a>
  event), emit an 
 <code>error</code>
  event if one of the topics exceeds this length. If not specified, no limit is applied.
@@ -2496,8 +2496,8 @@ connects.</p>
 
   
 
-  <p>Pre-connect event. Emitted after <a href="centro-js/lib/server.event:authz_end">centro-js/lib/server.event:authz_end</a>
-but before <a href="centro-js/lib/server.event:connect">centro-js/lib/server.event:connect</a>. The client connection
+  <p>Pre-connect event. Emitted after <a href="#centro-jslibservereventcentroserverauthz_end">authz_end</a>
+but before <a href="#centro-jslibservereventcentroserverconnect">connect</a>. The client connection
 has been authorized but handshake data has not yet been received.</p>
 
 
