@@ -4792,7 +4792,10 @@ module.exports = function (config, connect, options)
                 {
                     clients[0].on('error', function (err)
                     {
-                        expect(err.message).to.equal('carrier stream finished before duplex finished');
+                        expect(err.message).to.be.oneOf([
+                            'carrier stream finished before duplex finished',
+                            'write after end'
+                        ]);
                     });
                     clients[0].mux.carrier.end();
                     wait(1, function ()
