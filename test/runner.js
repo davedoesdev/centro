@@ -1257,7 +1257,7 @@ module.exports = function (config, connect, options)
                 {
                     var ths = this;
                     this.joins = new Set();
-                    return this.subscribe('join.*', function (s, info)
+                    return this.subscribe('join.*', function (s, info, ack)
                     {
                         if (presence_topics.has(info.topic)) { return read_all(s); }
                         expect(info.single).to.equal(single);
@@ -1267,6 +1267,7 @@ module.exports = function (config, connect, options)
                         }
                         read_all(s, function (v)
                         {
+                            ack();
                             expect(v.toString()).to.equal(typeof(data) === 'string' ? data : 'someone joined');
                             ths.joins.add(info.topic);
                         });
@@ -1668,10 +1669,9 @@ module.exports = function (config, connect, options)
 
                             expect(info.single).to.equal(true);
 
-                            ack();
-
                             read_all(s, function (v)
                             {
+                                ack();
                                 expect(v.toString()).to.equal('someone left');
                                 clients[1].unsubscribe('leave.*', undefined, pdone(done));
                             });
@@ -1887,7 +1887,7 @@ module.exports = function (config, connect, options)
                     info.mqserver.on('publish_requested', pubreq);
                 }
 
-                if (is_transport('tls'))
+                if (is_transport('tcp'))
                 {
                     clients[0].on('error', function (err)
                     {
@@ -2671,7 +2671,8 @@ module.exports = function (config, connect, options)
                                 'unexpected response',
                                 'write ECONNABORTED',
                                 'read ECONNRESET',
-                                'write ECONNRESET'
+                                'write ECONNRESET',
+                                'Client network socket disconnected before secure TLS connection was established'
                             ]);
                         }
 
@@ -2683,7 +2684,8 @@ module.exports = function (config, connect, options)
                             }
 
                             if ((errors[0].message === 'socket hang up') ||
-                                (errors[0].message === 'read ECONNRESET'))
+                                (errors[0].message === 'read ECONNRESET') ||
+                                (errors[0].message === 'Client network socket disconnected before secure TLS connection was established'))
                             {
                                 for (var i = 1; i < errors.length - 1; i += 1)
                                 {
@@ -3569,7 +3571,10 @@ module.exports = function (config, connect, options)
 
                     clients[0].on('error', function (err)
                     {
-                        expect(err.message).to.equal('carrier stream finished before duplex finished');
+                        expect(err.message).to.be.oneOf([
+                            'carrier stream finished before duplex finished',
+                            'write after end'
+                        ]);
                     });
 
                     server._connections.delete(uri);
@@ -5747,7 +5752,8 @@ module.exports = function (config, connect, options)
                             {
                                 expect(err.message).to.be.oneOf([
                                     'socket hang up',
-                                    'read ECONNRESET'
+                                    'read ECONNRESET',
+                                    'Client network socket disconnected before secure TLS connection was established'
                                 ]);
                                 get_info().detach_extension(ths.centro_test_ltc);
                                 done();
@@ -5804,7 +5810,8 @@ module.exports = function (config, connect, options)
                            {
                                expect(conn_error.message).to.be.oneOf([
                                    'socket hang up',
-                                   'read ECONNRESET'
+                                   'read ECONNRESET',
+                                   'Client network socket disconnected before secure TLS connection was established'
                                ]);
                            }
                            get_info().detach_extension(this.centro_test_ltc); 
