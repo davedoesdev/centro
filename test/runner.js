@@ -114,6 +114,16 @@ module.exports = function (config, connect, options)
             }
         }
 
+        function on_pre_after(cb)
+        {
+            if (options.on_pre_after)
+            {
+                return options.on_pre_after(config, cb);
+            }
+
+            cb();
+        }
+
         function on_before(cb)
         {
             if (this && this.timeout)
@@ -237,11 +247,26 @@ module.exports = function (config, connect, options)
 
         before(on_before);
 
-        function on_after(cb3)
+        function on_after(cb4)
         {
             if (this && this.timeout)
             {
                 this.timeout(60000);
+            }
+
+            function cb3(err)
+            {
+                if (err)
+                {
+                    return cb4(err);
+                }
+
+                if (options.on_after)
+                {
+                    return options.on_after(config, cb4);
+                }
+
+                cb4();
             }
 
             function cb2(err)
@@ -251,12 +276,19 @@ module.exports = function (config, connect, options)
                     return cb3(err);
                 }
 
-                if (options.on_after)
+                server.close(function ()
                 {
-                    return options.on_after(config, cb3);
-                }
-
-                cb3();
+                    if (config.fsq)
+                    {
+                        expect(server.fsq.stopped).to.equal(false);
+                        config.fsq.stop_watching(cb3);
+                    }
+                    else
+                    {
+                        expect(server.fsq.stopped).to.equal(true);
+                        cb3();
+                    }
+                });
             }
 
             function cb(err)
@@ -266,19 +298,7 @@ module.exports = function (config, connect, options)
                     return cb2(err);
                 }
 
-                server.close(function ()
-                {
-                    if (config.fsq)
-                    {
-                        expect(server.fsq.stopped).to.equal(false);
-                        config.fsq.stop_watching(cb2);
-                    }
-                    else
-                    {
-                        expect(server.fsq.stopped).to.equal(true);
-                        cb2();
-                    }
-                });
+                on_pre_after(cb2);
             }
 
             if (options.anon)
@@ -405,7 +425,8 @@ module.exports = function (config, connect, options)
                                opts.separate_tokens ? token2 : [token, token2],
                         handshake_data: new Buffer([i]),
                         max_topic_length: opts.max_topic_length,
-                        max_open: opts.max_open
+                        max_open: opts.max_open,
+                        test_config: config
                     }, server, function (err, c)
                     {
                         if (err)
@@ -552,7 +573,8 @@ module.exports = function (config, connect, options)
                 expect_error: expect_error,
                 attach_extension: attach_extension,
                 detach_extension: detach_extension,
-                get_connid_from_mqserver: get_connid_from_mqserver
+                get_connid_from_mqserver: get_connid_from_mqserver,
+                on_pre_after: on_pre_after
             };
         }
 
@@ -2915,6 +2937,19 @@ module.exports = function (config, connect, options)
             it('should fail to authorize', expect_error("data.access_control.subscribe should have required property 'disallow'"));
         });
 
+        function close_on_before(cb)
+        {
+            on_pre_after(function (err)
+            {
+                if (err)
+                {
+                    return cb(err);
+                }
+
+                on_before(cb);
+            });
+        }
+
         describe('close', function ()
         {
             setup(1,
@@ -2972,7 +3007,7 @@ module.exports = function (config, connect, options)
                     server.close(function (err)
                     {
                         if (err) { return done(err); }
-                        on_before(done);
+                        close_on_before(done);
                     });
                 });
             });
@@ -2983,7 +3018,7 @@ module.exports = function (config, connect, options)
                 {
                     server.on('close', function ()
                     {
-                        on_before(done);
+                        close_on_before(done);
                     });
 
                     server.close();
@@ -3000,7 +3035,7 @@ module.exports = function (config, connect, options)
                         server.close(function (err)
                         {
                             if (err) { return done(err); }
-                            on_before(done);
+                            close_on_before(done);
                         });
                     });
                 });
@@ -3016,7 +3051,7 @@ module.exports = function (config, connect, options)
                     called += 1;
                     if (called === 2)
                     {
-                        on_before(done);
+                        close_on_before(done);
                     }
                     else if (called > 2)
                     {
@@ -3046,7 +3081,7 @@ module.exports = function (config, connect, options)
 
                 server.on('close', function ()
                 {
-                    on_before(done);
+                    close_on_before(done);
                 });
 
                 close(function ()
@@ -3084,7 +3119,7 @@ module.exports = function (config, connect, options)
                     server.close(function (err)
                     {
                         if (err) { return done(err); }
-                        on_before(done);
+                        close_on_before(done);
                     });
                 });
             });
@@ -3116,7 +3151,7 @@ module.exports = function (config, connect, options)
                     server.close(function (err)
                     {
                         if (err) { return done(err); }
-                        on_before(done);
+                        close_on_before(done);
                     });
                 });
             });
@@ -3138,7 +3173,7 @@ module.exports = function (config, connect, options)
 
                     server.on('close', function ()
                     {
-                        on_before(done);
+                        close_on_before(done);
                     });
 
                     close(function ()
@@ -3190,7 +3225,7 @@ module.exports = function (config, connect, options)
             it("should close connections while they're being authorised",
                 expect_error('closed', 1, 503, 0, function (done)
                 {
-                    on_before(done);
+                    close_on_before(done);
                 }));
         });
 
@@ -3247,7 +3282,7 @@ module.exports = function (config, connect, options)
             it("should close connections while they're being authorised",
                 expect_error('closed', 1, 503, 0, function (done)
                 {
-                    on_before(done);
+                    close_on_before(done);
                 }));
         });
 
@@ -5006,7 +5041,7 @@ module.exports = function (config, connect, options)
                 server.once('disconnect', function ()
                 {
                     detach_extension(ext);
-                    done();
+                    on_pre_after(done);
                 });
 
                 for (var info of connections.values())
@@ -5708,7 +5743,7 @@ module.exports = function (config, connect, options)
                             var s = get_info().clients[0].publish('foo', function (err)
                             {
                                 expect(err.message).to.equal('server error');
-                                expect(get_info().server.last_warning.message).to.equal(options.relay ? 'server error' : ('message data exceeded limit 1000: ' + get_info().connections.values().next().value.prefixes[0] + 'foo'));
+                                expect(get_info().server.last_warning.message).to.equal((options.relay && !is_transport('http2')) ? 'server error' : ('message data exceeded limit 1000: ' + get_info().connections.values().next().value.prefixes[0] + 'foo'));
                                 done();
                             });
                             s.write(new Buffer(500));
@@ -5723,7 +5758,7 @@ module.exports = function (config, connect, options)
 
         describe('transport ready event', function ()
         {
-            run.call(this, Object.assign(
+            var cfg = Object.assign(
             {
                 only: options.relay ? function (get_info)
                 {
@@ -5744,23 +5779,62 @@ module.exports = function (config, connect, options)
                     it('maxConnections', function (done)
                     {
                         var ths = this;
+
+                        if (is_transport('http2'))
+                        {
+                            get_info().clients[0].on('warning', function (err)
+                            {
+                                expect(err.message).to.equal('Client network socket disconnected before secure TLS connection was established');
+                            });
+                        }
+
                         get_info().clients[0].subscribe('foo', function ()
                         {
                             done(new Error('should not be called'));
                         }, function (err)
                         {
                             if (err) { return done(err); }
-                            var s = get_info().clients[0].publish('foo');
+                            if (is_transport('http2'))
+                            {
+                                cfg.client2_save = cfg.client2;
+                                cfg.client2 = cfg.make_client2();
+                            }
+
+                            var s = get_info().clients[0].publish('foo'),
+                                called = false;
+
+                            function rejected()
+                            {
+                                if (called) { return; }
+                                called = true;
+
+                                get_info().detach_extension(ths.centro_test_ltc);
+                                if (is_transport('http2'))
+                                {
+                                    return get_info().on_pre_after(function (err)
+                                    {
+                                        cfg.client2 = cfg.client2_save;
+                                        delete cfg.client2_save;
+                                        done(err);
+                                    });
+                                }
+                                done();
+                            }
+
                             s.on('error', function (err)
                             {
                                 expect(err.message).to.be.oneOf([
                                     'socket hang up',
                                     'read ECONNRESET',
-                                    'Client network socket disconnected before secure TLS connection was established'
+                                    'Client network socket disconnected before secure TLS connection was established',
+                                    'The pending stream has been canceled (caused by: Client network socket disconnected before secure TLS connection was established)'
                                 ]);
-                                get_info().detach_extension(ths.centro_test_ltc);
-                                done();
+
+                                rejected();
                             });
+
+                            s.on('close', rejected);
+
                             s.end('bar');
                         });
                     });
@@ -5769,14 +5843,23 @@ module.exports = function (config, connect, options)
                     {
                         var ths = this,
                             now = new Date(),
-                            s = get_info().clients[0].publish('foo');
-                        s.on('error', function (err)
+                            s;
+                        function on_error(err)
                         {
                             expect(new Date().getTime() - now.getTime()).to.be.at.least(2000);
-                            expect(err.message).to.equal('socket hang up');
+                            expect(err.message).to.equal(is_transport('http2') ? 'server error' : 'socket hang up');
                             get_info().detach_extension(ths.centro_test_thpr);
                             done();
-                        });
+                        }
+                        if (is_transport('http2'))
+                        {
+                            s = get_info().clients[0].publish('foo', on_error);
+                        }
+                        else
+                        {
+                            s = get_info().clients[0].publish('foo');
+                            s.on('error', on_error);
+                        }
                         s.write('a');
                     });
                 } : function (get_info)
@@ -5849,7 +5932,8 @@ module.exports = function (config, connect, options)
                             { http_publish_timeout: 2000 });
                     }
                 }
-            }, config));
+            }, config);
+            run.call(this, cfg);
         });
 
         function backoff_event(f, before_server_ready)

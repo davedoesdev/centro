@@ -15,6 +15,14 @@ var runner = require('./runner'),
     PassThrough = require('stream').PassThrough,
     port = 8700;
 
+const {
+    HTTP2_HEADER_PATH,
+    HTTP2_HEADER_STATUS,
+    HTTP2_HEADER_METHOD,
+    HTTP2_HEADER_AUTHORIZATION,
+    HTTP2_HEADER_WWW_AUTHENTICATE
+} = require('http2').constants;
+
 function make_token(get_info, topic)
 {
     topic = topic || 'foo';
@@ -42,8 +50,45 @@ function make_token(get_info, topic)
 function setup(mod, client_config, server_config)
 {
 
+function on_pre_after(config, cb)
+{
+    var client2 = config.client2;
+    delete config.client2;
+
+    if (client2 && !client2.destroyed)
+    {
+        client2.once('close', cb);
+        return client2.destroy();
+    }
+
+    cb();
+}
+
 function connect(config, server, cb)
 {
+    var mqclient;
+
+    if ((mod === 'http2') && !config.test_config.client2)
+    {
+        config.test_config.make_client2 = function ()
+        {
+            var scheme = client_config.ca ? 'https' : 'http',
+                r = require(mod).connect(scheme + '://localhost:' + port, client_config);
+            r.on('error', function (err)
+            {
+                if (mqclient)
+                {
+                    return mqclient.emit('warning', err);
+                }
+
+                throw err;
+            });
+
+            return r;
+        };
+        config.test_config.client2 = config.test_config.make_client2();
+    }
+
     centro.separate_auth(config, function (err, userpass)
     {
         if (err)
@@ -58,7 +103,7 @@ function connect(config, server, cb)
                 return cb(err);
             }
 
-            var mqclient = centro.stream_auth(stream, config);
+            mqclient = centro.stream_auth(stream, config);
 
             if (mqclient)
             {
@@ -80,14 +125,7 @@ function connect(config, server, cb)
                             options = undefined;
                         }
 
-                        return require(mod).request(Object.assign(
-                        {
-                            port: port,
-                            auth: userpass,
-                            method: 'POST',
-                            path: pub_pathname + querystring.stringify(Object.assign(
-                                    {}, options, { topic: topic, n: n }))
-                        }, client_config), function (res)
+                        function on_response(res)
                         {
                             var msg = '';
 
@@ -131,7 +169,37 @@ function connect(config, server, cb)
                                     msg += r.toString();
                                 }
                             });
-                        });
+                        }
+
+                        const path = pub_pathname +
+                                     querystring.stringify(Object.assign(
+                                         {}, options, { topic: topic, n: n }));
+
+                        if (config.test_config.client2)
+                        {
+                            const req = config.test_config.client2.request(
+                            {
+                                [HTTP2_HEADER_PATH]: path,
+                                [HTTP2_HEADER_METHOD]: 'POST',
+                                [HTTP2_HEADER_AUTHORIZATION]: 'Basic ' + Buffer.from(userpass).toString('base64')
+                            });
+
+                            req.on('response', headers =>
+                            {
+                                req.statusCode = headers[HTTP2_HEADER_STATUS];
+                                on_response(req);
+                            });
+
+                            return req;
+                        }
+
+                        return require(mod).request(Object.assign(
+                        {
+                            port: port,
+                            auth: userpass,
+                            method: 'POST',
+                            path: path
+                        }, client_config), on_response);
                     };
 
                     var nsubs = [];
@@ -193,15 +261,8 @@ function connect(config, server, cb)
                                 subs.set(t, new Set([handler]));
                             }
                         }
-                        
-                        require(mod).request(Object.assign(
-                        {
-                            port: port,
-                            auth: userpass,
-                            method: 'GET',
-                            path: sub_pathname + querystring.stringify(
-                                    { topic: topic, n: n })
-                        }, client_config), function (res)
+
+                        function on_response(res)
                         {
                             if (res.statusCode !== 200)
                             {
@@ -331,7 +392,33 @@ function connect(config, server, cb)
                                     }
                                 }
                             });
-                        }).end();
+                        }
+
+                        const path = sub_pathname + querystring.stringify(
+                                        { topic: topic, n: n });
+
+                        if (config.test_config.client2)
+                        {
+                            const req = config.test_config.client2.request(
+                            {
+                                [HTTP2_HEADER_PATH]: path,
+                                [HTTP2_HEADER_AUTHORIZATION]: 'Basic ' + Buffer.from(userpass).toString('base64')
+                            });
+
+                            return req.on('response', headers =>
+                            {
+                                req.statusCode = headers[HTTP2_HEADER_STATUS];
+                                on_response(req);
+                            });
+                        }
+
+                        require(mod).request(Object.assign(
+                        {
+                            port: port,
+                            auth: userpass,
+                            method: 'GET',
+                            path: path
+                        }, client_config), on_response).end();
                     };
 
                     this.unsubscribe = function (n, topic, handler, cb)
@@ -398,9 +485,64 @@ function connect(config, server, cb)
 
 function extra(get_info, on_before)
 {
+    let client2;
+
+    function on_bef(cb)
+    {
+        if (mod === 'http2')
+        {
+            var scheme = client_config.ca ? 'https' : 'http';
+            client2 = require(mod).connect(scheme + '://localhost:' + port, client_config);
+        }
+
+        cb();
+    }
+    before(on_bef);
+
+    function on_aft(cb)
+    {
+        if ((mod === 'http2') && client2 && !client2.destroyed)
+        {
+            client2.once('close', cb);
+            return client2.destroy();
+        }
+
+        cb();
+    }
+    after(on_aft);
+
+    function rqst(options, cb)
+    {
+        if (client2)
+        {
+            const req = client2.request(
+            {
+                [HTTP2_HEADER_PATH]: options.path,
+                [HTTP2_HEADER_METHOD]: options.method,
+                origin: options.headers ? options.headers.origin : undefined,
+                [HTTP2_HEADER_AUTHORIZATION]: options.auth ?
+                    ('Basic ' + Buffer.from(options.auth).toString('base64')) :
+                    undefined
+            });
+
+            req.on('response', headers =>
+            {
+                req.statusCode = headers[HTTP2_HEADER_STATUS];
+                req.headers = {
+                    'www-authenticate': headers[HTTP2_HEADER_WWW_AUTHENTICATE]
+                };
+                cb(req, req);
+            });
+
+            return req;
+        }
+
+        return require(mod).request(options, cb);
+    }
+
     it('should return 404 for unknown path', function (done)
     {
-        require(mod).request(Object.assign(
+        rqst(Object.assign(
         {
             port: port,
             method: 'POST',
@@ -418,7 +560,7 @@ function extra(get_info, on_before)
 
     it('should return 405 for non-POSTs to publish', function (done)
     {
-        require(mod).request(Object.assign(
+        rqst(Object.assign(
         {
             port: port,
             method: 'GET',
@@ -436,7 +578,7 @@ function extra(get_info, on_before)
 
     it('should return 405 for non-GETs to subscribe', function (done)
     {
-        require(mod).request(Object.assign(
+        rqst(Object.assign(
         {
             port: port,
             method: 'POST',
@@ -454,7 +596,7 @@ function extra(get_info, on_before)
 
     it('should return 403 for invalid CORS request', function (done)
     {
-        require(mod).request(Object.assign(
+        rqst(Object.assign(
         {
             port: port,
             method: 'GET',
@@ -482,7 +624,7 @@ function extra(get_info, on_before)
                 token: make_token(get_info, 'sspkac')
             }, function (err, userpass)
             {
-                require(mod).request(Object.assign(
+                rqst(Object.assign(
                 {
                     port: port,
                     auth: userpass,
@@ -524,7 +666,7 @@ function extra(get_info, on_before)
                 token: make_token(get_info, 'snspkac')
             }, function (err, userpass)
             {
-                require(mod).request(Object.assign(
+                rqst(Object.assign(
                 {
                     port: port,
                     auth: userpass,
@@ -560,7 +702,7 @@ function extra(get_info, on_before)
 
     it('should return 401 for authorise error', function (done)
     {
-        require(mod).request(Object.assign(
+        rqst(Object.assign(
         {
             port: port,
             method: 'POST',
@@ -584,7 +726,7 @@ function extra(get_info, on_before)
             token: make_token(get_info)
         }, function (err, userpass)
         {
-            require(mod).request(Object.assign(
+            rqst(Object.assign(
             {
                 port: port,
                 auth: userpass,
@@ -627,7 +769,7 @@ function extra(get_info, on_before)
             token: make_token(get_info)
         }, function (err, userpass)
         {
-            require(mod).request(Object.assign(
+            rqst(Object.assign(
             {
                 port: port,
                 auth: userpass,
@@ -642,7 +784,7 @@ function extra(get_info, on_before)
                 read_all(res, function (v)
                 {
                     expect(v.toString()).to.equal('closed');
-                    on_before(done); 
+                    on_aft(() => on_before(() => on_bef(done)));
                 });
             }).end('hello');
         });
@@ -663,7 +805,7 @@ function extra(get_info, on_before)
             token: make_token(get_info)
         }, function (err, userpass)
         {
-            require(mod).request(Object.assign(
+            rqst(Object.assign(
             {
                 port: port,
                 auth: userpass,
@@ -699,7 +841,7 @@ function extra(get_info, on_before)
                 dstroy();
                 orig_set.call(this, connid, dstroy);
             };
-            require(mod).request(Object.assign(
+            rqst(Object.assign(
             {
                 port: port,
                 auth: userpass,
@@ -773,6 +915,8 @@ function extra(get_info, on_before)
             });
         });
     });
+
+    return rqst;
 }
 
 runner(
@@ -787,6 +931,7 @@ runner(
     }, 'in-mem'],
 }, connect,
 {
+    on_pre_after: on_pre_after,
     relay: true,
     extra: extra
 });
@@ -809,7 +954,7 @@ runner(
     relay: true,
     extra: function (get_info, on_before)
     {
-        extra(get_info, on_before);
+        var rqst = extra(get_info, on_before);
 
         it('should catch errors when writing response', function (done)
         {
@@ -858,7 +1003,7 @@ runner(
                 token: make_token(get_info)
             }, function (err, userpass)
             {
-                require(mod).request(Object.assign(
+                rqst(Object.assign(
                 {
                     port: port,
                     auth: userpass,
@@ -927,7 +1072,7 @@ runner(
                 token: make_token(get_info)
             }, function (err, userpass)
             {
-                require(mod).request(Object.assign(
+                rqst(Object.assign(
                 {
                     port: port,
                     auth: userpass,
@@ -979,7 +1124,7 @@ runner(
                 token: make_token(get_info)
             }, function (err, userpass)
             {
-                require(mod).request(Object.assign(
+                rqst(Object.assign(
                 {
                     port: port,
                     auth: userpass,
@@ -1040,7 +1185,7 @@ runner(
                 token: make_token(get_info)
             }, function (err, userpass)
             {
-                require(mod).request(Object.assign(
+                rqst(Object.assign(
                 {
                     port: port,
                     auth: userpass,
@@ -1103,7 +1248,7 @@ runner(
                 token: make_token(get_info)
             }, function (err, userpass)
             {
-                require(mod).request(Object.assign(
+                rqst(Object.assign(
                 {
                     port: port,
                     auth: userpass,
@@ -1180,7 +1325,7 @@ runner(
                             token: make_token(get_info)
                         }, function (err, userpass)
                         {
-                            require(mod).request(Object.assign(
+                            rqst(Object.assign(
                             {
                                 port: port,
                                 auth: userpass,
@@ -1219,15 +1364,25 @@ runner(
 
         if (server_config)
         {
-            config.server = require(mod).createServer(server_config);
+            config.server = mod === 'http2' ?
+                (client_config.ca ?
+                    require(mod).createSecureServer(server_config) :
+                    require(mod).createServer(server_config)) :
+                require(mod).createServer(server_config);
         }
         else
         {
-            config.server = require(mod).createServer();
+            config.server = mod === 'http2' ?
+                (client_config.ca ?
+                    require(mod).createSecureServer() :
+                    require(mod).createServer()):
+                require(mod).createServer();
         }
 
         config.server.listen(port, cb);
     },
+
+    on_pre_after: on_pre_after,
 
     on_after: function (config, cb)
     {
@@ -1247,4 +1402,16 @@ setup('https',
 {
     key: fs.readFileSync(path.join(__dirname, 'server.key')),
     cert: fs.readFileSync(path.join(__dirname, 'server.pem'))
+});
+
+setup('http2', {}, { http2: true });
+
+setup('http2',
+{
+    ca: fs.readFileSync(path.join(__dirname, 'ca.pem'))
+},
+{
+    key: fs.readFileSync(path.join(__dirname, 'server.key')),
+    cert: fs.readFileSync(path.join(__dirname, 'server.pem')),
+    http2: true
 });

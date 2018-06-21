@@ -1,14 +1,18 @@
 module.exports = function (s, cb)
 {
-    var bufs = [];
+    var bufs = [], done = false;
 
-    s.on('end', function ()
+    function end()
     {
+        if (done) { return; }
+        done = true;
         if (cb)
         {
             cb(Buffer.concat(bufs));
         }
-    });
+    }
+    s.on('end', end);
+    s.on('close', end);
 
     s.on('readable', function ()
     {
