@@ -750,15 +750,18 @@ function extra(get_info, on_before)
 
     it.only('should return 503 when closed while authorizing', function (done)
     {
+    console.log("HERE1");
         var orig_authorize = get_info().server.transport_ops[0].authz.authorize;
 
         get_info().server.transport_ops[0].authz.authorize = function ()
         {
+    console.log("HERE2");
             var self = this,
             args = Array.prototype.slice.call(arguments);
 
             get_info().server.close(function (err)
             {
+    console.log("HERE3");
                 if (err) { throw err; }
                 orig_authorize.apply(self, args);
             });
@@ -769,6 +772,7 @@ function extra(get_info, on_before)
             token: make_token(get_info)
         }, function (err, userpass)
         {
+    console.log("HERE4");
             rqst(Object.assign(
             {
                 port: port,
@@ -780,9 +784,11 @@ function extra(get_info, on_before)
                 })
             }, client_config), function (res)
             {
+    console.log("HERE5");
                 expect(res.statusCode).to.equal(503);
                 read_all(res, function (v)
                 {
+    console.log("HERE6");
                     expect(v.toString()).to.equal('closed');
                     on_aft(() => on_before(() => on_bef(done)));
                 });
