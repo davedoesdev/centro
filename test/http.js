@@ -493,10 +493,6 @@ function extra(get_info, on_before)
         {
             var scheme = client_config.ca ? 'https' : 'http';
             client2 = require(mod).connect(scheme + '://localhost:' + port, client_config);
-            client2.on('error', function (err)
-            {
-                console.log("ERROR", err);
-            });
         }
 
         cb();
@@ -519,7 +515,6 @@ function extra(get_info, on_before)
     {
         if (client2)
         {
-        console.log("RQST1");
             const req = client2.request(
             {
                 [HTTP2_HEADER_PATH]: options.path,
@@ -529,11 +524,9 @@ function extra(get_info, on_before)
                     ('Basic ' + Buffer.from(options.auth).toString('base64')) :
                     undefined
             });
-        console.log("RQST2");
 
             req.on('response', headers =>
             {
-        console.log("RQST3");
                 req.statusCode = headers[HTTP2_HEADER_STATUS];
                 req.headers = {
                     'www-authenticate': headers[HTTP2_HEADER_WWW_AUTHENTICATE]
@@ -726,7 +719,7 @@ function extra(get_info, on_before)
         }).end();
     });
 
-    it.only('should handle bad ttl value', function (done)
+    it('should handle bad ttl value', function (done)
     {
         centro.separate_auth(
         {
@@ -755,20 +748,17 @@ function extra(get_info, on_before)
         });
     });
 
-    it.only('should return 503 when closed while authorizing', function (done)
+    it('should return 503 when closed while authorizing', function (done)
     {
-    console.log("HERE1");
         var orig_authorize = get_info().server.transport_ops[0].authz.authorize;
 
         get_info().server.transport_ops[0].authz.authorize = function ()
         {
-    console.log("HERE2");
             var self = this,
             args = Array.prototype.slice.call(arguments);
 
             get_info().server.close(function (err)
             {
-    console.log("HERE3");
                 if (err) { throw err; }
                 orig_authorize.apply(self, args);
             });
@@ -779,7 +769,6 @@ function extra(get_info, on_before)
             token: make_token(get_info)
         }, function (err, userpass)
         {
-    console.log("HERE4");
             rqst(Object.assign(
             {
                 port: port,
@@ -791,11 +780,9 @@ function extra(get_info, on_before)
                 })
             }, client_config), function (res)
             {
-    console.log("HERE5");
                 expect(res.statusCode).to.equal(503);
                 read_all(res, function (v)
                 {
-    console.log("HERE6");
                     expect(v.toString()).to.equal('closed');
                     on_aft(() => on_before(() => on_bef(done)));
                 });
@@ -948,8 +935,6 @@ runner(
     relay: true,
     extra: extra
 });
-
-return;
 
 runner(
 {
@@ -1406,7 +1391,7 @@ runner(
 });
 
 }
-/*
+
 setup('http');
 
 setup('https',
@@ -1418,7 +1403,7 @@ setup('https',
     key: fs.readFileSync(path.join(__dirname, 'server.key')),
     cert: fs.readFileSync(path.join(__dirname, 'server.pem'))
 });
-*/
+
 setup('http2', {}, { http2: true });
 
 setup('http2',
