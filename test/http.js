@@ -493,6 +493,10 @@ function extra(get_info, on_before)
         {
             var scheme = client_config.ca ? 'https' : 'http';
             client2 = require(mod).connect(scheme + '://localhost:' + port, client_config);
+            client2.on('error', function (err)
+            {
+                console.log("ERROR", err);
+            });
         }
 
         cb();
@@ -515,6 +519,7 @@ function extra(get_info, on_before)
     {
         if (client2)
         {
+        console.log("RQST1");
             const req = client2.request(
             {
                 [HTTP2_HEADER_PATH]: options.path,
@@ -524,9 +529,11 @@ function extra(get_info, on_before)
                     ('Basic ' + Buffer.from(options.auth).toString('base64')) :
                     undefined
             });
+        console.log("RQST2");
 
             req.on('response', headers =>
             {
+        console.log("RQST3");
                 req.statusCode = headers[HTTP2_HEADER_STATUS];
                 req.headers = {
                     'www-authenticate': headers[HTTP2_HEADER_WWW_AUTHENTICATE]
