@@ -5784,7 +5784,10 @@ module.exports = function (config, connect, options)
                         {
                             get_info().clients[0].on('warning', function (err)
                             {
-                                expect(err.message).to.equal('Client network socket disconnected before secure TLS connection was established');
+                                expect(err.message).to.be.oneOf([
+                                    'Client network socket disconnected before secure TLS connection was established',
+                                    'read ECONNRESET'
+                                ]);
                             });
                         }
 
@@ -5827,7 +5830,8 @@ module.exports = function (config, connect, options)
                                     'socket hang up',
                                     'read ECONNRESET',
                                     'Client network socket disconnected before secure TLS connection was established',
-                                    'The pending stream has been canceled (caused by: Client network socket disconnected before secure TLS connection was established)'
+                                    'The pending stream has been canceled (caused by: Client network socket disconnected before secure TLS connection was established)',
+                                    'The pending stream has been canceled (caused by: read ECONNRESET)'
                                 ]);
 
                                 rejected();
