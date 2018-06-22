@@ -719,7 +719,7 @@ function extra(get_info, on_before)
         }).end();
     });
 
-    it('should handle bad ttl value', function (done)
+    it.only('should handle bad ttl value', function (done)
     {
         centro.separate_auth(
         {
@@ -748,7 +748,7 @@ function extra(get_info, on_before)
         });
     });
 
-    it('should return 503 when closed while authorizing', function (done)
+    it.only('should return 503 when closed while authorizing', function (done)
     {
         var orig_authorize = get_info().server.transport_ops[0].authz.authorize;
 
@@ -935,6 +935,8 @@ runner(
     relay: true,
     extra: extra
 });
+
+return;
 
 runner(
 {
@@ -1391,7 +1393,7 @@ runner(
 });
 
 }
-
+/*
 setup('http');
 
 setup('https',
@@ -1403,7 +1405,7 @@ setup('https',
     key: fs.readFileSync(path.join(__dirname, 'server.key')),
     cert: fs.readFileSync(path.join(__dirname, 'server.pem'))
 });
-
+*/
 setup('http2', {}, { http2: true });
 
 setup('http2',
