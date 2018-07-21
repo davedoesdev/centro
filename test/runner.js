@@ -5743,7 +5743,20 @@ module.exports = function (config, connect, options)
                             var s = get_info().clients[0].publish('foo', function (err)
                             {
                                 expect(err.message).to.equal('server error');
-                                expect(get_info().server.last_warning.message).to.equal((options.relay && !is_transport('http2')) ? 'server error' : ('message data exceeded limit 1000: ' + get_info().connections.values().next().value.prefixes[0] + 'foo'));
+                                var limit_errmsg = 'message data exceeded limit 1000: ' + get_info().connections.values().next().value.prefixes[0] + 'foo';
+                                var last_errmsg = get_info().server.last_warning.message;
+                                if (options.relay)
+                                {
+                                    expect(last_errmsg).to.be.oneOf([
+                                        limit_errmsg,
+                                        'server error'
+                                    ]);
+                                }
+                                else
+                                {
+                                    expect(last_errmsg).to.equal(limit_errmsg);
+                                }
+
                                 done();
                             });
                             s.write(new Buffer(500));
