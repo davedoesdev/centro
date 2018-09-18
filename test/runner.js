@@ -1940,7 +1940,8 @@ module.exports = function (config, connect, options)
                     {
                         this.removeListener('warning', warning);
                         done();
-                    } else if (count > 2)
+                    }
+                    else if (count > 2)
                     {
                         done(new Error('called too many times'));
                     }
