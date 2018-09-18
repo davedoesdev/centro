@@ -1969,7 +1969,12 @@ module.exports = function (config, connect, options)
 
                     clients[0].publish('foo', function (err)
                     {
-                        if (err) { return done(err); }
+                        if (err &&
+                            (err.message !== 'carrier stream finished before duplex finished') &&
+                            (err.message !== 'carrier stream ended before end message received'))
+                        {
+                            return done(err);
+                        }
                     }).end('bar');
                 });
             });
