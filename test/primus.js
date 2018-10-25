@@ -42,7 +42,7 @@ runner(
         server: 'primus',
         config: transport_config,
         name: 'primus_' + mod
-    },
+    }
 }, connect);
 
 runner(
@@ -51,7 +51,7 @@ runner(
         server: 'primus',
         config: transport_config,
         name: 'primus_' + mod + '_passed_in_server'
-    },
+    }
 }, connect,
 {
     on_before: function (config, cb)

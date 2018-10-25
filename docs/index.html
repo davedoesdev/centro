@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset='utf-8' />
-  <title>centro-js 3.1.4 | Documentation</title>
+  <title>centro-js 3.2.0 | Documentation</title>
   <meta name='viewport' content='width=device-width,initial-scale=1'>
   <link href='assets/bass.css' type='text/css' rel='stylesheet' />
   <link href='assets/style.css' type='text/css' rel='stylesheet' />
@@ -15,7 +15,7 @@
       <div id='split-left' class='overflow-auto fs0 height-viewport-100'>
         <div class='py1 px2'>
           <h3 class='mb0 no-anchor'>centro-js</h3>
-          <div class='mb1'><code>3.1.4</code></div>
+          <div class='mb1'><code>3.2.0</code></div>
           <input
             placeholder='Filter'
             id='filter-input'
@@ -3682,7 +3682,11 @@ ing the connection, if an error occurs which means the connection can't be re-us
 <a href="https://nodejs.org/api/http2.html#http2_http2_createserver_options_onrequesthandler">http2.createServer</a>
 /
 <a href="https://nodejs.org/api/http2.html#http2_http2_createsecureserver_options_onrequesthandler">http2.createSecureServer</a>
-) instead of HTTP. Defaults to 
+) instead of HTTP. Note this still uses Server-Sent Events to deliver messages. If you want to use HTTP/2 streams to deliver messages, see the  
+<a href="centro-js/lib/server_transports/http2">http2</a>
+ and 
+<a href="centro-js/lib/server_transports/http2_duplex">http2_duplex</a>
+ transports. Defaults to 
 <code>false</code>
 .
 </span></td>

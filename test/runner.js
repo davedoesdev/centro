@@ -486,7 +486,9 @@ module.exports = function (config, connect, options)
                         return cb(err);
                     }
 
-                    if (opts.end_immediately && !is_transport('primus'))
+                    if (opts.end_immediately &&
+                        !is_transport('primus') &&
+                        !is_transport('node_http2'))
                     {
                         server.removeListener('connect', onconnect);
                         return setTimeout(cb, 1000);
@@ -1909,7 +1911,7 @@ module.exports = function (config, connect, options)
                     info.mqserver.on('publish_requested', pubreq);
                 }
 
-                if (is_transport('tcp'))
+                if (is_transport('tcp') || is_transport('node_http2'))
                 {
                     clients[0].on('error', function (err)
                     {
@@ -2653,7 +2655,7 @@ module.exports = function (config, connect, options)
                         expect(server.last_warning.statusCode).to.equal(
                             code === 401 ? code : undefined);
                         expect(server.last_warning.authenticate).to.equal(
-                            code === 401 ? 'Basic realm="centro"' : undefined);
+                            code === 401 ? 'Bearer realm="centro"' : undefined);
                     }
 
                     if (clients[n])
@@ -2700,7 +2702,8 @@ module.exports = function (config, connect, options)
                                 'write ECONNABORTED',
                                 'read ECONNRESET',
                                 'write ECONNRESET',
-                                'Client network socket disconnected before secure TLS connection was established'
+                                'Client network socket disconnected before secure TLS connection was established',
+                                'closed'
                             ]);
                         }
 
@@ -2848,12 +2851,13 @@ module.exports = function (config, connect, options)
             setup(1,
             {
                 end_immediately: true,
-                client_function: is_transport('primus') ? client_function : undefined
+                client_function: is_transport('primus') || is_transport('node_http2') ? client_function : undefined
             });
 
             it('should fail to read tokens',
                expect_error(is_transport('primus') ? 'tokens missing' :
-                                                     'ended before frame'));
+                            is_transport('node_http2') ? "JWS signature is not a form of 'Head.Payload.SigValue'." :
+                            'ended before frame'));
         });
 
         describe('max tokens', function ()
@@ -2897,7 +2901,7 @@ module.exports = function (config, connect, options)
                 client_function: client_function
             });
 
-            it('should fail to authorize', expect_error(is_transport('primus') ? 'token too long' : 'Message is larger than the allowed maximum of ' + config.max_token_length));
+            it('should fail to authorize', expect_error(is_transport('primus') || is_transport('node_http2') ? 'token too long' : 'Message is larger than the allowed maximum of ' + config.max_token_length));
         });
 
         describe('duplicate tokens', function ()
@@ -4209,7 +4213,7 @@ module.exports = function (config, connect, options)
                     if (clients[0].last_error && server.last_warning)
                     {
                         expect(server.last_warning.message).to.equal('unsupported version: 2');
-                        if (!(is_transport('primus') || is_transport('tls')) ||
+                        if (!(is_transport('primus') || is_transport('tls') || is_transport('node_http2')) ||
                             ((clients[0].last_error.message !== 'carrier stream ended before end message received') &&
                              (clients[0].last_error.message !== 'carrier stream finished before duplex finished') &&
                              (clients[0].last_error.message !== 'read ECONNRESET')))
