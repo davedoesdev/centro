@@ -37,6 +37,7 @@ module.exports = function (grunt)
                    'test/embedded.js',
                    'test/embedded-authz.js',
                    'test/http.js',
+                   'test/http2.js',
                    'test/in-mem-fsq.js',
                    'test/in-mem-anon.js',
                    'test/server-extra.js',

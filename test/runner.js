@@ -84,11 +84,11 @@ module.exports = function (config, connect, options)
     {
         if (n === 'tcp')
         {
-            return name.lastIndexOf('net') === 0 ||
-                   name.lastIndexOf('tls') === 0;
+            return name.lastIndexOf('net', 0) === 0 ||
+                   name.lastIndexOf('tls', 0) === 0;
         }
 
-        return name.lastIndexOf(n) === 0;
+        return name.lastIndexOf(n, 0) === 0;
     }
 
     function run(config)
@@ -462,7 +462,11 @@ module.exports = function (config, connect, options)
 
                         c.on('warning', function (err)
                         {
-                            console.warn(err.message);
+                            if (err.message !== c.last_err_message)
+                            {
+                                console.warn(err.message);
+                            }
+                            c.last_err_message = err.message;
                         });
                     });
                 }, function (err, cs)
@@ -2745,7 +2749,7 @@ module.exports = function (config, connect, options)
                                 expect(errors[0].message).to.equal('unexpected response');
                                 expect(errors[0].statusCode).to.equal(code);
                                 expect(errors[0].authenticate).to.equal(
-                                    code == 401 ? 'Basic realm="centro"' : undefined);
+                                    code == 401 ? 'Bearer realm="centro"' : undefined);
                                 expect(errors[0].data).to.equal('{"error":"' + msg + '"}');
                                 expect(errors[1].message).to.equal('WebSocket was closed before the connection was established');
                                 expect(errors[2].message).to.equal('WebSocket was closed before the connection was established');
@@ -5044,7 +5048,8 @@ module.exports = function (config, connect, options)
                         'read ECONNRESET',
                         'write ECONNRESET',
                         'write EPIPE',
-                        'write ECONNABORTED'
+                        'write ECONNABORTED',
+                        'carrier stream finished before duplex finished'
                     ]);
                 });
 
@@ -6080,7 +6085,8 @@ module.exports = function (config, connect, options)
                                 'write after end',
                                 'carrier stream ended before end message received',
                                 'carrier stream finished before duplex finished',
-                                'no handlers' // even after we unsubscribe there may be some messages left in server buffer
+                                'no handlers', // even after we unsubscribe there may be some messages left in server buffer
+                                'Cannot call write after a stream was destroyed'
                             ]);
                         });
 
@@ -6093,7 +6099,8 @@ module.exports = function (config, connect, options)
                                 'carrier stream ended before end message received',
                                 'write ECANCELED',
                                 'write EPIPE',
-                                'write ECONNRESET'
+                                'write ECONNRESET',
+                                'Cannot call write after a stream was destroyed'
                             ]);
                         });
 

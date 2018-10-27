@@ -710,7 +710,7 @@ function extra(get_info, on_before)
         }, client_config), function (res)
         {
             expect(res.statusCode).to.equal(401);
-            expect(res.headers['www-authenticate']).to.equal('Basic realm="centro"');
+            expect(res.headers['www-authenticate']).to.equal('Bearer realm="centro"');
             read_all(res, function (v)
             {
                 expect(v.toString()).to.equal('tokens missing');
