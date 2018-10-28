@@ -12,6 +12,7 @@ const runner = require('./runner'),
 
 function setup(client_config, server_config)
 {
+const scheme = client_config.ca ? 'https' : 'http';
 
 function connect(config, server, cb)
 {
@@ -69,7 +70,7 @@ function connect(config, server, cb)
         }
 
         http2.connect(
-            'https://localhost:' + port, client_config, function ()
+            `${scheme}://localhost:${port}`, client_config, function ()
             {
                 config.test_config.http2_client_session = this;
                 connected();
@@ -98,7 +99,7 @@ function extra(get_info, on_before)
     function on_bef(cb)
     {
         http2.connect(
-            'https://localhost:' + port, client_config, function ()
+            `${scheme}://localhost:${port}`, client_config, function ()
             {
                 session = this;
                 cb();
@@ -168,11 +169,12 @@ runner(
         {
             port: port
         }, server_config),
-        name: 'node_http2'
+        name: `node_http2_${scheme}`
     }
 }, connect,
 {
-    extra: extra
+    extra: extra,
+    on_pre_after: on_pre_after
 });
 
 runner(
@@ -183,7 +185,7 @@ runner(
         {
             port: port
         }, server_config),
-        name: 'node_http2_passed_in_server'
+        name: `node_http2_${scheme}_passed_in_server`
     }
 }, connect,
 {
@@ -196,7 +198,19 @@ runner(
             return cb();
         }
 
-        config.server = http2.createSecureServer(server_config);
+        if (server_config)
+        {
+            config.server = client_config.ca ?
+                http2.createSecureServer(server_config) :
+                http2.createServer(server_config);
+        }
+        else
+        {
+            config.server = client_config.ca ?
+                http2.createSecureServer() :
+                http2.createServer();
+        }
+
         config.server.listen(port, cb);
     },
 
@@ -209,6 +223,8 @@ runner(
 });
 
 }
+
+setup({});
 
 setup(
 {

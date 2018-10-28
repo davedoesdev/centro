@@ -2036,7 +2036,7 @@ module.exports = function (config, connect, options)
                 {
                     if (err.message === 'carrier stream finished before duplex finished')
                     {
-                        if (is_transport('primus'))
+                        if (is_transport('primus') || is_transport('node_http2_http'))
                         {
                             return done();
                         }
@@ -3548,7 +3548,7 @@ module.exports = function (config, connect, options)
                     client_function: client_function
                 });
 
-                it('should warn on destroy if error occurs while checking revision', expect_error('dummy', 0, 0));
+                it('should warn on destroy if error occurs while checking revision', expect_error('dummy', 0, 0, 0, on_pre_after));
             });
 
             describe('revision mismatch', function ()
@@ -3889,7 +3889,8 @@ module.exports = function (config, connect, options)
                         'read ECONNRESET',
                         'write ECONNABORTED',
                         'write ECONNRESET',
-                        'write EPIPE'
+                        'write EPIPE',
+                        'Cannot call write after a stream was destroyed'
                     ]);
                     var c = connections.values().next().value;
                     if (c)
@@ -4010,7 +4011,8 @@ module.exports = function (config, connect, options)
                             'write EPIPE',
                             'write after end',
                             'write ECONNABORTED',
-                            'read ECONNRESET'
+                            'read ECONNRESET',
+                            'Cannot call write after a stream was destroyed'
                         ]);
                     });
 
@@ -6230,8 +6232,8 @@ module.exports = function (config, connect, options)
                                 'write EPIPE',
                                 'write after end',
                                 'carrier stream ended before end message received',
-                                'carrier stream finished before duplex finished'
-
+                                'carrier stream finished before duplex finished',
+                                'Cannot call write after a stream was destroyed'
                             ]);
                         });
 
@@ -6243,7 +6245,8 @@ module.exports = function (config, connect, options)
                                 'carrier stream finished before duplex finished',
                                 'carrier stream ended before end message received',
                                 'write EPIPE',
-                                'write ECONNABORTED'
+                                'write ECONNABORTED',
+                                'Cannot call write after a stream was destroyed'
                             ]);
                         });
 
