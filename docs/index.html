@@ -282,6 +282,16 @@
               
                 
                 <li><a
+                  href='#centro-jslibserver_transportshttp2'
+                  class="">
+                  centro-js/lib/server_transports/http2
+                  
+                </a>
+                
+                </li>
+              
+                
+                <li><a
                   href='#centro-jslibserver_transportsin-mem'
                   class=" toggle-sibling">
                   centro-js/lib/server_transports/in-mem
@@ -1593,7 +1603,7 @@ clients.</p>
   
     (default <code>centro</code>)
   </td>
-  <td class='break-word'><span>When authorization of a client fails, the transport is given information it can (optionally) use when rejecting the connection. This includes a HTTP Basic Authentication header specifying this realm.
+  <td class='break-word'><span>When authorization of a client fails, the transport is given information it can (optionally) use when rejecting the connection. This includes a HTTP Bearer Authentication header specifying this realm.
 </span></td>
 </tr>
 
@@ -3329,7 +3339,7 @@ to <code>console.error</code>.</p>
                 <tr>
   <td class='break-word'><span class='code bold'>config.pathname</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></code>
   
-    (default <code>/centro/v1/primus</code>)
+    (default <code>/centro/v2/primus</code>)
   </td>
   <td class='break-word'><span>Pathname prefix on which Primus listens for connections.
 </span></td>
@@ -3517,7 +3527,7 @@ to <code>console.error</code>.</p>
   <p>HTTP transport. This allows messages to be published using HTTP POST requests
 and received using HTTP Server-Sent Events.</p>
 <p>Publish messages using POST requests of the form:</p>
-<pre><code>/centro/v1/publish?authz_token=XXX&#x26;topic=YYY
+<pre><code>/centro/v2/publish?authz_token=XXX&#x26;topic=YYY
 </code></pre>
 <ul>
 <li><code>XXX</code> is a <a href="http://self-issued.info/docs/draft-ietf-oauth-json-web-token.html">JSON Web Token</a> allowing access to the server. See <a href="https://github.com/davedoesdev/centro#authz-tokens">here</a> for more information about Centro authorization tokens.</li>
@@ -3526,7 +3536,7 @@ and received using HTTP Server-Sent Events.</p>
 interpret the data, it just treats it as a binary stream.</li>
 </ul>
 <p>Subscribe to messages using GET requests of the form:</p>
-<pre><code>/centro/v1/subscribe?authz_token=XXX&#x26;topic=YYY&#x26;topic=ZZZ
+<pre><code>/centro/v2/subscribe?authz_token=XXX&#x26;topic=YYY&#x26;topic=ZZZ
 </code></pre>
 <ul>
 <li><code>XXX</code> is the authorization token allowing access to the server.</li>
@@ -3589,10 +3599,8 @@ supported because when a connection drops, the server forgets all about it.</p>
             <span class='code bold'>config</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</code>
 	    Configuration options. This supports all the options supported by 
 <a href="https://nodejs.org/api/net.html#net_server_listen_options_callback">net.Server#listen</a>
-, 
-<a href="https://nodejs.org/api/https.html#https_https_createserver_options_requestlistener">https.createServer</a>
  and 
-<a href="https://github.com/primus/access-control">access-control</a>
+<a href="https://nodejs.org/api/https.html#https_https_createserver_options_requestlistener">https.createServer</a>
  as well as the following:
 
           </div>
@@ -3626,12 +3634,12 @@ supported because when a connection drops, the server forgets all about it.</p>
                 <tr>
   <td class='break-word'><span class='code bold'>config.pathname</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></code>
   
-    (default <code>/centro/v1/</code>)
+    (default <code>/centro/v2/</code>)
   </td>
   <td class='break-word'><span>Pathname prefix on which to listen for requests. Publish requests are made on 
-<code>/centro/v1/publish</code>
+<code>/centro/v2/publish</code>
  and subscribe requests are made on 
-<code>/centro/v1/subscribe</code>
+<code>/centro/v2/subscribe</code>
 .
 </span></td>
 </tr>
@@ -3683,7 +3691,7 @@ ing the connection, if an error occurs which means the connection can't be re-us
 /
 <a href="https://nodejs.org/api/http2.html#http2_http2_createsecureserver_options_onrequesthandler">http2.createSecureServer</a>
 ) instead of HTTP. Note this still uses Server-Sent Events to deliver messages. If you want to use HTTP/2 streams to deliver messages, see the  
-<a href="centro-js/lib/server_transports/http2">http2</a>
+<a href="#centro-jslibserver_transportshttp2">http2</a>
  and 
 <a href="centro-js/lib/server_transports/http2_duplex">http2_duplex</a>
  transports. Defaults to 
@@ -3696,6 +3704,147 @@ ing the connection, if an error occurs which means the connection can't be re-us
               
             </tbody>
           </table>
+          
+        </div>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>access</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>?)</code>
+	    Passed to 
+<a href="https://github.com/primus/access-control">access-control</a>
+.
+
+          </div>
+          
+        </div>
+      
+    </div>
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</section>
+
+        
+          
+          <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+  <div class='clearfix'>
+    
+    <h3 class='fl m0' id='centro-jslibserver_transportshttp2'>
+      centro-js/lib/server_transports/http2
+    </h3>
+    
+    
+  </div>
+  
+
+  <p>HTTP/2 transport. This allows messages to be sent over HTTP/2 streams.</p>
+
+ 
+  
+    <div class='pre p1 fill-light mt0'>centro-js/lib/server_transports/http2</div>
+   
+  
+  
+
+  
+  
+  
+  
+  
+  
+
+  
+    <div class='py1 quiet mt1 prose-big'>Parameters</div>
+    <div class='prose'>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>config</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</code>
+	    Configuration options. This supports all the options supported by 
+<a href="https://nodejs.org/api/http2.html#http2_http2_createserver_options_onrequesthandler">http2.createServer</a>
+, {
+<a href="https://nodejs.org/api/http2.html#http2_http2_createsecureserver_options_onrequesthandler%7Chttp2.createSecureServer%7D">https://nodejs.org/api/http2.html#http2_http2_createsecureserver_options_onrequesthandler|http2.createSecureServer}</a>
+ and 
+<a href="https://nodejs.org/api/net.html#net_server_listen_options_callback">net.Server#listen</a>
+ as well as the following:
+
+          </div>
+          
+          <table class='mt1 mb2 fixed-table h5 col-12'>
+            <colgroup>
+              <col width='30%' />
+              <col width='70%' />
+            </colgroup>
+            <thead>
+              <tr class='bold fill-light'>
+                <th>Name</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody class='mt1'>
+              
+                <tr>
+  <td class='break-word'><span class='code bold'>config.server</span> <code class='quiet'>(http2.Http2Server | http2.Http2SecureServer)?</code>
+  </td>
+  <td class='break-word'><span>If you want to supply your own HTTP/2 server object. Otherwise, 
+<a href="https://nodejs.org/api/http2.html#http2_http2_createserver_options_onrequesthandler">http2.createServer</a>
+ or {
+<a href="https://nodejs.org/api/http2.html#http2_http2_createsecureserver_options_onrequesthandler%7Chttp2.createSecureServer%7D">https://nodejs.org/api/http2.html#http2_http2_createsecureserver_options_onrequesthandler|http2.createSecureServer}</a>
+ will be called to create one.
+</span></td>
+</tr>
+
+
+              
+                <tr>
+  <td class='break-word'><span class='code bold'>config.pathname</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></code>
+  
+    (default <code>/centro/v2/http2/</code>)
+  </td>
+  <td class='break-word'><span>Pathname prefix on which to listen for requests.
+</span></td>
+</tr>
+
+
+              
+                <tr>
+  <td class='break-word'><span class='code bold'>config.http2</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>?</code>
+  </td>
+  <td class='break-word'><span>If present then this is used in preference to 
+<code>config</code>
+.
+</span></td>
+</tr>
+
+
+              
+            </tbody>
+          </table>
+          
+        </div>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>access</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>?)</code>
+	    Passed to 
+<a href="https://github.com/primus/access-control">access-control</a>
+.
+
+          </div>
           
         </div>
       

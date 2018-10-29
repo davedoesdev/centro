@@ -23,7 +23,7 @@ available to use shared memory on a single server machine or a distributed file
 system for multiple server machines.
 
 Clients can connect to the server using https://github.com/primus/primus[Primus]
-(Websockets), TCP, HTTP or in-memory streams.
+(Websockets), TCP, HTTP, HTTP/2 or in-memory streams.
 
 API documentation is available http://rawgit.davedoesdev.com/davedoesdev/centro/master/docs/index.html[here].
 
@@ -378,6 +378,82 @@ centro.separate_auth(
             assert.ifError(err);
             duplex.end();
         }));
+    });
+});
+----
+
+==== HTTP/2
+
+The HTTP/2 transport sends messages over a HTTP/2 stream. Note that browsers
+can't use the HTTP/2 transport directly because they don't fully support
+streaming uploads. They should use the <<http2-duplex,HTTP/2 Duplex>>
+transport.
+
+Here are publish and subscribe examples for Node using the `http2` module.
+
+[source,javascript]
+.subscribe_http2.js
+----
+const centro = require('centro-js');
+const assert = require('assert');
+const http2 = require('http2');
+
+function display_message(s, info) {
+    console.log('topic:', info.topic);
+    s.pipe(process.stdout);
+}
+
+centro.separate_auth({
+    token: process.env.CENTRO_TOKEN
+}, function (err, userpass, make_client) {
+    assert.ifError(err);
+    http2.connect('http://localhost:8803', function () {
+        this.request({
+            ':method': 'POST', // <1>
+            ':path': `/centro/v${centro.version}/http2`,
+            Authorization: `Bearer ${userpass.split(':')[1]}` // <2>
+        }).on('response', function (headers) {
+            assert.equal(headers[':status'], 200);
+            make_client(this).on('ready', function () {
+                for (var topic of process.argv.slice(2)) {
+                    this.subscribe(topic, display_message, assert.ifError);
+                }
+            });
+        });
+    });
+});
+----
+<1> You just need a single POST stream for all messages. Centro multiplexes messages using https://github.com/davedoesdev/bpmux[bpmux].
+<2> This example uses bearer authentication, which just needs the token, not the `centro:` prefix.
+
+[source,javascript]
+.publish_http2.js
+----
+const centro = require('centro-js');
+const assert = require('assert');
+const http2 = require('http2');
+
+centro.separate_auth({
+    token: process.env.CENTRO_TOKEN
+}, function (err, userpass, make_client) {
+    assert.ifError(err);
+    http2.connect('http://localhost:8803', function () {
+        const session = this;
+        this.request({
+            ':method': 'POST',
+            ':path': `/centro/v${centro.version}/http2`,
+            Authorization: `Bearer ${userpass.split(':')[1]}`
+        }).on('response', function (headers) {
+            assert.equal(headers[':status'], 200);
+            const stream = this;
+            make_client(this).on('ready', function () {
+                process.stdin.pipe(this.publish(process.argv[2], function (err) {
+                    assert.ifError(err);
+                    stream.end();
+                    session.close();
+                }));
+            });
+        });
     });
 });
 ----

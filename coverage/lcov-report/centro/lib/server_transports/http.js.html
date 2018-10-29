@@ -641,7 +641,9 @@
 <a name='L593'></a><a href='#L593'>593</a>
 <a name='L594'></a><a href='#L594'>594</a>
 <a name='L595'></a><a href='#L595'>595</a>
-<a name='L596'></a><a href='#L596'>596</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L596'></a><a href='#L596'>596</a>
+<a name='L597'></a><a href='#L597'>597</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1032,36 +1034,36 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">641x</span>
-<span class="cline-any cline-yes">641x</span>
+<span class="cline-any cline-yes">644x</span>
+<span class="cline-any cline-yes">644x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">641x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">641x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">641x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">641x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">641x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">9059x</span>
+<span class="cline-any cline-yes">644x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">644x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">644x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">641x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">644x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">644x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">8594x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">644x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">16x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1070,7 +1072,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">641x</span>
+<span class="cline-any cline-yes">644x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">612x</span>
@@ -1137,7 +1139,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">276x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">144x</span>
+<span class="cline-any cline-yes">145x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1243,7 +1245,7 @@
  * Publish messages using POST requests of the form:
  *
  * ```
- * /centro/v1/publish?authz_token=XXX&amp;topic=YYY
+ * /centro/v2/publish?authz_token=XXX&amp;topic=YYY
  * ```
  *
  * - `XXX` is a {@link http://self-issued.info/docs/draft-ietf-oauth-json-web-token.html|JSON Web Token} allowing access to the server. See {@link https://github.com/davedoesdev/centro#authz-tokens|here} for more information about Centro authorization tokens.
@@ -1254,7 +1256,7 @@
  * Subscribe to messages using GET requests of the form:
  *
  * ```
- * /centro/v1/subscribe?authz_token=XXX&amp;topic=YYY&amp;topic=ZZZ
+ * /centro/v2/subscribe?authz_token=XXX&amp;topic=YYY&amp;topic=ZZZ
  * ```
  *
  * - `XXX` is the authorization token allowing access to the server.
@@ -1302,12 +1304,13 @@
  * supported because when a connection drops, the server forgets all about it.
  *
  * @module centro-js/lib/server_transports/http
- * @param {Object} config - Configuration options. This supports all the options supported by {@link https://nodejs.org/api/net.html#net_server_listen_options_callback|net.Server#listen}, {@link https://nodejs.org/api/https.html#https_https_createserver_options_requestlistener|https.createServer} and {@link https://github.com/primus/access-control|access-control} as well as the following:
+ * @param {Object} config - Configuration options. This supports all the options supported by {@link https://nodejs.org/api/net.html#net_server_listen_options_callback|net.Server#listen} and {@link https://nodejs.org/api/https.html#https_https_createserver_options_requestlistener|https.createServer} as well as the following:
  * @param {http.Server|https.Server} [config.server] - If you want to supply your own HTTP or HTTPS server object. Otherwise, {@link https://nodejs.org/api/http.html#http_http_createserver_requestlistener|http.createServer} or {@link https://nodejs.org/api/https.html#https_https_createserver_options_requestlistener|https.createServer} will be called to create one.
- * @param {string} [config.pathname=/centro/v1/] - Pathname prefix on which to listen for requests. Publish requests are made on `/centro/v1/publish` and subscribe requests are made on `/centro/v1/subscribe`.
+ * @param {string} [config.pathname=/centro/v2/] - Pathname prefix on which to listen for requests. Publish requests are made on `/centro/v2/publish` and subscribe requests are made on `/centro/v2/subscribe`.
  * @param {integer} [config.sse_keep_alive_interval] - If present, the number of seconds between sending a Server-Sent Event comment in order to keep a connection alive. If you don't specify this, no keep-alive comments will be sent.
  * @param {integer} [config.destroy_after_end_delay=500] - Amount of time (in milliseconds) to wait between {@link https://nodejs.org/api/http.html#http_response_end_data_encoding_callback|end}ing a response and {@link https://nodejs.org/api/http.html#http_message_destroy_error|destroy}ing the connection, if an error occurs which means the connection can't be re-used. If you don't want the connection forcibly destroyed, set this to a negative value.
  * @param {Object} [config.http] - If present then this is used in preference to `config`.
+ * @param {Object} [access] - Passed to {@link https://github.com/primus/access-control|access-control}.
  * @param {boolean} [config.http2] - Whether to use {@link https://tools.ietf.org/html/rfc7540|HTTP/2} ({@link https://nodejs.org/api/http2.html#http2_http2_createserver_options_onrequesthandler|http2.createServer}/{@link https://nodejs.org/api/http2.html#http2_http2_createsecureserver_options_onrequesthandler|http2.createSecureServer}) instead of HTTP. Note this still uses Server-Sent Events to deliver messages. If you want to use HTTP/2 streams to deliver messages, see the  {@link centro-js/lib/server_transports/http2|http2} and {@link centro-js/lib/server_transports/http2_duplex|http2_duplex} transports. Defaults to `false`.
  */
 "use strict";
@@ -1837,7 +1840,7 @@ module.exports = function (config, authorize, connected, ready, error, warning)
 </div><!-- /wrapper -->
 <div class='footer quiet pad2 space-top1 center small'>
   Code coverage
-  generated by <a href="https://istanbul.js.org/" target="_blank">istanbul</a> at Sun Oct 28 2018 09:08:52 GMT+0000 (Greenwich Mean Time)
+  generated by <a href="https://istanbul.js.org/" target="_blank">istanbul</a> at Mon Oct 29 2018 09:13:28 GMT+0000 (Greenwich Mean Time)
 </div>
 </div>
 <script src="../../../prettify.js"></script>

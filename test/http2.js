@@ -218,6 +218,17 @@ runner(
 
     on_after: function (config, cb)
     {
+        config.server.on('session', function (session)
+        {
+            try
+            {
+                session.destroy();
+            }
+            catch (ex)
+            {
+            }
+        });
+
         config.server.close(cb);
     }
 });

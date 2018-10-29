@@ -8,5 +8,6 @@ toc:
   - centro-js/lib/server_transports/primus
   - centro-js/lib/server_transports/tcp
   - centro-js/lib/server_transports/http
+  - centro-js/lib/server_transports/http2
   - centro-js/lib/server_transports/in-mem
   - name: Extensions

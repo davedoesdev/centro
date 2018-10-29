@@ -12,6 +12,9 @@ var config = {
         server: 'http',
         config: { port: 8802 }
     }, {
+        server: 'http2',
+        config: { port: 8803 }
+    }, {
         server: 'in-mem',
         authorize_config: { ANONYMOUS_MODE: true }
     }]
