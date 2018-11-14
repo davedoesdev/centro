@@ -56,7 +56,7 @@ module.exports = function (grunt)
 
         exec: {
             cover: {
-                cmd: nyc_path + " -x Gruntfile.js -x \"" + path.join('test', '**') + "\" node --napi-modules " + grunt_path + " test"
+                cmd: nyc_path + " -x Gruntfile.js -x \"" + path.join('test', '**') + "\" node " + grunt_path + " test"
             },
 
             cover_report: {
@@ -100,7 +100,7 @@ module.exports = function (grunt)
             },
 
             default_schema: {
-                cmd: 'mkdir -p docs/schema/schemas && node --napi-modules -p \'JSON.stringify(require("./lib/server_config.js").default_authz_token_schema, null, 2)\' > docs/schema/schemas/default_authz_token.schema.json && cd docs/schema && ../../node_modules/.bin/matic'
+                cmd: 'mkdir -p docs/schema/schemas && node -p \'JSON.stringify(require("./lib/server_config.js").default_authz_token_schema, null, 2)\' > docs/schema/schemas/default_authz_token.schema.json && cd docs/schema && ../../node_modules/.bin/matic'
             }
         }
     });

@@ -18,9 +18,9 @@
   "license": "MIT",
   "main": "index.js",
   "scripts": {
-    "test": "node --napi-modules ./node_modules/.bin/grunt lint keys test",
-    "test-win": "node --napi-modules .\\node_modules\\grunt\\bin\\grunt lint keys test",
-    "coverage": "node --napi-modules ./node_modules/.bin/grunt lint keys coverage"
+    "test": "./node_modules/.bin/grunt lint keys test",
+    "test-win": "node .\\node_modules\\grunt\\bin\\grunt lint keys test",
+    "coverage": "./node_modules/.bin/grunt lint keys coverage"
   },
   "directories": {
     "test": "test",
