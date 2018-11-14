@@ -1,5 +1,7 @@
-var webpack = require('webpack'),
-    path = require('path');
+/*eslint-env node */
+"use strict";
+
+var path = require('path');
 
 module.exports = {
     context: __dirname,

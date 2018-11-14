@@ -1,4 +1,10 @@
+/*eslint-env node */
+/*eslint-disable no-console */
+"use strict";
+
 var centro = require('../../..');
+var fs = require('fs');
+var path = require('path');
 
 var config = {
     allowed_algs: ['PS256'],
@@ -14,6 +20,13 @@ var config = {
     }, {
         server: 'http2',
         config: { port: 8803 }
+    }, {
+        server: 'http2-duplex',
+        config: {
+            port: 8804,
+            key: fs.readFileSync(path.join(__dirname, '..', '..', 'server.key')),
+            cert: fs.readFileSync(path.join(__dirname, '..', '..', 'server.pem'))
+        }
     }, {
         server: 'in-mem',
         authorize_config: { ANONYMOUS_MODE: true }

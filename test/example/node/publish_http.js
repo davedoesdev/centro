@@ -1,3 +1,6 @@
+/*eslint-env node */
+"use strict";
+
 process.stdin.pipe(require('http').request(
 {
     method: 'POST',

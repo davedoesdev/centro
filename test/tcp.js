@@ -1,9 +1,8 @@
+/*eslint-env node, mocha */
 "use strict";
 
-var net = require('net'),
-	fs = require('fs'),
+var fs = require('fs'),
 	path = require('path'),
-    expect = require('chai').expect,
     runner = require('./runner'),
     centro = require('..'),
     port = 8700;

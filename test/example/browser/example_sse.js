@@ -1,7 +1,16 @@
-var publish = function (event) { event.preventDefault(); };
+/*eslint-env browser */
+/*eslint-disable no-unused-vars */
+
+var publish = function (event)
+{
+    "use strict";
+    event.preventDefault();
+};
 
 function connect()
 {
+    "use strict";
+
     var topic = document.getElementById('topic'),
         message = document.getElementById('message'),
         messages = document.getElementById('messages'),

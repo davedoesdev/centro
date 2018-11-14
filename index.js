@@ -1,3 +1,5 @@
+/*eslint-env node */
+
 /**
  * Pub-sub and work queue server. Wildcards, streams, back-pressure,
  * multi-transport. Just Node and a filesystem required.

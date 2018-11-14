@@ -1,3 +1,6 @@
+/*eslint-env node */
+"use strict";
+
 var centro = require('../../..'),
     net = require('net'),
     assert = require('assert');

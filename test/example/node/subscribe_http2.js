@@ -1,3 +1,7 @@
+/*eslint-env node */
+/*eslint-disable no-console */
+"use strict";
+
 const centro = require('../../..');
 const assert = require('assert');
 const http2 = require('http2');

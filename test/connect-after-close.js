@@ -1,9 +1,8 @@
-/*jshint mocha: true */
+/*eslint-env node, mocha */
 "use strict";
 
 var centro = require('..'),
     CentroServer = centro.CentroServer,
-    expect = require('chai').expect,
     stream = require('stream');
 
 describe('connect after close', function ()
@@ -13,7 +12,7 @@ describe('connect after close', function ()
         var server = new CentroServer(
         {
             ANONYMOUS_MODE: true,
-            transport: function (config, authorize, connected, ready, error, warning)
+            transport: function (config, authorize, connected, ready, unused_error, unused_warning)
             {
                 ready(null,
                 {

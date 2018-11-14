@@ -1,4 +1,4 @@
-/*jshint mocha: true */
+/*eslint-env node, mocha */
 "use strict";
 
 var centro = require('..'),
@@ -16,6 +16,15 @@ var centro = require('..'),
     read_all = require('./read_all'),
     uri = 'mailto:dave@davedoesdev.com',
     uri2 = 'mailto:david@davedoesdev.com';
+
+process.on('unhandledRejection', (reason, p) => {
+    if (reason.message !== 'async skip; aborting execution')
+    {
+        // eslint-disable-next-line no-console
+        console.error('Unhandled Rejection at:', p, 'reason:', reason);
+        process.exit(1);
+    }
+});
 
 function NullStream()
 {
@@ -100,7 +109,7 @@ module.exports = function (config, connect, options)
         var server, clients,
             priv_key, priv_key2,
             issuer_id, issuer_id2,
-            rev, rev2,
+            rev,
             connections = new Map();
 
         function get_connid_from_mqserver(mqserver)
@@ -189,7 +198,7 @@ module.exports = function (config, connect, options)
 
                         priv_key2 = jsjws.generatePrivateKey(2048, 65537);
                         server.authz.keystore.add_pub_key(uri2, priv_key2.toPublicPem('utf8'),
-                        function (err, the_issuer_id, the_rev)
+                        function (err, the_issuer_id, unused_the_rev)
                         {
                             if (err)
                             {
@@ -197,7 +206,6 @@ module.exports = function (config, connect, options)
                             }
                             
                             issuer_id2 = the_issuer_id;
-                            rev2 = the_rev;
 
                             if (ths && ths.test_should_skip)
                             {
@@ -217,9 +225,16 @@ module.exports = function (config, connect, options)
                         (err.message !== 'write after end') &&
                         (err.message !== 'backoff') &&
                         (err.message !== 'This socket is closed.') &&
-                        (err.message !== 'This socket is closed'))
+                        (err.message !== 'This socket is closed') &&
+                        (err.message !== 'Cannot call write after a stream was destroyed'))
                     {
+                        // eslint-disable-next-line no-console
                         console.warn(err.message);
+                        if (!this.warnings)
+                        {
+                            this.warnings = [];
+                        }
+                        this.warnings.push(err.message);
                         this.last_warning = err;
                     }
                 });
@@ -329,6 +344,7 @@ module.exports = function (config, connect, options)
         {
             beforeEach(function (cb)
             {
+                server.warnings = [];
                 server.last_warning = null;
 
                 expect(connections.size).to.equal(0);
@@ -371,7 +387,7 @@ module.exports = function (config, connect, options)
                     orig_separate_auth = centro.separate_auth;
                 if (opts.end_immediately)
                 {
-                    centro.stream_auth = function (stream, config)
+                    centro.stream_auth = function (stream, unused_config)
                     {
                         stream.end();
                         return null;
@@ -464,6 +480,7 @@ module.exports = function (config, connect, options)
                         {
                             if (err.message !== c.last_err_message)
                             {
+                                // eslint-disable-next-line no-console
                                 console.warn(err.message);
                             }
                             c.last_err_message = err.message;
@@ -533,8 +550,12 @@ module.exports = function (config, connect, options)
                     {
                         if (!called)
                         {
-                            cb();
+                            if (c && is_transport('node_http2-duplex'))
+                            {
+                                c.mux.carrier.destroy();
+                            }
                             called = true;
+                            cb();
                         }
                     }
 
@@ -542,7 +563,7 @@ module.exports = function (config, connect, options)
                         c.mux.carrier._readableState.ended ||
                         c.mux.carrier.destroyed)
                     {
-                        return cb();
+                        return cb2();
                     }
                     c.mux.carrier.on('close', cb2);
                     c.mux.carrier.on('end', cb2);
@@ -641,6 +662,7 @@ module.exports = function (config, connect, options)
                         if (err) { return done(err); }
                         clients[0].publish('foo', function (err)
                         {
+                            if (err) { return done(err); }
                             setTimeout(done, 1000);
                         }).end('bar');
                     });
@@ -670,6 +692,7 @@ module.exports = function (config, connect, options)
                             if (err) { return done(err); }
                             clients[0].publish('foo', function (err)
                             {
+                                if (err) { return done(err); }
                                 setTimeout(done, 1000);
                             }).end('bar');
                         });
@@ -729,6 +752,7 @@ module.exports = function (config, connect, options)
                                 if (err) { return done(err); }
                                 clients[0].publish('foo', function (err)
                                 {
+                                    if (err) { return done(err); }
                                     setTimeout(done, 1000);
                                 }).end('bar');
                             });
@@ -1074,7 +1098,7 @@ module.exports = function (config, connect, options)
                     });
                 }
                
-                clients[0].subscribe('foo.bar', function (s, info)
+                clients[0].subscribe('foo.bar', function (unused_s, unused_info)
                 {
                     done(new Error('should not be called'));
                 }, function (err)
@@ -1877,7 +1901,14 @@ module.exports = function (config, connect, options)
 
                 clients[0].on('error', function (err)
                 {
-                    expect(err.message).to.equal('dummy');
+                    if (is_transport('node_http2-duplex'))
+                    {
+                        expect(err.response.status).to.equal(404);
+                    }
+                    else if (is_transport('in-mem'))
+                    {
+                        expect(err.message).to.equal('dummy');
+                    }
                 });
 
                 for (var info of connections.values())
@@ -2047,6 +2078,7 @@ module.exports = function (config, connect, options)
                         'carrier stream ended before end message received',
                         'read ECONNRESET'
                     ]);
+
                     done();
                 }
 
@@ -2264,7 +2296,7 @@ module.exports = function (config, connect, options)
                         }
                     }
      
-                    clients[t[0]].subscribe(t[1], t[2], function (s, info, cb)
+                    clients[t[0]].subscribe(t[1], t[2], function (unused_s, unused_info, unused_cb)
                     {
                         done(new Error('should not be called'));
                     }, function (err)
@@ -2332,7 +2364,7 @@ module.exports = function (config, connect, options)
 
                         if (t[3])
                         {
-                            clients[t[0]].subscribe(t[1], t[2], function sub(s, info, cb)
+                            clients[t[0]].subscribe(t[1], t[2], function sub(s, info, unused_cb)
                             {
                                 expect(info.topic).to.equal(t[2]);
 
@@ -2531,7 +2563,7 @@ module.exports = function (config, connect, options)
                     {
                         var orig_get_pub_key_by_uri = server.transport_ops[0].authz.keystore.get_pub_key_by_uri;
 
-                        server.transport_ops[0].authz.keystore.get_pub_key_by_uri = function (uri, cb)
+                        server.transport_ops[0].authz.keystore.get_pub_key_by_uri = function (unused_uri, unused_cb)
                         {
                             this.get_pub_key_by_uri = orig_get_pub_key_by_uri;
                         };
@@ -2583,7 +2615,8 @@ module.exports = function (config, connect, options)
                     {
                         expect(err.message).to.be.oneOf([
                             'carrier stream finished before duplex finished',
-                            'carrier stream ended before end message received']);
+                            'carrier stream ended before end message received'
+                        ]);
                     });
                 });
             });
@@ -2596,6 +2629,12 @@ module.exports = function (config, connect, options)
             c.on('error', function (err)
             {
                 this.errors.push(err);
+
+                if (err.response && is_transport('node_http2-duplex'))
+                {
+                    expect(err.response.status).to.equal(404);
+                }
+
                 onconnect();
             });
 
@@ -2745,7 +2784,6 @@ module.exports = function (config, connect, options)
                             }
                             else
                             {
-                                var ur_index = 0;
                                 expect(errors[0].message).to.equal('unexpected response');
                                 expect(errors[0].statusCode).to.equal(code);
                                 expect(errors[0].authenticate).to.equal(
@@ -2992,7 +3030,9 @@ module.exports = function (config, connect, options)
                     expect(err.message).to.be.oneOf([
                         'write EPIPE',
                         'read ECONNRESET',
-                        'write ECONNRESET'
+                        'write ECONNRESET',
+                        'Stream closed with error code NGHTTP2_REFUSED_STREAM',
+                        'Request failed'
                     ]);
                 });
 
@@ -3668,7 +3708,7 @@ module.exports = function (config, connect, options)
 			}
         }
 
-        describe('stream hooks', function (done)
+        describe('stream hooks', function ()
         {
             setup(1,
             {
@@ -3868,6 +3908,14 @@ module.exports = function (config, connect, options)
                     });
                 }
 
+                if (is_transport('node_http2-duplex'))
+                {
+                    clients[0].on('error', function (err)
+                    {
+                        expect(err.response.status).to.equal(404);
+                    });
+                }
+
                 clients[0].mux.on('end', function ()
                 {
                     client_done = true;
@@ -3881,17 +3929,24 @@ module.exports = function (config, connect, options)
                 {
                     expect(err.message).to.equal('server error');
                     connections.values().next().value.destroy();
-                }).on('error', function (err)
+                }).on('error', function (err, unused_data, unused_duplex)
                 {
-                    expect(err.message).to.be.oneOf([
-                        'carrier stream finished before duplex finished',
-                        'carrier stream ended before end message received',
-                        'read ECONNRESET',
-                        'write ECONNABORTED',
-                        'write ECONNRESET',
-                        'write EPIPE',
-                        'Cannot call write after a stream was destroyed'
-                    ]);
+                    if (err.response && is_transport('node_http2-duplex'))
+                    {
+                        expect(err.response.status).to.equal(404);
+                    }
+                    else
+                    {
+                        expect(err.message).to.be.oneOf([
+                            'carrier stream finished before duplex finished',
+                            'carrier stream ended before end message received',
+                            'read ECONNRESET',
+                            'write ECONNABORTED',
+                            'write ECONNRESET',
+                            'write EPIPE',
+                            'Cannot call write after a stream was destroyed'
+                        ]);
+                    }
                     var c = connections.values().next().value;
                     if (c)
                     {
@@ -4067,7 +4122,7 @@ module.exports = function (config, connect, options)
             }
         });
 
-        describe('stream hooks (2 connections)', function (done)
+        describe('stream hooks (2 connections)', function ()
         {
             setup(2,
             {
@@ -4218,7 +4273,15 @@ module.exports = function (config, connect, options)
                 {
                     if (clients[0].last_error && server.last_warning)
                     {
-                        expect(server.last_warning.message).to.equal('unsupported version: 2');
+                        if (is_transport('node_http2-duplex'))
+                        {
+                            expect(server.warnings).to.include('unsupported version: 2');
+                        }
+                        else
+                        {
+                            expect(server.last_warning.message).to.equal('unsupported version: 2');
+                        }
+
                         if (!(is_transport('primus') || is_transport('tls') || is_transport('node_http2')) ||
                             ((clients[0].last_error.message !== 'carrier stream ended before end message received') &&
                              (clients[0].last_error.message !== 'carrier stream finished before duplex finished') &&
@@ -4585,7 +4648,7 @@ module.exports = function (config, connect, options)
                     s_obj = obj;
                 });
 
-                clients[0].subscribe('foo', function (s, info)
+                clients[0].subscribe('foo', function (s, unused_info)
                 {
                     s.on('error', function (err)
                     {
@@ -4643,6 +4706,7 @@ module.exports = function (config, connect, options)
             {
                 clients[0].publish('foo', function (err)
                 {
+                    if (err) { return done(err); }
                     expect(server.count_authz_start).to.equal(options.relay ? 2 :1);
                     expect(server.count_authz_end).to.equal(options.relay ? 2 :1);
                     server.removeAllListeners('authz_start');
@@ -5044,16 +5108,26 @@ module.exports = function (config, connect, options)
                 var ccoe = require('../lib/server_extensions/close_conn_on_error'),
                     ext = attach_extension(ccoe.close_conn_on_error);
 
-                clients[0].on('error', function (err)
+                if (is_transport('node_http2-duplex'))
                 {
-                    expect(err.message).to.be.oneOf([
-                        'read ECONNRESET',
-                        'write ECONNRESET',
-                        'write EPIPE',
-                        'write ECONNABORTED',
-                        'carrier stream finished before duplex finished'
-                    ]);
-                });
+                    clients[0].on('error', function (err)
+                    {
+                        expect(err.response.status).to.equal(404);
+                    });
+                }
+                else
+                {
+                    clients[0].on('error', function (err)
+                    {
+                        expect(err.message).to.be.oneOf([
+                            'read ECONNRESET',
+                            'write ECONNRESET',
+                            'write EPIPE',
+                            'write ECONNABORTED',
+                            'carrier stream finished before duplex finished'
+                        ]);
+                    });
+                }
 
                 server.once('disconnect', function ()
                 {
@@ -5366,7 +5440,7 @@ module.exports = function (config, connect, options)
                         }, function (err)
                         {
                             if (err) { return done(err); }
-                            get_info().clients[1].subscribe('#', function (s, info)
+                            get_info().clients[1].subscribe('#', function (unused_s, unused_info)
                             {
                                 done(new Error('should not be called'));
                             }, function (err)
@@ -6092,7 +6166,7 @@ module.exports = function (config, connect, options)
                             ]);
                         });
 
-                        get_info().clients[0].on('error', function (err, obj)
+                        get_info().clients[0].on('error', function (err, unused_obj)
                         {
                             expect(err.message).to.be.oneOf([
                                 'write after end',
@@ -6228,26 +6302,40 @@ module.exports = function (config, connect, options)
 
                         get_info().clients[0].on('warning', function (err)
                         {
-                            expect(err.message).to.be.oneOf([
-                                'write EPIPE',
-                                'write after end',
-                                'carrier stream ended before end message received',
-                                'carrier stream finished before duplex finished',
-                                'Cannot call write after a stream was destroyed'
-                            ]);
+                            if (err.response && is_transport('node_http2-duplex'))
+                            {
+                                expect(err.response.status).to.equal(404);
+                            }
+                            else
+                            {
+                                expect(err.message).to.be.oneOf([
+                                    'write EPIPE',
+                                    'write after end',
+                                    'carrier stream ended before end message received',
+                                    'carrier stream finished before duplex finished',
+                                    'Cannot call write after a stream was destroyed'
+                                ]);
+                            }
                         });
 
-                        get_info().clients[0].on('error', function (err, obj)
+                        get_info().clients[0].on('error', function (err, unused_obj)
                         {
-                            expect(err.message).to.be.oneOf([
-                                'write after end',
-                                'read ECONNRESET',
-                                'carrier stream finished before duplex finished',
-                                'carrier stream ended before end message received',
-                                'write EPIPE',
-                                'write ECONNABORTED',
-                                'Cannot call write after a stream was destroyed'
-                            ]);
+                            if (err.response && is_transport('node_http2-duplex'))
+                            {
+                                expect(err.response.status).to.equal(404);
+                            }
+                            else
+                            {
+                                expect(err.message).to.be.oneOf([
+                                    'write after end',
+                                    'read ECONNRESET',
+                                    'carrier stream finished before duplex finished',
+                                    'carrier stream ended before end message received',
+                                    'write EPIPE',
+                                    'write ECONNABORTED',
+                                    'Cannot call write after a stream was destroyed'
+                                ]);
+                            }
                         });
 
                         function onpub(err)
@@ -6526,7 +6614,7 @@ module.exports = function (config, connect, options)
                         backoff.backoff,
                         {
                             skip_message: true,
-                            on_skip: function (info)
+                            on_skip: function (unused_info)
                             {
                                 skipped += 1;
                                 if (on_skip)
@@ -6552,7 +6640,7 @@ module.exports = function (config, connect, options)
                             },
                             messaged = 0;
 
-                        function gotmsg(s, info)
+                        function gotmsg(s, unused_info)
                         {
                             messaged += 1;
                             read_all(s, function ()
@@ -6611,7 +6699,7 @@ module.exports = function (config, connect, options)
                         backoff.backoff,
                         {
                             delay_message: true,
-                            on_delay: function (info)
+                            on_delay: function (unused_info)
                             {
                                 delayed += 1;
                                 if (on_delay)
@@ -6731,7 +6819,7 @@ module.exports = function (config, connect, options)
                         full.full,
                         {
                             skip_message: true,
-                            on_skip: function (info)
+                            on_skip: function (unused_info)
                             {
                                 skipped += 1;
                                 if (on_skip)
@@ -6817,7 +6905,7 @@ module.exports = function (config, connect, options)
                         full.full,
                         {
                             delay_message: true,
-                            on_delay: function (info)
+                            on_delay: function (unused_info)
                             {
                                 delayed += 1;
                                 if (on_delay)

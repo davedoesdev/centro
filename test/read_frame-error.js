@@ -1,4 +1,4 @@
-/*jshint mocha: true */
+/*eslint-env node, mocha */
 "use strict";
 
 var centro = require('..'),

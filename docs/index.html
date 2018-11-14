@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset='utf-8' />
-  <title>centro-js 3.2.0 | Documentation</title>
+  <title>centro-js 3.3.0 | Documentation</title>
   <meta name='viewport' content='width=device-width,initial-scale=1'>
   <link href='assets/bass.css' type='text/css' rel='stylesheet' />
   <link href='assets/style.css' type='text/css' rel='stylesheet' />
@@ -15,7 +15,7 @@
       <div id='split-left' class='overflow-auto fs0 height-viewport-100'>
         <div class='py1 px2'>
           <h3 class='mb0 no-anchor'>centro-js</h3>
-          <div class='mb1'><code>3.2.0</code></div>
+          <div class='mb1'><code>3.3.0</code></div>
           <input
             placeholder='Filter'
             id='filter-input'
@@ -285,6 +285,16 @@
                   href='#centro-jslibserver_transportshttp2'
                   class="">
                   centro-js/lib/server_transports/http2
+                  
+                </a>
+                
+                </li>
+              
+                
+                <li><a
+                  href='#centro-jslibserver_transportshttp2-duplex'
+                  class="">
+                  centro-js/lib/server_transports/http2-duplex
                   
                 </a>
                 
@@ -3682,6 +3692,17 @@ ing the connection, if an error occurs which means the connection can't be re-us
 
               
                 <tr>
+  <td class='break-word'><span class='code bold'>config.access</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>?</code>
+  </td>
+  <td class='break-word'><span>Passed to 
+<a href="https://github.com/primus/access-control">access-control</a>
+.
+</span></td>
+</tr>
+
+
+              
+                <tr>
   <td class='break-word'><span class='code bold'>config.http2</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean">boolean</a>?</code>
   </td>
   <td class='break-word'><span>Whether to use 
@@ -3693,7 +3714,7 @@ ing the connection, if an error occurs which means the connection can't be re-us
 ) instead of HTTP. Note this still uses Server-Sent Events to deliver messages. If you want to use HTTP/2 streams to deliver messages, see the  
 <a href="#centro-jslibserver_transportshttp2">http2</a>
  and 
-<a href="centro-js/lib/server_transports/http2_duplex">http2_duplex</a>
+<a href="#centro-jslibserver_transportshttp2-duplex">http2-duplex</a>
  transports. Defaults to 
 <code>false</code>
 .
@@ -3704,17 +3725,6 @@ ing the connection, if an error occurs which means the connection can't be re-us
               
             </tbody>
           </table>
-          
-        </div>
-      
-        <div class='space-bottom0'>
-          <div>
-            <span class='code bold'>access</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>?)</code>
-	    Passed to 
-<a href="https://github.com/primus/access-control">access-control</a>
-.
-
-          </div>
           
         </div>
       
@@ -3752,6 +3762,9 @@ ing the connection, if an error occurs which means the connection can't be re-us
   
 
   <p>HTTP/2 transport. This allows messages to be sent over HTTP/2 streams.</p>
+<p>Note that this transport won't work with browser clients. You'll need to use
+the <a href="#centro-jslibserver_transportshttp2-duplex">http2-duplex</a>
+transport with browsers.</p>
 
  
   
@@ -3776,8 +3789,8 @@ ing the connection, if an error occurs which means the connection can't be re-us
             <span class='code bold'>config</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</code>
 	    Configuration options. This supports all the options supported by 
 <a href="https://nodejs.org/api/http2.html#http2_http2_createserver_options_onrequesthandler">http2.createServer</a>
-, {
-<a href="https://nodejs.org/api/http2.html#http2_http2_createsecureserver_options_onrequesthandler%7Chttp2.createSecureServer%7D">https://nodejs.org/api/http2.html#http2_http2_createsecureserver_options_onrequesthandler|http2.createSecureServer}</a>
+, 
+<a href="https://nodejs.org/api/http2.html#http2_http2_createsecureserver_options_onrequesthandler">http2.createSecureServer</a>
  and 
 <a href="https://nodejs.org/api/net.html#net_server_listen_options_callback">net.Server#listen</a>
  as well as the following:
@@ -3813,7 +3826,7 @@ ing the connection, if an error occurs which means the connection can't be re-us
                 <tr>
   <td class='break-word'><span class='code bold'>config.pathname</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></code>
   
-    (default <code>/centro/v2/http2/</code>)
+    (default <code>/centro/v2/http2</code>)
   </td>
   <td class='break-word'><span>Pathname prefix on which to listen for requests.
 </span></td>
@@ -3832,19 +3845,161 @@ ing the connection, if an error occurs which means the connection can't be re-us
 
 
               
+                <tr>
+  <td class='break-word'><span class='code bold'>config.access</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>?</code>
+  </td>
+  <td class='break-word'><span>Passed to 
+<a href="https://github.com/primus/access-control">access-control</a>
+.
+</span></td>
+</tr>
+
+
+              
             </tbody>
           </table>
           
         </div>
       
+    </div>
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</section>
+
+        
+          
+          <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+  <div class='clearfix'>
+    
+    <h3 class='fl m0' id='centro-jslibserver_transportshttp2-duplex'>
+      centro-js/lib/server_transports/http2-duplex
+    </h3>
+    
+    
+  </div>
+  
+
+  <p>HTTP/2 transport for browsers. This allows messages to be sent over HTTP/2
+streams to browsers.</p>
+<p>If your client isn't a browser, you should be able to use the
+<a href="#centro-jslibserver_transportshttp2">http2</a> transport.</p>
+<p>This transport uses the <a href="https://github.com/davedoesdev/browser-http2-duplex">http2-duplex</a> module to emulate a full-duplex connection with browsers.
+Browser-to-server streaming isn't implemented by any browser, nor are there
+any plans to do so. <code>http2-duplex</code> emulates it by using POST requests.</p>
+
+ 
+  
+    <div class='pre p1 fill-light mt0'>centro-js/lib/server_transports/http2-duplex</div>
+   
+  
+  
+
+  
+  
+  
+  
+  
+  
+
+  
+    <div class='py1 quiet mt1 prose-big'>Parameters</div>
+    <div class='prose'>
+      
         <div class='space-bottom0'>
           <div>
-            <span class='code bold'>access</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>?)</code>
-	    Passed to 
-<a href="https://github.com/primus/access-control">access-control</a>
-.
+            <span class='code bold'>config</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</code>
+	    Configuration options. This supports all the options supported by 
+<a href="https://nodejs.org/api/http2.html#http2_http2_createserver_options_onrequesthandler">http2.createServer</a>
+, 
+<a href="https://nodejs.org/api/http2.html#http2_http2_createsecureserver_options_onrequesthandler">http2.createSecureServer</a>
+, 
+<a href="https://nodejs.org/api/net.html#net_server_listen_options_callback">net.Server#listen</a>
+ and 
+<a href="https://github.com/davedoesdev/browser-http2-duplex">http2-duplex</a>
+ as well as the following:
 
           </div>
+          
+          <table class='mt1 mb2 fixed-table h5 col-12'>
+            <colgroup>
+              <col width='30%' />
+              <col width='70%' />
+            </colgroup>
+            <thead>
+              <tr class='bold fill-light'>
+                <th>Name</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody class='mt1'>
+              
+                <tr>
+  <td class='break-word'><span class='code bold'>config.server</span> <code class='quiet'>centro-js/lib/server_transports/http2-duplex.CentroHttp2DuplexServer?</code>
+  </td>
+  <td class='break-word'><span>If you want to supply your own HTTP/2 full-duplex emulation server. This class inherits from 
+<code>Http2DuplexServer</code>
+ in 
+<a href="https://github.com/davedoesdev/browser-http2-duplex">http2-duplex</a>
+. If you don't supply an instance (the default) then one will be created for you, along with an instance of 
+<a href="https://nodejs.org/api/http2.html#http2_class_http2server">Http2Server</a>
+ or 
+<a href="https://nodejs.org/api/http2.html#http2_class_http2secureserver">Http2SecureServer</a>
+.
+</span></td>
+</tr>
+
+
+              
+                <tr>
+  <td class='break-word'><span class='code bold'>config.pathname</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></code>
+  
+    (default <code>/centro/v2/http2-duplex</code>)
+  </td>
+  <td class='break-word'><span>Pathname prefix on which to listen for requests.
+</span></td>
+</tr>
+
+
+              
+                <tr>
+  <td class='break-word'><span class='code bold'>config.http2_duplex</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>?</code>
+  </td>
+  <td class='break-word'><span>If present then this is used in preference to 
+<code>config</code>
+.
+</span></td>
+</tr>
+
+
+              
+                <tr>
+  <td class='break-word'><span class='code bold'>config.access</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>?</code>
+  </td>
+  <td class='break-word'><span>Passed to 
+<a href="https://github.com/primus/access-control">access-control</a>
+.
+</span></td>
+</tr>
+
+
+              
+            </tbody>
+          </table>
           
         </div>
       

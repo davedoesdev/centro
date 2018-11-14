@@ -1,3 +1,7 @@
+/*eslint-env node */
+/*eslint-disable no-console */
+"use strict";
+
 var EventSource = require('eventsource'),
     es = new EventSource('http://localhost:8802/centro/v2/subscribe?' +
                          require('querystring').stringify(

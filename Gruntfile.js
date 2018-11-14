@@ -1,3 +1,4 @@
+/*eslint-env node */
 "use strict";
 
 var path = require('path'),
@@ -22,29 +23,32 @@ module.exports = function (grunt)
 {
     grunt.initConfig(
     {
-        jshint: {
-            src: [ 'index.js', 'Gruntfile.js', 'lib/**/*.js', 'test/**/*.js' ],
-            options: {
-                node: true,
-                esversion: 6
-            }
+        eslint: {
+            target: [
+                '*.js',
+                'lib/**/*.js',
+                'test/**/*.js'
+            ]
         },
 
         mochaTest: {
-            src: [ 'test/in-mem.js',
-                   'test/tcp.js',
-                   'test/primus.js',
-                   'test/embedded.js',
-                   'test/embedded-authz.js',
-                   'test/http.js',
-                   'test/http2.js',
-                   'test/in-mem-fsq.js',
-                   'test/in-mem-anon.js',
-                   'test/server-extra.js',
-                   'test/read_frame-error.js',
-                   'test/connect-after-close.js',
-                   'test/pipeline.js',
-                   'test/sep-auth-no-config.js' ],
+            src: [
+                'test/in-mem.js',
+                'test/tcp.js',
+                'test/primus.js',
+                'test/embedded.js',
+                'test/embedded-authz.js',
+                'test/http.js',
+                'test/http2.js',
+                'test/http2-duplex.js',
+                'test/in-mem-fsq.js',
+                'test/in-mem-anon.js',
+                'test/server-extra.js',
+                'test/read_frame-error.js',
+                'test/connect-after-close.js',
+                'test/pipeline.js',
+                'test/sep-auth-no-config.js'
+            ],
             options: {
                 bail: true
             }
@@ -101,11 +105,11 @@ module.exports = function (grunt)
         }
     });
 
-    grunt.loadNpmTasks('grunt-contrib-jshint');
+    grunt.loadNpmTasks('grunt-eslint');
     grunt.loadNpmTasks('grunt-mocha-test');
     grunt.loadNpmTasks('grunt-exec');
 
-    grunt.registerTask('lint', 'jshint');
+    grunt.registerTask('lint', 'eslint');
     grunt.registerTask('keys', 'exec:keys');
     grunt.registerTask('dist', 'exec:webpack');
     grunt.registerTask('check_dist', 'exec:check_dist');

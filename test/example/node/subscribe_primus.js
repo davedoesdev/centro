@@ -1,3 +1,7 @@
+/*eslint-env node */
+/*eslint-disable no-console */
+"use strict";
+
 var centro = require('../../..'),
     assert = require('assert'),
     Primus = require('primus'),

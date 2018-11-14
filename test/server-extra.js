@@ -1,4 +1,4 @@
-/*jshint mocha: true */
+/*eslint-env node, mocha */
 "use strict";
 
 var centro = require('..'),
@@ -12,7 +12,7 @@ describe('server errors', function ()
         var server = new CentroServer(
         {
             ANONYMOUS_MODE: true,
-            transport: function (config, authorize, connected, ready, error, warning)
+            transport: function (config, authorize, connected, ready, unused_error, unused_warning)
             {
                 ready(new Error('dummy'));
             }
@@ -30,7 +30,7 @@ describe('server errors', function ()
         var server = new CentroServer(
         {
             transport: {
-                server: function (config, authorize, connected, ready, error, warning)
+                server: function (config, authorize, connected, ready, unused_error, unused_warning)
                 {
                     ready(new Error('dummy'));
                 },
@@ -136,7 +136,7 @@ describe('server errors', function ()
         var server = new CentroServer(
         {
             ANONYMOUS_MODE: true,
-            transport: function (config, authorize, connected, ready, error, warning)
+            transport: function (config, authorize, connected, ready, unused_error, unused_warning)
             {
                 ready(null,
                 {

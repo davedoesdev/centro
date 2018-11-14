@@ -1,0 +1,21 @@
+<html>
+  <head>
+    <title>Centro Example</title>
+    <link href="example.css" rel="stylesheet" type="text/css">
+    <script src="../../../dist/centro.js"></script>
+    <script src="example_http2.js"></script>
+  </head>
+  <body onload="connect()">
+    <form onsubmit="publish(event)">
+      <div id="input">
+        <div>
+          <label>topic: <input type="text" id="topic" autofocus></label>
+          <label>message:  <input type="text" id="message"></label>
+        </div>
+        <input type="submit" value="publish">
+      </div>
+      <div id="messages">
+      </div>
+    </form>
+  </body>
+</html>

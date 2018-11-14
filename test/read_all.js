@@ -1,3 +1,6 @@
+/*eslint-env node */
+"use strict";
+
 module.exports = function (s, cb)
 {
     var bufs = [], done = false;
@@ -8,7 +11,7 @@ module.exports = function (s, cb)
         done = true;
         if (cb)
         {
-            cb(Buffer.concat(bufs));
+            cb.call(this, Buffer.concat(bufs));
         }
     }
     s.on('end', end);
@@ -16,7 +19,7 @@ module.exports = function (s, cb)
 
     s.on('readable', function ()
     {
-        while (true)
+        while (true) //eslint-disable-line no-constant-condition
         {
             var data = this.read();
             if (data === null) { break; }

@@ -1,3 +1,5 @@
+/*eslint-env node, mocha */
+"use strict";
 
 const runner = require('./runner'),
       centro = require('..'),
@@ -51,7 +53,7 @@ function connect(config, server, cb)
 
                         return this.on('readable', function ()
                         {
-                            while (true)
+                            while (true) // eslint-disable-line no-constant-condition
                             {
                                 const buf = this.read();
                                 if (buf === null) { break; }
@@ -92,7 +94,7 @@ function on_pre_after(config, cb)
     cb();
 }
 
-function extra(get_info, on_before)
+function extra(unused_get_info)
 {
     let session;
 
@@ -225,7 +227,7 @@ runner(
                 session.destroy();
             }
             catch (ex)
-            {
+            { // eslint-disable-line no-constant-condition
             }
         });
 

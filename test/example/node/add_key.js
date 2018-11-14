@@ -1,3 +1,6 @@
+/*eslint-env node */
+"use strict";
+
 var uri = 'http://davedoesdev.com',
     authorize_jwt = require('../../..').authorize_jwt,
     assert = require('assert'),

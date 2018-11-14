@@ -1,5 +1,5 @@
 /*eslint-env browser */
-/*eslint-disable no-unused-vars, no-undef */
+/*eslint-disable no-unused-vars, no-undef, no-console */
 
 var publish = function (event)
 {
@@ -28,18 +28,21 @@ function connect()
     {
         messages.appendChild(div);
         messages.scrollTop = messages.scrollHeight;
-    }
+    } 
 
     centro.separate_auth(
     {
         token: params.get('token')
-    }, function (err, userpass, make_client)
+    }, async function (err, userpass, make_client)
     {
         if (err) { throw(err); }
 
-        var primus = new Primus('http://' + userpass + '@localhost:8801',
-                                { strategy: false }),
-            duplex = new centro.PrimusDuplex(primus),
+        var duplex = await centro.make_client_http2_duplex(
+            'https://localhost:8804/centro/v2/http2-duplex', {
+                headers: {
+                    Authorization: 'Bearer ' + userpass.split(':')[1]
+                }
+            }),
             client = make_client(duplex);
 
         client.on('ready', function ()
@@ -64,9 +67,15 @@ function connect()
             };
         });
 
-        primus.on('close', function ()
+        duplex.on('end', function ()
         {
             add_message(tag_text('status', 'closed'));
+        });
+
+        client.on('error', function (err)
+        {
+            console.error(err);
+            duplex.destroy();
         });
     });
 }

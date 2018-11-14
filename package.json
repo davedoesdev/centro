@@ -1,7 +1,7 @@
 {
   "name": "centro-js",
   "description": "Pub-sub and work queue service on Primus or TCP. Supports wildcards, streams and back-pressure. Just Node and a filesystem required.",
-  "version": "3.2.0",
+  "version": "3.3.0",
   "homepage": "https://github.com/davedoesdev/centro",
   "author": {
     "name": "David Halls",
@@ -43,6 +43,7 @@
     "authorize-jwt": "^5.5.2",
     "primus": "~7.2.2",
     "primus-backpressure": "~1.0.5",
+    "http2-duplex": "~4.0.0",
     "frame-stream": "~1.1.1",
     "ajv": "~6.5.3",
     "async": "~2.6.1",
@@ -51,24 +52,26 @@
     "wu": "~2.1.0"
   },
   "devDependencies": {
-    "grunt": "~1.0.3",
-    "grunt-contrib-jshint": "~1.1.0",
-    "grunt-mocha-test": "~0.13.3",
-    "grunt-exec": "~3.0.0",
-    "mocha": "~5.2.0",
     "chai": "~4.1.2",
-    "nyc": "~13.0.1",
     "coveralls": "~3.0.2",
-    "jsjws": "^5.3.0",
-    "ws": "~6.0.0",
+    "documentation": "~8.1.2",
+    "eslint": "~5.9.0",
+    "eventsource": "~1.0.7",
     "fastest-writable": "~2.0.2",
+    "fetch-h2": "^1.0.0",
+    "grunt": "~1.0.3",
+    "grunt-eslint": "~21.0.0",
+    "grunt-exec": "~3.0.0",
+    "grunt-mocha-test": "~0.13.3",
+    "jsjws": "^5.3.0",
+    "matic": "~0.5.2",
+    "mocha": "~5.2.0",
+    "nyc": "~13.0.1",
+    "removeNPMAbsolutePaths": "~1.0.4",
+    "rimraf": "~2.6.2",
     "webpack": "~4.19.0",
     "webpack-cli": "~3.1.0",
-    "rimraf": "~2.6.2",
-    "eventsource": "~1.0.7",
-    "removeNPMAbsolutePaths": "~1.0.4",
-    "documentation": "~8.1.2",
-    "matic": "~0.5.2"
+    "ws": "~6.0.0"
   },
   "engines": {
     "node": ">= 10"

@@ -42,6 +42,8 @@ Here's a server which listens on all transports.
 .server.js
 ----
 var centro = require('centro-js');
+var fs = require('fs');
+var path = require('path');
 
 var config = {
     allowed_algs: ['PS256'], // <1>
@@ -55,21 +57,32 @@ var config = {
         server: 'http',
         config: { port: 8802 }
     }, {
+        server: 'http2',
+        config: { port: 8803 }
+    }, {
+        server: 'http2-duplex',
+        config: {
+            port: 8804,
+            key: fs.readFileSync(path.join(__dirname, 'server.key')), <2>
+            cert: fs.readFileSync(path.join(__dirname, 'server.pem'))
+        }
+    }, {
         server: 'in-mem',
-        authorize_config: { ANONYMOUS_MODE: true } // <2>
+        authorize_config: { ANONYMOUS_MODE: true } // <3>
     }]
 };
 
 var server = new centro.CentroServer(config);
 
-server.on('ready', function () // <3>
+server.on('ready', function () // <4>
 {
     console.log('READY.');
 });
 ----
 <1> <<authz-tokens,Authorization tokens>> signed with these algorithms are accepted.
-<2> In-memory transport doesn't require authorization tokens.
-<3> Connections may be refused until `ready` is emitted.
+<2> Browsers only support HTTP/2 over TLS.
+<3> In-memory transport doesn't require authorization tokens.
+<4> Connections may be refused until `ready` is emitted.
 
 This is just an example -- you only need to list transports to which your
 applications will connect.
@@ -753,6 +766,123 @@ Load the example page using a URL like `file:///path/to/example_sse.html?subscri
 
 Further details of how messages are delivered using server-sent events are
 available http://rawgit.davedoesdev.com/davedoesdev/centro/master/docs/index.html#centro-jslibserver_transportshttp[here].
+
+[[http2-duplex]]
+==== HTTP/2-duplex
+
+The `http2-duplex` transport uses the https://github.com/davedoesdev/browser-http2-duplex[http2-duplex] module to emulate a full-duplex connection with browsers. Browser-to-server HTTP/2 streaming isn't implemented by any browser, nor are there any plans to do so. `http2-duplex` emulates it by using POST requests.
+
+The HTML for this example is the same as <<primus-html,Primus HTML>> except
+that we don't need the Primus client:
+
+[source,html]
+.example_http2.html
+----
+<html>
+  <head>
+    <title>Centro Example</title>
+    <link href="example.css" rel="stylesheet" type="text/css">
+    <script src="dist/centro.js"></script>
+    <script src="example_http2.js"></script>
+  </head>
+  <body onload="connect()">
+    <form onsubmit="publish(event)">
+      <div id="input">
+        <div>
+          <label>topic: <input type="text" id="topic" autofocus></label>
+          <label>message:  <input type="text" id="message"></label>
+        </div>
+        <input type="submit" value="publish">
+      </div>
+      <div id="messages">
+      </div>
+    </form>
+  </body>
+</html>
+----
+
+The script is also similar to the <<primus-js,Primus script>>:
+
+[source,html]
+.example_http2.js
+----
+var publish = function (event) { event.preventDefault(); };
+
+function connect()
+{
+    var topic = document.getElementById('topic'),
+        message = document.getElementById('message'),
+        messages = document.getElementById('messages'),
+        params = new URLSearchParams(window.location.search);
+
+    function tag_text(cls, text)
+    {
+        var div = document.createElement('div');
+        div.className = cls;
+        div.appendChild(document.createTextNode(text));
+        return div;
+    }
+
+    function add_message(div)
+    {
+        messages.appendChild(div);
+        messages.scrollTop = messages.scrollHeight;
+    } 
+
+    centro.separate_auth(
+    {
+        token: params.get('token')
+    }, async function (err, userpass, make_client)
+    {
+        if (err) { throw(err); }
+
+        var duplex = await centro.make_client_http2_duplex( // <1>
+            'https://localhost:8804/centro/v2/http2-duplex', {
+                headers: {
+                    Authorization: 'Bearer ' + userpass.split(':')[1] // <2>
+                }
+            }),
+            client = make_client(duplex);
+
+        client.on('ready', function ()
+        {
+            add_message(tag_text('status', 'open'));
+            this.subscribe(params.get('subscribe'), function (s, info)
+            {
+                centro.read_all(s, function (v)
+                {
+                    var msg = document.createElement('div');
+                    msg.className = 'message';
+                    msg.appendChild(tag_text('topic', info.topic));
+                    msg.appendChild(tag_text('data', v.toString()));
+                    add_message(msg);
+                });
+            });
+
+            publish = function (event)
+            {
+                event.preventDefault();
+                client.publish(topic.value).end(message.value);
+            };
+        });
+
+        duplex.on('end', function ()
+        {
+            add_message(tag_text('status', 'closed'));
+        });
+
+        client.on('error', function (err)
+        {
+            console.error(err);
+            duplex.destroy();
+        });
+    });
+}
+----
+<1> The Centro client distribution also includes the https://github.com/davedoesdev/browser-http2-duplex[http2-duplex] client, which connects to the server and returns an emulated duplex stream.
+<2> You can use `Basic` or `Bearer` authentication.
+
+Load the example page using a URL like `file:///path/to/example_http2.html?subscribe=foo.*&token=XXX`
 
 === In-memory client
 

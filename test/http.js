@@ -1,4 +1,4 @@
-/*jshint mocha: true */
+/*eslint-env node, mocha */
 "use strict";
 
 var runner = require('./runner'),
@@ -983,7 +983,7 @@ runner(
                 this.removeListener('request', request);
 
                 var orig_writeHead = res.writeHead;
-                res.writeHead = function (code, headers)
+                res.writeHead = function (unused_code, unused_headers)
                 {
                     res.writeHead = orig_writeHead;
 
@@ -1150,7 +1150,7 @@ runner(
             get_info().server.once('connect', function (connid)
             {
                 var info = get_info().connections.get(connid);
-                info.mqserver.once('publish_requested', function (topic, duplex, options, done2)
+                info.mqserver.once('publish_requested', function (unused_topic, unused_duplex, unused_options, unused_done2)
                 {
                     // handshake is sent after carrier finishes
                     done(new Error('should not be called'));
@@ -1159,13 +1159,13 @@ runner(
 
             var msg;
 
-            function request(req, res)
+            function request(req, unused_res)
             {
                 /*jshint validthis: true */
                 this.removeListener('request', request);
 
                 var orig_pipe = req.pipe;
-                req.pipe = function (dest)
+                req.pipe = function (unused_dest)
                 {
                     req.pipe = orig_pipe;
 
@@ -1212,7 +1212,7 @@ runner(
             get_info().server.once('connect', function (connid)
             {
                 var info = get_info().connections.get(connid);
-                info.mqserver.once('publish_requested', function (topic, duplex, options, done2)
+                info.mqserver.once('publish_requested', function (unused_topic, unused_duplex, unused_options, unused_done2)
                 {
                     // handshake is sent after carrier finishes
                     done(new Error('should not be called'));
@@ -1227,7 +1227,7 @@ runner(
                 this.removeListener('request', request);
 
                 var orig_pipe = req.pipe;
-                req.pipe = function (dest)
+                req.pipe = function (unused_dest)
                 {
                     req.pipe = orig_pipe;
 
@@ -1292,7 +1292,7 @@ runner(
 
                         var msg;
 
-                        function request(req, res)
+                        function request(req, unused_res)
                         {
                             /*jshint validthis: true */
                             this.removeListener('request', request);

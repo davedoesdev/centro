@@ -1,3 +1,7 @@
+/*eslint-env node */
+/*eslint-disable no-console */
+"use strict";
+
 var uri = 'http://davedoesdev.com',
     authorize_jwt = require('../../..').authorize_jwt,
     jsjws = require('jsjws'),

@@ -1,4 +1,4 @@
-/*jshint mocha: true */
+/*eslint-env node, mocha */
 "use strict";
 
 var centro = require('..'),
@@ -80,7 +80,7 @@ describe('pipeline', function ()
             next(x.concat(3));
         });
  
-        pipeline(obj, 'foo', function (x, next)
+        pipeline(obj, 'foo', function (x, unused_next)
         {
             expect(ev1called).to.equal(true);
             expect(ev2called).to.equal(false);
@@ -155,13 +155,13 @@ describe('pipeline', function ()
             next(x.concat(3));
         });
  
-        pipeline(obj, 'foo', function (x, next)
+        pipeline(obj, 'foo', function (x, unused_next)
         {
             expect(x).to.eql([0, 1, 2, 3]);
             setTimeout(done, 500);
         });
 
-        obj.default_foo_handler = function (x)
+        obj.default_foo_handler = function (unused_x)
         {
             done(new Error('should not be called'));
         };
