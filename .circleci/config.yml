@@ -26,4 +26,4 @@ jobs:
   test-11:
     <<: *test-template
     docker:
-      - image: circleci/node:11.2.0
+      - image: circleci/node:11.1.0
