@@ -5,7 +5,7 @@ set -e
 set -x
 
 node_ver=$(node -p 'process.versions.node.split(".")[0]')
-check_ver=10
+check_ver=11
 
 if [ $node_ver = $check_ver ]; then
   ./node_modules/.bin/grunt check_dist
