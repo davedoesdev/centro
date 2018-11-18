@@ -919,6 +919,15 @@ function extra(get_info, on_before)
     return rqst;
 }
 
+var name = mod;
+if (mod === 'http2')
+{
+    if (client_config.ca)
+    {
+        name += 's';
+    }
+}
+
 runner(
 {
     transport: [{
@@ -927,7 +936,7 @@ runner(
         {
             port: port
         }, server_config),
-        name: mod
+        name: name
     }, 'in-mem'],
 }, connect,
 {
@@ -945,7 +954,7 @@ runner(
             port: port,
             sse_keep_alive_interval: 1
         }, server_config),
-        name: mod + '_passed_in_server'
+        name: name + '_passed_in_server'
     }, {
         server: 'in-mem'
     }],
