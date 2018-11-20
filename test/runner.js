@@ -16,7 +16,18 @@ var centro = require('..'),
     read_all = require('./read_all'),
     uri = 'mailto:dave@davedoesdev.com',
     uri2 = 'mailto:david@davedoesdev.com';
-
+/*
+var EventEmitter = require('events').EventEmitter;
+var orig_emit = EventEmitter.prototype.emit;
+EventEmitter.prototype.emit = function (type, ...args)
+{
+    if (type === 'error')
+    {
+        console.log("ERROR", args, this);
+    }
+    return orig_emit.apply(this, arguments);
+};
+*/
 process.on('unhandledRejection', (reason, p) => {
     if (reason.message !== 'async skip; aborting execution')
     {
@@ -2779,6 +2790,10 @@ module.exports = function (config, connect, options)
                             }
                             else if (errors.length > 4)
                             {
+                                if (errors[4].message === 'carrier stream finished before duplex finished')
+                                {
+                                    return false;
+                                }
                                 done(new Error('too many errors'));
                                 return false;
                             }
