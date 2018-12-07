@@ -2705,11 +2705,18 @@ module.exports = function (config, connect, options)
                 {
                     if (!ignore_server)
                     {
-                        expect(server.last_warning.message).to.equal(msg);
-                        expect(server.last_warning.statusCode).to.equal(
-                            code === 401 ? code : undefined);
-                        expect(server.last_warning.authenticate).to.equal(
-                            code === 401 ? 'Bearer realm="centro"' : undefined);
+                        if ((msg === 'token too long') &&
+                            (server.last_warning.message === 'Parse Error'))
+                        {
+                            expect(server.last_warning.code).to.equal('HPE_HEADER_OVERFLOW');
+                        }
+                        else
+                        {
+                            expect(server.last_warning.statusCode).to.equal(
+                                code === 401 ? code : undefined);
+                            expect(server.last_warning.authenticate).to.equal(
+                                code === 401 ? 'Bearer realm="centro"' : undefined);
+                        }
                     }
 
                     if (clients[n])
@@ -2800,10 +2807,20 @@ module.exports = function (config, connect, options)
                             else
                             {
                                 expect(errors[0].message).to.equal('unexpected response');
-                                expect(errors[0].statusCode).to.equal(code);
-                                expect(errors[0].authenticate).to.equal(
-                                    code == 401 ? 'Bearer realm="centro"' : undefined);
-                                expect(errors[0].data).to.equal('{"error":"' + msg + '"}');
+
+                                if ((msg === 'token too long') &&
+                                    (server.last_warning.message === 'Parse Error'))
+                                {
+                                    expect(errors[0].statusCode).to.equal(400);
+                                }
+                                else
+                                {
+                                    expect(errors[0].statusCode).to.equal(code);
+                                    expect(errors[0].authenticate).to.equal(
+                                        code == 401 ? 'Bearer realm="centro"' : undefined);
+                                    expect(errors[0].data).to.equal('{"error":"' + msg + '"}');
+                                }
+
                                 expect(errors[1].message).to.equal('WebSocket was closed before the connection was established');
                                 expect(errors[2].message).to.equal('WebSocket was closed before the connection was established');
                                 expect(errors[3].message).to.equal('carrier stream ended before end message received');
