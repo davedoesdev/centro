@@ -2706,9 +2706,13 @@ module.exports = function (config, connect, options)
                     if (!ignore_server)
                     {
                         if ((msg === 'token too long') &&
-                            (server.last_warning.message === 'Parse Error'))
+                            (!server.last_warning ||
+                             (server.last_warning.message === 'Parse Error')))
                         {
-                            expect(server.last_warning.code).to.equal('HPE_HEADER_OVERFLOW');
+                            if (server.last_warning)
+                            {
+                                expect(server.last_warning.code).to.equal('HPE_HEADER_OVERFLOW');
+                            }
                         }
                         else
                         {
@@ -2809,7 +2813,8 @@ module.exports = function (config, connect, options)
                                 expect(errors[0].message).to.equal('unexpected response');
 
                                 if ((msg === 'token too long') &&
-                                    (server.last_warning.message === 'Parse Error'))
+                                    (!server.last_warning ||
+                                     (server.last_warning.message === 'Parse Error')))
                                 {
                                     expect(errors[0].statusCode).to.equal(400);
                                 }
