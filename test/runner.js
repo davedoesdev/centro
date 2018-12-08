@@ -170,7 +170,11 @@ module.exports = function (config, connect, options)
                     pending_presence_topics.add('join.' + connid);
                     pending_presence_topics.add('leave.' + connid);
                     pending_presence_topics.add('ready.all.' + connid);
-                    connections.get(connid).hsdata = hsdata;
+                    var conn = connections.get(connid);
+                    if (conn)
+                    {
+                        conn.hsdata = hsdata;
+                    }
                 });
 
                 server.on('disconnect', function (connid)
