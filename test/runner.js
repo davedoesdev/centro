@@ -167,12 +167,12 @@ module.exports = function (config, connect, options)
 
                 server.on('connect', function (connid, hsdata)
                 {
-                    pending_presence_topics.add('join.' + connid);
-                    pending_presence_topics.add('leave.' + connid);
-                    pending_presence_topics.add('ready.all.' + connid);
                     var conn = connections.get(connid);
                     if (conn)
                     {
+                        pending_presence_topics.add('join.' + connid);
+                        pending_presence_topics.add('leave.' + connid);
+                        pending_presence_topics.add('ready.all.' + connid);
                         conn.hsdata = hsdata;
                     }
                 });
