@@ -3,16 +3,17 @@ environment:
     - nodejs_version: "11.4.0"
 
 install:
-#  - ps: Install-Product node $env:nodejs_version
-  - ps: Update-NodeJsInstallation $env:nodejs_version
+#  - ps: Update-NodeJsInstallation $env:nodejs_version x64
+  - ps: Remove-NodeJsInstallation $(Get-InstalledNodeJsVersion).version $(Get-InstalledNodeJsVersion).bitness
+  - ps: cmd /c start /wait msiexec /i $(Get-NodeJsInstallPackage $env:nodejs_version x64) /q
+  - node --version
+  - npm --version
   - npm install
 
 test_script:
-  - node --version
-  - npm --version
   - npm run test-win
 
 build: off
 
-on_finish:
-  - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+#on_finish:
+#  - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
