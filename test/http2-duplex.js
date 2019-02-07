@@ -28,7 +28,7 @@ global.fetch = async function(url, options) {
             body: Buffer.from(options.body)
         };
     }
-    const response = await fetch2(url, options);
+    const response = await fetch2(url.replace('http:', 'http2:'), options);
     let readable = null;
     response.body = {
         getReader() {
