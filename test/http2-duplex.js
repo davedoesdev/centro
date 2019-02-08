@@ -14,11 +14,14 @@ const pathname = `/centro/v${centro.version}/http2-duplex`;
 const path = require('path');
 const fs = require('fs');
 const { EventEmitter } = require('events');
-const fetch2 = require('fetch-h2').context({
+require('fetch-h2/dist/lib/utils-http2').hasGotGoaway = function() {
+    return false;
+};
+const { fetch: fetch2 } = require('fetch-h2').context({
     session: {
         ca: fs.readFileSync(path.join(__dirname, 'ca.pem')) 
     }
-}).fetch;
+});
 const port = 8700;
 
 global.fetch = async function(url, options) {
@@ -28,7 +31,13 @@ global.fetch = async function(url, options) {
             body: Buffer.from(options.body)
         };
     }
-    const response = await fetch2(url.replace('http:', 'http2:'), options);
+    let url2 = url.replace('http:', 'http2:');
+    let response;
+    try {
+        response = await fetch2(url2, options);
+    } catch (ex) {
+        throw ex;
+    }
     let readable = null;
     response.body = {
         getReader() {
@@ -119,6 +128,13 @@ function connect(config, server, cb) {
 
 function extra(unused_get_info) {
     it('should return 403 for invalid CORS request', async function() {
+        const orig_includes = Array.prototype.includes;
+        Array.prototype.includes = function (name) {
+            if (name === 'origin') {
+                return false;
+            }
+            return orig_includes.apply(this, arguments);
+        };
         const response = await fetch(
             `${scheme}://localhost:${port}${pathname}`, {
                 method: 'POST',
@@ -126,6 +142,7 @@ function extra(unused_get_info) {
                     'origin': '%'
                 }
             });
+        Array.prototype.includes = orig_includes;
         expect(response.ok).to.be.false;
         expect(response.status).to.equal(403);
         expect(await response.text()).to.equal('Invalid HTTP Access Control (CORS) request:\n  Origin: %\n  Method: POST');

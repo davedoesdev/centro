@@ -1918,7 +1918,10 @@ module.exports = function (config, connect, options)
                 {
                     if (is_transport('node_http2-duplex'))
                     {
-                        expect(err.response.status).to.equal(404);
+                        if (err.message !== 'Stream prematurely closed')
+                        {
+                            expect(err.response.status).to.equal(404);
+                        }
                     }
                     else if (is_transport('in-mem'))
                     {
@@ -2630,7 +2633,8 @@ module.exports = function (config, connect, options)
                     {
                         expect(err.message).to.be.oneOf([
                             'carrier stream finished before duplex finished',
-                            'carrier stream ended before end message received'
+                            'carrier stream ended before end message received',
+                            'Stream prematurely closed'
                         ]);
                     });
                 });
@@ -3068,13 +3072,17 @@ module.exports = function (config, connect, options)
 
                 clients[0].on('error', function (err)
                 {
-                    expect(err.message).to.be.oneOf([
-                        'write EPIPE',
-                        'read ECONNRESET',
-                        'write ECONNRESET',
-                        'Stream closed with error code NGHTTP2_REFUSED_STREAM',
-                        'Request failed'
-                    ]);
+                    if (!err.message.startsWith('connect ECONNREFUSED'))
+                    {
+                        expect(err.message).to.be.oneOf([
+                            'write EPIPE',
+                            'read ECONNRESET',
+                            'write ECONNRESET',
+                            'Stream closed with error code NGHTTP2_REFUSED_STREAM',
+                            'Request failed',
+                            'Body already used' // fetch-h2 retries on GOAWAY
+                        ]);
+                    }
                 });
 
                 var s = clients[0].publish('foo');
@@ -4027,7 +4035,8 @@ module.exports = function (config, connect, options)
                     {
                         expect(err.message).to.be.oneOf([
                             'write after end',
-                            'read ECONNRESET'
+                            'read ECONNRESET',
+                            'Stream prematurely closed'
                         ]);
                     });
 
@@ -4108,7 +4117,8 @@ module.exports = function (config, connect, options)
                             'write after end',
                             'write ECONNABORTED',
                             'read ECONNRESET',
-                            'Cannot call write after a stream was destroyed'
+                            'Cannot call write after a stream was destroyed',
+                            'Stream prematurely closed'
                         ]);
                     });
 
@@ -5153,7 +5163,10 @@ module.exports = function (config, connect, options)
                 {
                     clients[0].on('error', function (err)
                     {
-                        expect(err.response.status).to.equal(404);
+                        if (err.message !== 'Stream prematurely closed')
+                        {
+                            expect(err.response.status).to.equal(404);
+                        }
                     });
                 }
                 else
@@ -6203,7 +6216,8 @@ module.exports = function (config, connect, options)
                                 'carrier stream ended before end message received',
                                 'carrier stream finished before duplex finished',
                                 'no handlers', // even after we unsubscribe there may be some messages left in server buffer
-                                'Cannot call write after a stream was destroyed'
+                                'Cannot call write after a stream was destroyed',
+                                'Stream prematurely closed'
                             ]);
                         });
 
@@ -6217,7 +6231,8 @@ module.exports = function (config, connect, options)
                                 'write ECANCELED',
                                 'write EPIPE',
                                 'write ECONNRESET',
-                                'Cannot call write after a stream was destroyed'
+                                'Cannot call write after a stream was destroyed',
+                                'Stream prematurely closed'
                             ]);
                         });
 
@@ -6354,7 +6369,8 @@ module.exports = function (config, connect, options)
                                     'write after end',
                                     'carrier stream ended before end message received',
                                     'carrier stream finished before duplex finished',
-                                    'Cannot call write after a stream was destroyed'
+                                    'Cannot call write after a stream was destroyed',
+                                    'Stream prematurely closed'
                                 ]);
                             }
                         });
@@ -6374,7 +6390,8 @@ module.exports = function (config, connect, options)
                                     'carrier stream ended before end message received',
                                     'write EPIPE',
                                     'write ECONNABORTED',
-                                    'Cannot call write after a stream was destroyed'
+                                    'Cannot call write after a stream was destroyed',
+                                    'Stream prematurely closed'
                                 ]);
                             }
                         });
