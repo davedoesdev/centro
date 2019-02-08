@@ -3,12 +3,12 @@ workflows:
   version: 2
   test:
     jobs:
-      - test-10
       - test-11
+#      - test-10
 jobs:
-  test-10: &test-template
+  test-11: &test-template
     docker:
-      - image: circleci/node:10.15.1
+      - image: circleci/node:11.9.0
         environment:
           CXX: g++-6
     steps:
@@ -23,7 +23,7 @@ jobs:
       - run:
           name: test
           command: ./test/ci-test.sh
-  test-11:
+  test-10:
     <<: *test-template
     docker:
-      - image: circleci/node:11.9.0
+      - image: circleci/node:10.15.1
