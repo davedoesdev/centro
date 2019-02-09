@@ -3961,7 +3961,10 @@ module.exports = function (config, connect, options)
                 {
                     clients[0].on('error', function (err)
                     {
-                        expect(err.response.status).to.equal(404);
+                        if (err.message !== 'Stream prematurely closed')
+                        {
+                            expect(err.response.status).to.equal(404);
+                        }
                     });
                 }
 
