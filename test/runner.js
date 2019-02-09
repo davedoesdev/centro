@@ -3993,7 +3993,8 @@ module.exports = function (config, connect, options)
                             'write ECONNABORTED',
                             'write ECONNRESET',
                             'write EPIPE',
-                            'Cannot call write after a stream was destroyed'
+                            'Cannot call write after a stream was destroyed',
+                            'Stream prematurely closed'
                         ]);
                     }
                     var c = connections.values().next().value;
