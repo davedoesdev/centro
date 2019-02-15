@@ -2083,6 +2083,8 @@ module.exports = function (config, connect, options)
             {
                 function check_error(err)
                 {
+                    console.log(err.message);
+
                     if (err.message === 'carrier stream finished before duplex finished')
                     {
                         if (is_transport('primus') || is_transport('node_http2_http'))
