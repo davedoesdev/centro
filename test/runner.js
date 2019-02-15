@@ -2083,6 +2083,7 @@ module.exports = function (config, connect, options)
             {
                 function check_error(err)
                 {
+                    // eslint-disable-next-line no-console
                     console.log(err.message);
 
                     if (err.message === 'carrier stream finished before duplex finished')
