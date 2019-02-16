@@ -2026,7 +2026,8 @@ module.exports = function (config, connect, options)
                     {
                         if (err &&
                             (err.message !== 'carrier stream finished before duplex finished') &&
-                            (err.message !== 'carrier stream ended before end message received'))
+                            (err.message !== 'carrier stream ended before end message received') &&
+                            (err.message !== 'closed'))
                         {
                             return done(err);
                         }
