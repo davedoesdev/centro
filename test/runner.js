@@ -2081,16 +2081,24 @@ module.exports = function (config, connect, options)
 
             it('should error if carrier ends before client connects', function (done)
             {
+                var is_done = false;
+
+                function done2()
+                {
+                    if (!is_done)
+                    {
+                        is_done = true;
+                        return done();
+                    }
+                }
+
                 function check_error(err)
                 {
-                    // eslint-disable-next-line no-console
-                    console.log(err.message);
-
                     if (err.message === 'carrier stream finished before duplex finished')
                     {
                         if (is_transport('primus') || is_transport('node_http2_http'))
                         {
-                            return done();
+                            return done2();
                         }
                         return;
                     }
@@ -2100,7 +2108,7 @@ module.exports = function (config, connect, options)
                         'read ECONNRESET'
                     ]);
 
-                    done();
+                    done2();
                 }
 
                 if (clients[0].last_error)
