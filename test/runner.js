@@ -3778,8 +3778,6 @@ module.exports = function (config, connect, options)
 
             it('should be able to throttle streams', function (done)
             {
-                this.timeout(8000);
-
                 var throttle = require('../lib/server_extensions/throttle'),
                     tps = attach_extension(throttle.throttle_publish_streams,
                                            { rate: 10 }),
@@ -3814,8 +3812,6 @@ module.exports = function (config, connect, options)
 
             it('should be able to time-out publish streams', function (done)
             {
-                this.timeout(8000);
-
                 var timeout = require('../lib/server_extensions/timeout'),
                     tps = attach_extension(timeout.timeout_publish_streams,
                                            { timeout: 3000 });
@@ -3833,8 +3829,6 @@ module.exports = function (config, connect, options)
 
             it('should be able to time-out message streams', function (done)
             {
-                this.timeout(60000);
-
                 var timeout = require('../lib/server_extensions/timeout'),
                     tms = attach_extension(timeout.timeout_message_streams,
                                            { timeout: 3000 });
@@ -5247,8 +5241,6 @@ module.exports = function (config, connect, options)
                         {
                             return this.skip();
                         }
-
-                        this.timeout(20000);
 
                         // test filter on handler without .mqlobber_server
                         get_info().server.fsq.subscribe(get_info().connections.values().next().value.prefixes[0] + 'foo.foo', function ()
