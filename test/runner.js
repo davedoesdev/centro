@@ -3784,7 +3784,7 @@ module.exports = function (config, connect, options)
                     tms = attach_extension(throttle.throttle_message_streams,
                                            { rate: 10 });
 
-                var date_before_publish;
+                var time_before_publish;
 
                 clients[0].subscribe('foo', function (s, info)
                 {
@@ -3793,7 +3793,7 @@ module.exports = function (config, connect, options)
 
                     read_all(s, function (v)
                     {
-                        expect(new Date() - date_before_publish).to.be.at.least(4000);
+                        expect(process.hrtime(time_before_publish)[0]).to.be.at.least(4);
                         expect(v.toString()).to.equal('012345678901234567890');
 
                         detach_extension(tps);
@@ -3805,7 +3805,7 @@ module.exports = function (config, connect, options)
                 {
                     if (err) { return done(err); }
 
-                    date_before_publish = new Date();
+                    time_before_publish = process.hrtime();
                     clients[0].publish('foo').end('012345678901234567890');
                 });
             });
@@ -3816,12 +3816,12 @@ module.exports = function (config, connect, options)
                     tps = attach_extension(timeout.timeout_publish_streams,
                                            { timeout: 3000 });
 
-                var date_before_publish = new Date();
+                var time_before_publish = process.hrtime();
 
                 clients[0].publish('foo', function (err)
                 {
                     expect(err.message).to.equal('server error');
-                    expect(new Date() - date_before_publish).to.be.at.least(3000);
+                    expect(process.hrtime(time_before_publish)[0]).to.be.at.least(3);
                     detach_extension(tps);
                     done();
                 }).write('A');
@@ -6003,11 +6003,11 @@ module.exports = function (config, connect, options)
                     it('request timeout', function (done)
                     {
                         var ths = this,
-                            now = new Date(),
+                            now = process.hrtime(),
                             s;
                         function on_error(err)
                         {
-                            expect(new Date().getTime() - now.getTime()).to.be.at.least(2000);
+                            expect(process.hrtime(now)[0]).to.be.at.least(2);
                             expect(err.message).to.equal(is_transport('http2') ? 'server error' : 'socket hang up');
                             get_info().detach_extension(ths.centro_test_thpr);
                             done();
