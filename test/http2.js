@@ -46,7 +46,7 @@ function connect(config, server, cb)
                             const client = new class extends EventEmitter {}();
                             client.mux = { carrier: this };
                             process.nextTick(() => {
-                                client.emit('error', new Error(msg || 'closed'));
+                                client.emit('error', new Error(msg ? JSON.parse(msg).error : 'closed'));
                             });
                             cb(null, client);
                         });

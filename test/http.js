@@ -139,7 +139,7 @@ function connect(config, server, cb)
                                 }
                                 else
                                 {
-                                    err = new Error(msg);
+                                    err = new Error(JSON.parse(msg).error);
                                 }
 
                                 if (cb)
@@ -270,7 +270,7 @@ function connect(config, server, cb)
 
                                 res.on('end', function ()
                                 {
-                                    var err = new Error(msg);
+                                    var err = new Error(JSON.parse(msg).error);
                                     if (cb)
                                     {
                                         cb(err);
@@ -552,7 +552,7 @@ function extra(get_info, on_before)
             expect(res.statusCode).to.equal(404);
             read_all(res, function (v)
             {
-                expect(v.toString()).to.equal('not found');
+                expect(JSON.parse(v.toString()).error).to.equal('not found');
                 done();
             });
         }).end();
@@ -570,7 +570,7 @@ function extra(get_info, on_before)
             expect(res.statusCode).to.equal(405);
             read_all(res, function (v)
             {
-                expect(v.toString()).to.equal('method not allowed');
+                expect(JSON.parse(v.toString()).error).to.equal('method not allowed');
                 done();
             });
         }).end();
@@ -588,7 +588,7 @@ function extra(get_info, on_before)
             expect(res.statusCode).to.equal(405);
             read_all(res, function (v)
             {
-                expect(v.toString()).to.equal('method not allowed');
+                expect(JSON.parse(v.toString()).error).to.equal('method not allowed');
                 done();
             });
         }).end();
@@ -713,7 +713,7 @@ function extra(get_info, on_before)
             expect(res.headers['www-authenticate']).to.equal('Bearer realm="centro"');
             read_all(res, function (v)
             {
-                expect(v.toString()).to.equal('tokens missing');
+                expect(JSON.parse(v.toString()).error).to.equal('tokens missing');
                 done();
             });
         }).end();
@@ -741,7 +741,7 @@ function extra(get_info, on_before)
                 expect(res.statusCode).to.equal(400);
                 read_all(res, function (v)
                 {
-                    expect(v.toString()).to.equal('data.ttl should be integer');
+                    expect(JSON.parse(v.toString()).error).to.equal('data.ttl should be integer');
                     done();
                 });
             }).end('hello');
@@ -783,7 +783,7 @@ function extra(get_info, on_before)
                 expect(res.statusCode).to.equal(503);
                 read_all(res, function (v)
                 {
-                    expect(v.toString()).to.equal('closed');
+                    expect(JSON.parse(v.toString()).error).to.equal('closed');
                     on_aft(() => on_before(() => on_bef(done)));
                 });
             }).end('hello');
@@ -819,7 +819,7 @@ function extra(get_info, on_before)
                 expect(res.statusCode).to.equal(503);
                 read_all(res, function (v)
                 {
-                    expect(v.toString()).to.equal('closed');
+                    expect(JSON.parse(v.toString()).error).to.equal('closed');
                     done();
                 });
             }).end('hello');
@@ -855,7 +855,7 @@ function extra(get_info, on_before)
                 expect(res.statusCode).to.equal(503);
                 read_all(res, function (v)
                 {
-                    expect(v.toString()).to.equal('closed');
+                    expect(JSON.parse(v.toString()).error).to.equal('closed');
                     done();
                 });
             }).end('hello');
@@ -1208,7 +1208,7 @@ runner(
                     expect(res.statusCode).to.equal(500);
                     read_all(res, function (v)
                     {
-                        expect(v.toString()).to.equal('server error');
+                        expect(JSON.parse(v.toString()).error).to.equal('server error');
                         expect(msg).to.equal('dummy');
                         done();
                     });
@@ -1271,7 +1271,7 @@ runner(
                     expect(res.statusCode).to.equal(500);
                     read_all(res, function (v)
                     {
-                        expect(v.toString()).to.equal('server error');
+                        expect(JSON.parse(v.toString()).error).to.equal('server error');
                         expect(msg).to.equal('dummy');
                         done();
                     });
@@ -1348,7 +1348,7 @@ runner(
                                 expect(res.statusCode).to.equal(500);
                                 read_all(res, function (v)
                                 {
-                                    expect(v.toString()).to.equal('server error');
+                                    expect(JSON.parse(v.toString()).error).to.equal('server error');
                                     expect(msg).to.equal('dummy');
                                     setTimeout(function ()
                                     {

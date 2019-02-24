@@ -43,7 +43,7 @@
     "authorize-jwt": "^5.5.3",
     "primus": "^7.3.2",
     "primus-backpressure": "^1.0.5",
-    "http2-duplex": "^4.3.0",
+    "http2-duplex": "^4.4.0",
     "frame-stream": "^1.1.1",
     "ajv": "^6.8.1",
     "async": "^2.6.1",
