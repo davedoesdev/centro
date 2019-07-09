@@ -87,6 +87,8 @@ module.exports = function (config, connect, options)
 
     config.allowed_algs = ['PS256'];
     config.max_tokens = 2;
+    // Note the following requires the test to be run with
+    // --max-http-header-size=32768
     config.max_token_length = 16 * 1024;
     config.maxSize = config.max_token_length;
     config.send_expires = true;
@@ -357,6 +359,14 @@ module.exports = function (config, connect, options)
 
         function setup(n, opts)
         {
+            if (options.on_before_each)
+            {
+                beforeEach(function (cb)
+                {
+                    options.on_before_each(config, cb);
+                });
+            }
+
             beforeEach(function (cb)
             {
                 server.warnings = [];
@@ -454,7 +464,7 @@ module.exports = function (config, connect, options)
                                opts.duplicate_tokens ? [token, token] :
                                i % 2 === 0 || (options.anon && !opts.separate_tokens) ? token :
                                opts.separate_tokens ? token2 : [token, token2],
-                        handshake_data: new Buffer([i]),
+                        handshake_data: Buffer.from([i]),
                         max_topic_length: opts.max_topic_length,
                         max_open: opts.max_open,
                         test_config: config
@@ -2129,7 +2139,7 @@ module.exports = function (config, connect, options)
                 {
                     info.mqserver.on('handshake', function (hsdata, delay)
                     {
-                        delay()(new Buffer([0, 1, 2]));
+                        delay()(Buffer.from([0, 1, 2]));
                     });
                 });
             });
@@ -2182,7 +2192,7 @@ module.exports = function (config, connect, options)
                 {
                     info.mqserver.on('handshake', function (hsdata, delay)
                     {
-                        delay()(new Buffer(JSON.stringify(
+                        delay()(Buffer.from(JSON.stringify(
                         {
                             hello: 90
                         })));
@@ -2981,7 +2991,7 @@ module.exports = function (config, connect, options)
             it('should fail to authorize', expect_error('too many tokens'));
         });
 
-        describe('long token', function ()
+        describe('long token (requires NODE_OPTIONS=--max-http-header-size=32768)', function ()
         {
             setup(1,
             {
@@ -3762,7 +3772,7 @@ module.exports = function (config, connect, options)
 			for (var ev in ext)
 			{
 				/* istanbul ignore else */
-				if (ext.hasOwnProperty(ev))
+				if (Object.prototype.hasOwnProperty.call(ext, ev))
 				{
 					server.removeListener(ev, ext[ev]);
 				}
@@ -3870,7 +3880,14 @@ module.exports = function (config, connect, options)
                         {
                             expect(client_errored).to.equal(true);
                             expect(s_errored).to.equal(true);
-                            expect(v.length).to.be.below(size);
+                            if (is_transport('in-mem-pg'))
+                            {
+                                expect(v.length).to.equal(size);
+                            }
+                            else
+                            {
+                                expect(v.length).to.be.below(size);
+                            }
                             detach_extension(tms);
                             done();
                         });
@@ -3881,7 +3898,7 @@ module.exports = function (config, connect, options)
                     clients[0].publish('foo90', function (err)
                     {
                         if (err) { return done(err); }
-                    }).end(new Buffer(size));
+                    }).end(Buffer.alloc(size));
                 });
             });
 
@@ -4011,7 +4028,7 @@ module.exports = function (config, connect, options)
                     {
                         c.destroy();
                     }
-                }).end(new Buffer(128 * 1024));
+                }).end(Buffer.alloc(128 * 1024));
             });
 
             if (!options.relay)
@@ -4094,7 +4111,7 @@ module.exports = function (config, connect, options)
                         clients[0].publish('foo', function (err)
                         {
                             if (err) { done(err); }
-                        }).end(new Buffer(17000));
+                        }).end(Buffer.alloc(17000));
                     });
                 });
 
@@ -4380,7 +4397,7 @@ module.exports = function (config, connect, options)
                 {
                     var client = require('../lib/client');
                     client.version_buffer_save = client.version_buffer;
-                    client.version_buffer = new Buffer(2);
+                    client.version_buffer = Buffer.alloc(2);
                 },
 
                 client_function: function (c, i, onconnect)
@@ -5340,7 +5357,7 @@ module.exports = function (config, connect, options)
                             }, function (err)
                             {
                                 if (err) { return done(err); }
-                            }).end(new Buffer(8 * 1024 * 1024));
+                            }).end(Buffer.alloc(8 * 1024 * 1024));
                         });
                     });
                 },
@@ -5391,7 +5408,7 @@ module.exports = function (config, connect, options)
                             message1_called = false,
                             laggard0_called = false,
                             laggard1_called = false,
-                            buf = new Buffer(100 * 1024),
+                            buf = Buffer.alloc(100 * 1024),
                             mqservers = [],
                             prefixes = [];
 
@@ -5405,9 +5422,13 @@ module.exports = function (config, connect, options)
 
                             if (info.count === num_handlers)
                             {
-                                process.nextTick(function ()
+                                msg_stream.centro_server_extension_filter_fastest_writable.once('peer_added', function ()
                                 {
                                     // make fastest_writable enter waiting state
+                                    // we need to do this after fw has added
+                                    // both peers but not in nextTick because
+                                    // then the first data will have been
+                                    // written
                                     msg_stream.centro_server_extension_filter_fastest_writable.write(buf);
                                 });
                             }
@@ -5539,7 +5560,7 @@ module.exports = function (config, connect, options)
                     it('should read initial data from message by default', function (done)
                     {
                         let message_called = false,
-                            buf = new Buffer(100 * 1024);
+                            buf = Buffer.alloc(100 * 1024);
 
                         function message(msg_stream, info, multiplex, cb, next)
                         {
@@ -5610,7 +5631,7 @@ module.exports = function (config, connect, options)
                     it('should not read initial data from message', function (done)
                     {
                         let message_called = false,
-                            buf = new Buffer(100 * 1024);
+                            buf = Buffer.alloc(100 * 1024);
 
                         function message(msg_stream, info, multiplex, cb, next)
                         {
@@ -5912,8 +5933,8 @@ module.exports = function (config, connect, options)
 
                                 done();
                             });
-                            s.write(new Buffer(500));
-                            s.end(new Buffer(501));
+                            s.write(Buffer.alloc(500));
+                            s.end(Buffer.alloc(501));
                         });
                     });
                 },

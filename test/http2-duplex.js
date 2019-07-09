@@ -32,19 +32,14 @@ global.fetch = async function(url, options) {
         };
     }
     let url2 = url.replace('http:', 'http2:');
-    let response;
-    try {
-        response = await fetch2(url2, options);
-    } catch (ex) {
-        throw ex;
-    }
+    const response = await fetch2(url2, options);
     let readable = null;
     response.body = {
         getReader() {
             return {
                 async read() {
                     if (!readable) {
-                        readable = await response.readable();
+                        readable = await response.readable(); // eslint-disable-line require-atomic-updates
                     }
                     return await promisify(function (cb) {
                         function cb2(err, r) {
@@ -142,7 +137,7 @@ function extra(unused_get_info) {
                     'origin': '%'
                 }
             });
-        Array.prototype.includes = orig_includes;
+        Array.prototype.includes = orig_includes; // eslint-disable-line require-atomic-updates
         expect(response.ok).to.be.false;
         expect(response.status).to.equal(403);
         expect(await response.text()).to.equal('Invalid HTTP Access Control (CORS) request:\n  Origin: %\n  Method: POST');

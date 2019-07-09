@@ -32,7 +32,7 @@ describe('read_frame errors', function ()
             cb();
         });
 
-        var buf = new Buffer(4);
+        var buf = Buffer.alloc(4);
         buf.writeInt32BE(1, 0);
         s.write(buf);
         s.end('X');
@@ -48,7 +48,7 @@ describe('read_frame errors', function ()
             cb();
         });
 
-        var buf = new Buffer(4);
+        var buf = Buffer.alloc(4);
         buf.writeInt32BE(2, 0);
         s.write(buf);
         s.end('XX');

@@ -3,14 +3,15 @@ workflows:
   version: 2
   test:
     jobs:
-      - test-11
+      - test-12
 #      - test-10
 jobs:
-  test-11: &test-template
+  test-12: &test-template
     docker:
-      - image: circleci/node:11.10.0
+      - image: circleci/node:12.6.0
         environment:
           CXX: g++-6
+          NODE_OPTIONS: --max-http-header-size=32768
     steps:
       - checkout
       - run:
