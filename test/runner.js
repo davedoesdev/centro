@@ -6433,6 +6433,7 @@ module.exports = function (config, connect, options)
                                     'carrier stream ended before end message received',
                                     'carrier stream finished before duplex finished',
                                     'write after end',
+                                    'write ECONNRESET',
                                     'read ECONNRESET',
                                     'write EPIPE',
                                     'write ECONNABORTED'
