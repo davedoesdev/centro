@@ -6395,6 +6395,7 @@ module.exports = function (config, connect, options)
                             {
                                 expect(err.message).to.be.oneOf([
                                     'write EPIPE',
+                                    'write ECONNRESET',
                                     'write after end',
                                     'carrier stream ended before end message received',
                                     'carrier stream finished before duplex finished',
