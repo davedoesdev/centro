@@ -14,8 +14,6 @@ fi
 # CircleCI runs on aufs which has max file name length 242
 export SPLIT_TOPIC_AT=150
 
-echo "$NODE_CONFIG"
-
 npm explore qlobber-pg -- npm run migrate up
 
 #if ! npm run coverage >& "$CIRCLE_ARTIFACTS/test.log"; then
