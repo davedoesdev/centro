@@ -12,8 +12,11 @@ jobs:
         environment:
           CXX: g++-6
           NODE_OPTIONS: --max-http-header-size=32768
-          NODE_CONFIG: '{"db":"postgresql://root@localhost/circle_test"}'
+          NODE_CONFIG: '{"db":"postgresql://postgres@localhost/qlobber-pg"}'
       - image: circleci/postgres:11.4-alpine
+        environment:
+          POSTGRES_USER: postgres
+          POSTGRES_DB: qlobber-pg
     steps:
       - checkout
       - run:
