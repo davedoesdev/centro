@@ -12,6 +12,8 @@ jobs:
         environment:
           CXX: g++-6
           NODE_OPTIONS: --max-http-header-size=32768
+          NODE_CONFIG: '{"db":{"connectionString":"postgresql://root@localhost/circletest"}}'
+      - image: circleci/postgres:11.4-alpine
     steps:
       - checkout
       - run:
