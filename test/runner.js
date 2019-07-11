@@ -5142,7 +5142,10 @@ module.exports = function (config, connect, options)
                     {
                         function expect_err(err)
                         {
-                            expect(err.message).to.equal('carrier stream finished before duplex finished');
+                            expect(err.message).to.be.oneOf([
+                                'carrier stream finished before duplex finished',
+                                'carrier stream ended before end message received'
+                            ]);
                         }
 
                         for (var i = 0; i < 1001; i += 1)
