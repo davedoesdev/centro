@@ -11,7 +11,7 @@ init:
   - set PATH=%POSTGRES_PATH%\bin;%PATH%
 
 services:
-  -postgresql101
+  - postgresql101
 
 install:
 #  - ps: Update-NodeJsInstallation $env:nodejs_version x64
