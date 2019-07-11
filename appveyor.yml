@@ -21,12 +21,14 @@ install:
   - npm --version
   - npm install
 
-build:
+before_test:
   - createdb qlobber-pg
   - npm run migrate up
 
 test_script:
   - npm run test-win
+
+build: off
 
 #on_finish:
 #  - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
