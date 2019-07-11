@@ -23,7 +23,7 @@ install:
 
 build_script:
   - createdb qlobber-pg
-  - npm run migrate up
+  - npm explore qlobber-pg -- npm run migrate up
 
 test_script:
   - npm run test-win
