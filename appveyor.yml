@@ -1,7 +1,17 @@
 environment:
+  POSTGRES_PATH: C:\Program Files\PostgreSQL\10.1
+  PGUSER: postgres
+  PGPASSWORD: Password12!
+  NODE_CONFIG: '{"db":"postgresql://postgres:Password12!@localhost/qlobber-pg"}'
   NODE_OPTIONS: --max-http-header-size=32768
   matrix:
     - nodejs_version: "12.6.0"
+
+init:
+  - set PATH="%POSTGRES_PATH\bin;%PATH"
+
+services:
+  -postgresql101
 
 install:
 #  - ps: Update-NodeJsInstallation $env:nodejs_version x64
@@ -10,6 +20,8 @@ install:
   - node --version
   - npm --version
   - npm install
+  - createdb qlobber-pg
+  - npm run migrate up
 
 test_script:
   - npm run test-win

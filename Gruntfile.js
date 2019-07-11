@@ -33,6 +33,7 @@ module.exports = function (grunt)
 
         mochaTest: {
             src: [
+                'test/in-mem-pg.js',
                 'test/in-mem.js',
                 'test/tcp.js',
                 'test/primus.js',
@@ -42,7 +43,6 @@ module.exports = function (grunt)
                 'test/http2.js',
                 'test/http2-duplex.js',
                 'test/in-mem-fsq.js',
-                'test/in-mem-pg.js',
                 'test/in-mem-anon.js',
                 'test/server-extra.js',
                 'test/read_frame-error.js',
