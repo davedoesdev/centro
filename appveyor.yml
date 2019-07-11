@@ -20,6 +20,7 @@ install:
   - node --version
   - npm --version
   - npm install
+  - echo %PATH%
   - createdb qlobber-pg
   - npm run migrate up
 
