@@ -21,7 +21,7 @@ install:
   - npm --version
   - npm install
 
-before_test:
+build_script:
   - createdb qlobber-pg
   - npm run migrate up
 
