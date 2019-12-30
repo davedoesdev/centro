@@ -11,6 +11,7 @@ jobs:
       - &node-template
         image: circleci/node:13.5.0
         environment:
+          CXX: g++-9
           NODE_OPTIONS: --max-http-header-size=32768
           NODE_CONFIG: '{"db":"postgresql://postgres@localhost/qlobber-pg"}'
       - &pg-template
@@ -24,7 +25,7 @@ jobs:
           name: install
           command: |
             sudo apt update
-            sudo apt install lcov
+            sudo apt install lcov g++-9
             npm install
       - run:
           name: test
