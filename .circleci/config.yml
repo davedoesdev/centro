@@ -24,7 +24,7 @@ jobs:
           name: install
           command: |
             sudo apt update
-            sudo apt -y install libboost-dev lcov
+            sudo apt -y install libboost-context-dev lcov
             npm install
       - run:
           name: test
