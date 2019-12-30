@@ -77,7 +77,7 @@ global.fetch = async function(url, options) {
 function setup(scheme, server_config) {
 
 function connect(config, server, cb) {
-    server.on('authz_start', function (cancel, onclose, stream) {
+    server.once('authz_start', function (cancel, onclose, stream) {
         stream.on('close', () => {
             onclose(() => {}); // adds coverage to onclose when already closed
         });

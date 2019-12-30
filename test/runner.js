@@ -466,6 +466,8 @@ module.exports = function (config, connect, options)
                                opts.separate_tokens ? token2 : [token, token2],
                         handshake_data: Buffer.from([i]),
                         max_topic_length: opts.max_topic_length,
+                        max_words: opts.max_words,
+                        max_wildcard_somes: opts.max_wildcard_somes,
                         max_open: opts.max_open,
                         test_config: config
                     }, server, function (err, c)
@@ -3468,13 +3470,13 @@ module.exports = function (config, connect, options)
                         orig_set.call(this, connid, dstroy);
 
                         var orig_eachSeries = async.eachSeries;
-                        async.eachSeries = function (hs, cb)
+                        async.eachSeries = function (hs, cb, done)
                         {
                             async.eachSeries = orig_eachSeries;
                             var ths = this;
                             process.nextTick(function ()
                             {
-                                orig_eachSeries.call(ths, hs, cb);
+                                orig_eachSeries.call(ths, hs, cb, done);
                             });
                         };
                     };
@@ -3991,6 +3993,14 @@ module.exports = function (config, connect, options)
                     });
                 }
 
+                if (is_transport('in-mem-pg'))
+                {
+                    clients[0].on('error', function (err)
+                    {
+                        expect(err.message).to.equal('write after end');
+                    });
+                }
+
                 clients[0].mux.on('end', function ()
                 {
                     client_done = true;
@@ -4020,7 +4030,8 @@ module.exports = function (config, connect, options)
                             'write ECONNRESET',
                             'write EPIPE',
                             'Cannot call write after a stream was destroyed',
-                            'Stream prematurely closed'
+                            'Stream prematurely closed',
+                            'write after end'
                         ]);
                     }
                     var c = connections.values().next().value;
@@ -4571,7 +4582,7 @@ module.exports = function (config, connect, options)
             });
         });
 
-        describe('max topic length in subscriptions', function ()
+        describe("subscriptions in token shouldn't be subject to access control", function ()
         {
             setup(2,
             {
@@ -4590,9 +4601,7 @@ module.exports = function (config, connect, options)
 
                 subscribe: {
                     foo: false
-                },
-
-                max_topic_length: 3
+                }
             });
 
             it('should override access control', function (done)
@@ -4617,7 +4626,7 @@ module.exports = function (config, connect, options)
             });
         });
 
-        describe('exceed max topic length in subscriptions (client-enforced)', function ()
+        describe('max topic length in subscriptions (client-enforced)', function ()
         {
             setup(2,
             {
@@ -4632,14 +4641,13 @@ module.exports = function (config, connect, options)
                     }
                 },
 
-                separate_tokens: true,
 
                 subscribe: {
                     foo: false
                 },
 
                 max_topic_length: 2,
-
+                separate_tokens: true,
                 skip_ready: true,
                 client_function: function (c, i, onconnect)
                 {
@@ -4688,6 +4696,300 @@ module.exports = function (config, connect, options)
                 }
 
                 clients[0].on('ready', check_error2);
+            });
+        });
+
+        describe('max words in subscriptions (client-enforced)', function ()
+        {
+            setup(2,
+            {
+                access_control: {
+                    publish: {
+                        allow: ['foo'],
+                        disallow: []
+                    },
+                    subscribe: {
+                        allow: [],
+                        disallow: ['foo']
+                    }
+                },
+
+                subscribe: {
+                    [new Array(51).join('.')]: false
+                },
+
+                max_words: 50,
+                separate_tokens: true,
+                skip_ready: true,
+                client_function: function (c, i, onconnect)
+                {
+                    if (i === 0)
+                    {
+                        c.on('ready', function ()
+                        {
+                            this.ready = true;
+                            onconnect();
+                        });
+                    }
+                    else
+                    {
+                        c.on('error', function (err)
+                        {
+                            this.last_error = err;
+                            onconnect();
+                        });
+                    }
+                }
+            });
+
+            it('should error', function (done)
+            {
+                function check_error(err)
+                {
+                    expect(err.message).to.equal('data.subscriptions[0] should NOT have additional properties');
+                    done();
+                }
+
+                function check_error2()
+                {
+                    if (clients[1].last_error)
+                    {
+                        return check_error(clients[1].last_error);
+                    }
+
+                    clients[1].on('error', check_error);
+                }
+
+                // make sure clients[0] doesn't connect later
+
+                if (clients[0].ready)
+                {
+                    return check_error2();
+                }
+
+                clients[0].on('ready', check_error2);
+            });
+        });
+
+        describe('max words in subscriptions (server-enforced)', function ()
+        {
+            setup(2,
+            {
+                access_control: {
+                    publish: {
+                        allow: ['foo'],
+                        disallow: []
+                    },
+                    subscribe: {
+                        allow: ['foo'],
+                        disallow: []
+                    }
+                },
+
+                subscribe: {
+                    [new Array(101).join('.')]: false
+                },
+
+                separate_tokens: true,
+                skip_ready: true,
+                client_function: get_info().client_function
+            });
+
+            it('should reject subscribe topics',
+               expect_error('data.subscribe should NOT have additional properties', false, 401, 1, function (done)
+               {
+                   // make sure clients[0] doesn't connect later
+
+                   if (clients[0].ready)
+                   {
+                       return done();
+                   }
+
+                   clients[0].on('ready', done);
+               }));
+        });
+
+        describe('max words when subscribing', function ()
+        {
+            setup(1,
+            {
+                access_control: {
+                    publish: {
+                        allow: ['foo'],
+                        disallow: []
+                    },
+                    subscribe: {
+                        allow: ['foo'],
+                        disallow: []
+                    }
+                }
+            });
+
+            it('should block too many words', function (done)
+            {
+                clients[0].subscribe('foo', function () {},
+                function (err)
+                {
+                    if (err) { return done(err); }
+                    clients[0].subscribe(new Array(101).join('.'), function () {},
+                    function (err)
+                    {
+                        expect(err.message).to.be.oneOf(
+                        [
+                            'server error',
+                            'data.topics[0] should match pattern "^(?=[^\\u002e]*(\\u002e[^\\u002e]*){0,99}$)(?=([^\\u0023]|((?<!(^|\\u002e))\\u0023)|\\u0023(?!($|\\u002e)))*(((?<=(^|\\u002e))\\u0023(?=($|\\u002e)))([^\\u0023]|((?<!(^|\\u002e))\\u0023)|\\u0023(?!($|\\u002e)))*){0,3}$)"'
+                        ]);
+                        expect(get_info().server.last_warning.message).to.equal(options.relay ? 'data.topics[0] should match pattern "^(?=[^\\u002e]*(\\u002e[^\\u002e]*){0,99}$)(?=([^\\u0023]|((?<!(^|\\u002e))\\u0023)|\\u0023(?!($|\\u002e)))*(((?<=(^|\\u002e))\\u0023(?=($|\\u002e)))([^\\u0023]|((?<!(^|\\u002e))\\u0023)|\\u0023(?!($|\\u002e)))*){0,3}$)"' : 'subscribe too many words');
+                        done();
+                    });
+                });
+            });
+        });
+
+        describe('max wildcard somes in subscriptions (client-enforced)', function ()
+        {
+            setup(2,
+            {
+                access_control: {
+                    publish: {
+                        allow: ['foo'],
+                        disallow: []
+                    },
+                    subscribe: {
+                        allow: [],
+                        disallow: ['foo']
+                    }
+                },
+
+                subscribe: {
+                    [new Array(3).fill('#').join('.')]: false
+                },
+
+                max_wildcard_somes: 2,
+                separate_tokens: true,
+                skip_ready: true,
+                client_function: function (c, i, onconnect)
+                {
+                    if (i === 0)
+                    {
+                        c.on('ready', function ()
+                        {
+                            this.ready = true;
+                            onconnect();
+                        });
+                    }
+                    else
+                    {
+                        c.on('error', function (err)
+                        {
+                            this.last_error = err;
+                            onconnect();
+                        });
+                    }
+                }
+            });
+
+            it('should error', function (done)
+            {
+                function check_error(err)
+                {
+                    expect(err.message).to.equal('data.subscriptions[0] should NOT have additional properties');
+                    done();
+                }
+
+                function check_error2()
+                {
+                    if (clients[1].last_error)
+                    {
+                        return check_error(clients[1].last_error);
+                    }
+
+                    clients[1].on('error', check_error);
+                }
+
+                // make sure clients[0] doesn't connect later
+
+                if (clients[0].ready)
+                {
+                    return check_error2();
+                }
+
+                clients[0].on('ready', check_error2);
+            });
+        });
+
+        describe('max wildcard somes in subscriptions (server-enforced)', function ()
+        {
+            setup(2,
+            {
+                access_control: {
+                    publish: {
+                        allow: ['foo'],
+                        disallow: []
+                    },
+                    subscribe: {
+                        allow: ['foo'],
+                        disallow: []
+                    }
+                },
+
+                subscribe: {
+                    [new Array(4).fill('#').join('.')]: false
+                },
+
+                separate_tokens: true,
+                skip_ready: true,
+                client_function: get_info().client_function
+            });
+
+            it('should reject subscribe topics',
+               expect_error('data.subscribe should NOT have additional properties', false, 401, 1, function (done)
+               {
+                   // make sure clients[0] doesn't connect later
+
+                   if (clients[0].ready)
+                   {
+                       return done();
+                   }
+
+                   clients[0].on('ready', done);
+               }));
+        });
+
+        describe('max wildcard somes when subscribing', function ()
+        {
+            setup(1,
+            {
+                access_control: {
+                    publish: {
+                        allow: ['foo'],
+                        disallow: []
+                    },
+                    subscribe: {
+                        allow: ['foo'],
+                        disallow: []
+                    }
+                }
+            });
+
+            it('should block too many wildcard somes', function (done)
+            {
+                clients[0].subscribe('foo', function () {},
+                function (err)
+                {
+                    if (err) { return done(err); }
+                    clients[0].subscribe(new Array(4).fill('#').join('.'), function () {},
+                    function (err)
+                    {
+                        expect(err.message).to.be.oneOf(
+                        [
+                            'server error',
+                            'data.topics[0] should match pattern "^(?=[^\\u002e]*(\\u002e[^\\u002e]*){0,99}$)(?=([^\\u0023]|((?<!(^|\\u002e))\\u0023)|\\u0023(?!($|\\u002e)))*(((?<=(^|\\u002e))\\u0023(?=($|\\u002e)))([^\\u0023]|((?<!(^|\\u002e))\\u0023)|\\u0023(?!($|\\u002e)))*){0,3}$)"'
+                        ]);
+                        expect(get_info().server.last_warning.message).to.equal(options.relay ? 'data.topics[0] should match pattern "^(?=[^\\u002e]*(\\u002e[^\\u002e]*){0,99}$)(?=([^\\u0023]|((?<!(^|\\u002e))\\u0023)|\\u0023(?!($|\\u002e)))*(((?<=(^|\\u002e))\\u0023(?=($|\\u002e)))([^\\u0023]|((?<!(^|\\u002e))\\u0023)|\\u0023(?!($|\\u002e)))*){0,3}$)"' : 'subscribe too many wildcard somes');
+                        done();
+                    });
+                });
             });
         });
 
@@ -5132,9 +5434,17 @@ module.exports = function (config, connect, options)
                         check();
                     });
 
+                    clients[0].on('error', function (err)
+                    {
+                        expect(err.message).to.equal('write after end');
+                    });
+
                     clients[0].on('warning', function (err)
                     {
-                        expect(err.message).to.equal('carrier stream ended before end message received');
+                        expect(err.message).to.be.oneOf([
+                            'carrier stream ended before end message received',
+                            'carrier stream finished before duplex finished'
+                        ]);
                     });
 
                     // give chance for initial handshake duplex to close
@@ -5764,9 +6074,9 @@ module.exports = function (config, connect, options)
                                 expect(err.message).to.be.oneOf(
                                 [
                                     'server error',
-                                    'data.topics[0] should NOT be longer than 3 characters'
+                                    'data.topics[0] should match pattern "^(?=[^\\u002e]*(\\u002e[^\\u002e]*){0,99}$)(?=([^\\u0023]|((?<!(^|\\u002e))\\u0023)|\\u0023(?!($|\\u002e)))*(((?<=(^|\\u002e))\\u0023(?=($|\\u002e)))([^\\u0023]|((?<!(^|\\u002e))\\u0023)|\\u0023(?!($|\\u002e)))*){0,3}$)(?=.{0,3}$)"'
                                 ]);
-                                expect(get_info().server.last_warning.message).to.equal(options.relay ? 'data.topics[0] should NOT be longer than 3 characters' : ('subscribe topic longer than ' + (options.anon ? 3 : 68)));
+                                expect(get_info().server.last_warning.message).to.equal(options.relay ? 'data.topics[0] should match pattern "^(?=[^\\u002e]*(\\u002e[^\\u002e]*){0,99}$)(?=([^\\u0023]|((?<!(^|\\u002e))\\u0023)|\\u0023(?!($|\\u002e)))*(((?<=(^|\\u002e))\\u0023(?=($|\\u002e)))([^\\u0023]|((?<!(^|\\u002e))\\u0023)|\\u0023(?!($|\\u002e)))*){0,3}$)(?=.{0,3}$)"' : ('subscribe topic longer than ' + (options.anon ? 3 : 68)));
                                 done();
                             });
                         });
@@ -7043,12 +7353,12 @@ module.exports = function (config, connect, options)
                     var ccoe = require('../lib/server_extensions/close_conn_on_error');
                     get_info().attach_extension(ccoe.close_conn_on_error);
 
-                    get_info().server.on('authz_start', function (cancel, onclose, obj)
+                    get_info().server.once('authz_start', function (cancel, onclose, obj)
                     {
                         obj.emit('error', new Error('foo'));
                     });
 
-                    get_info().server.on('authz_end', function (err)
+                    get_info().server.once('authz_end', function (err)
                     {
                         expect(err.message).to.equal('foo');
                     });

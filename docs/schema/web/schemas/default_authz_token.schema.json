@@ -38,7 +38,7 @@
               "items": {
                 "description": "Topic",
                 "type": "string",
-                "maxLength": 32768
+                "pattern": "^(?=[^\\u002e]*(\\u002e[^\\u002e]*){0,99}$)(?=([^\\u0023]|((?<!(^|\\u002e))\\u0023)|\\u0023(?!($|\\u002e)))*(((?<=(^|\\u002e))\\u0023(?=($|\\u002e)))([^\\u0023]|((?<!(^|\\u002e))\\u0023)|\\u0023(?!($|\\u002e)))*){0,3}$)(?=.{0,4096}$)"
               }
             },
             "disallow": {
@@ -48,7 +48,7 @@
               "items": {
                 "description": "Topic",
                 "type": "string",
-                "maxLength": 32768
+                "pattern": "^(?=[^\\u002e]*(\\u002e[^\\u002e]*){0,99}$)(?=([^\\u0023]|((?<!(^|\\u002e))\\u0023)|\\u0023(?!($|\\u002e)))*(((?<=(^|\\u002e))\\u0023(?=($|\\u002e)))([^\\u0023]|((?<!(^|\\u002e))\\u0023)|\\u0023(?!($|\\u002e)))*){0,3}$)(?=.{0,4096}$)"
               }
             },
             "disallow_single": {
@@ -77,7 +77,7 @@
               "items": {
                 "description": "Topic",
                 "type": "string",
-                "maxLength": 32768
+                "pattern": "^(?=[^\\u002e]*(\\u002e[^\\u002e]*){0,99}$)(?=([^\\u0023]|((?<!(^|\\u002e))\\u0023)|\\u0023(?!($|\\u002e)))*(((?<=(^|\\u002e))\\u0023(?=($|\\u002e)))([^\\u0023]|((?<!(^|\\u002e))\\u0023)|\\u0023(?!($|\\u002e)))*){0,3}$)(?=.{0,4096}$)"
               }
             },
             "disallow": {
@@ -87,7 +87,7 @@
               "items": {
                 "description": "Topic",
                 "type": "string",
-                "maxLength": 32768
+                "pattern": "^(?=[^\\u002e]*(\\u002e[^\\u002e]*){0,99}$)(?=([^\\u0023]|((?<!(^|\\u002e))\\u0023)|\\u0023(?!($|\\u002e)))*(((?<=(^|\\u002e))\\u0023(?=($|\\u002e)))([^\\u0023]|((?<!(^|\\u002e))\\u0023)|\\u0023(?!($|\\u002e)))*){0,3}$)(?=.{0,4096}$)"
               }
             }
           }
@@ -99,7 +99,7 @@
           "items": {
             "description": "Topic",
             "type": "string",
-            "maxLength": 32768
+            "pattern": "^(?=[^\\u002e]*(\\u002e[^\\u002e]*){0,99}$)(?=([^\\u0023]|((?<!(^|\\u002e))\\u0023)|\\u0023(?!($|\\u002e)))*(((?<=(^|\\u002e))\\u0023(?=($|\\u002e)))([^\\u0023]|((?<!(^|\\u002e))\\u0023)|\\u0023(?!($|\\u002e)))*){0,3}$)(?=.{0,4096}$)"
           }
         }
       }
@@ -110,7 +110,7 @@
       "maxProperties": 1000,
       "additionalProperties": false,
       "patternProperties": {
-        "^.{0,32768}$": {
+        "^(?=[^\\u002e]*(\\u002e[^\\u002e]*){0,99}$)(?=([^\\u0023]|((?<!(^|\\u002e))\\u0023)|\\u0023(?!($|\\u002e)))*(((?<=(^|\\u002e))\\u0023(?=($|\\u002e)))([^\\u0023]|((?<!(^|\\u002e))\\u0023)|\\u0023(?!($|\\u002e)))*){0,3}$)(?=.{0,4096}$)": {
           "description": "If true then presenting clients will be sent any existing, unexpired messages that match the topic, as well as new ones",
           "type": "boolean"
         }
@@ -127,7 +127,7 @@
         "prefix": {
           "description": "The acknowledgement message's topic will be the original message's topic appended to this prefix. The body will be empty",
           "type": "string",
-          "maxLength": 32768
+          "pattern": "^(?=[^\\u002e]*(\\u002e[^\\u002e]*){0,99}$)(?=([^\\u0023]|((?<!(^|\\u002e))\\u0023)|\\u0023(?!($|\\u002e)))*(((?<=(^|\\u002e))\\u0023(?=($|\\u002e)))([^\\u0023]|((?<!(^|\\u002e))\\u0023)|\\u0023(?!($|\\u002e)))*){0,3}$)(?=.{0,4096}$)"
         }
       }
     },
@@ -151,7 +151,7 @@
             "topic": {
               "description": "Message topic",
               "type": "string",
-              "maxLength": 32768
+              "pattern": "^(?=[^\\u002e]*(\\u002e[^\\u002e]*){0,99}$)(?=([^\\u0023]|((?<!(^|\\u002e))\\u0023)|\\u0023(?!($|\\u002e)))*(((?<=(^|\\u002e))\\u0023(?=($|\\u002e)))([^\\u0023]|((?<!(^|\\u002e))\\u0023)|\\u0023(?!($|\\u002e)))*){0,3}$)(?=.{0,4096}$)"
             },
             "single": {
               "description": "Whether the message will be given to at most one interested client",
@@ -180,7 +180,7 @@
             "topic": {
               "description": "Message topic",
               "type": "string",
-              "maxLength": 32768
+              "pattern": "^(?=[^\\u002e]*(\\u002e[^\\u002e]*){0,99}$)(?=([^\\u0023]|((?<!(^|\\u002e))\\u0023)|\\u0023(?!($|\\u002e)))*(((?<=(^|\\u002e))\\u0023(?=($|\\u002e)))([^\\u0023]|((?<!(^|\\u002e))\\u0023)|\\u0023(?!($|\\u002e)))*){0,3}$)(?=.{0,4096}$)"
             },
             "single": {
               "description": "Whether the message will be given to at most one interested client",

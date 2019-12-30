@@ -1279,7 +1279,7 @@ link:LICENCE[MIT]
 
 [source,bash]
 ----
-grunt test
+NODE_OPTIONS=--max-http-header-size=32768 grunt test
 ----
 
 (make sure you do `grunt keys` at least once first)
@@ -1295,7 +1295,7 @@ grunt lint
 
 [source,bash]
 ----
-grunt coverage
+NODE_OPTIONS=--max-http-header-size=32768 grunt coverage
 ----
 
 https://istanbul.js.org/[Istanbul] results are available
