@@ -24,6 +24,7 @@ jobs:
       - run:
           name: install
           command: |
+            sudo apt -y install software-properties-common
             sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
             sudo add-apt-repository -y ppa:mhier/libboost-latest
             sudo apt update
