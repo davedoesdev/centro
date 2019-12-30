@@ -9,7 +9,7 @@ jobs:
   test-13: &test-template
     docker:
       - &node-template
-        image: circleci/node:13.5.0
+        image: circleci/node:13.5.0-buster
         environment:
           CXX: g++-9
           NODE_OPTIONS: --max-http-header-size=32768
@@ -24,10 +24,6 @@ jobs:
       - run:
           name: install
           command: |
-            sudo apt -y install software-properties-common
-            sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 1E9377A2BA9EF27F
-            sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
-            sudo add-apt-repository -y ppa:mhier/libboost-latest
             sudo apt update
             sudo apt -y install libboost1.70-dev g++-9 lcov
             npm install
@@ -38,5 +34,5 @@ jobs:
     <<: *test-template
     docker:
       - <<: *node-template
-        image: circleci/node:12.14.0
+        image: circleci/node:12.14.0-buster
       - *pg-template
