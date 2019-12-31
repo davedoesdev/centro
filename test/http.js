@@ -68,214 +68,66 @@ function connect(config, server, cb)
 {
     var mqclient;
 
-    if ((mod === 'http2') && !config.test_config.client2)
+    function auth()
     {
-        config.test_config.make_client2 = function ()
-        {
-            var scheme = client_config.ca ? 'https' : 'http',
-                r = require(mod).connect(scheme + '://localhost:' + port, client_config);
-            r.on('error', function (err)
-            {
-                if (mqclient)
-                {
-                    return mqclient.emit('warning', err);
-                }
-
-                throw err;
-            });
-
-            return r;
-        };
-        config.test_config.client2 = config.test_config.make_client2();
-    }
-
-    centro.separate_auth(config, function (err, userpass)
-    {
-        if (err)
-        {
-            return cb(err);
-        }
-
-        server.transport_ops[1].connect(function (err, stream)
+        centro.separate_auth(config, function (err, userpass)
         {
             if (err)
             {
                 return cb(err);
             }
 
-            mqclient = centro.stream_auth(stream, config);
-
-            if (mqclient)
+            server.transport_ops[1].connect(function (err, stream)
             {
-                mqclient.on('ready', function ()
+                if (err)
                 {
-                    this.publish = function (n, topic, options, cb)
+                    return cb(err);
+                }
+
+                mqclient = centro.stream_auth(stream, config);
+
+                if (mqclient)
+                {
+                    mqclient.on('ready', function ()
                     {
-                        if (typeof n !== 'number')
+                        this.publish = function (n, topic, options, cb)
                         {
-                            cb = options;
-                            options = topic;
-                            topic = n;
-                            n = 0;
-                        }
-
-                        if (typeof options === 'function')
-                        {
-                            cb = options;
-                            options = undefined;
-                        }
-
-                        function on_response(res)
-                        {
-                            var msg = '';
-
-                            res.on('end', function ()
+                            if (typeof n !== 'number')
                             {
-                                var err = null;
-
-                                if (res.statusCode === 200)
-                                {
-                                    expect(msg).to.equal('');
-                                }
-                                else
-                                {
-                                    err = new Error(JSON.parse(msg).error);
-                                }
-
-                                if (cb)
-                                {
-                                    cb(err);
-                                }
-                                else if (err)
-                                {
-                                    mqclient._warning(err);
-                                }
-                            });
-
-                            if (cb)
-                            {
-                                res.on('error', cb);
-                            }
-                            else
-                            {
-                                res.on('error', mqclient._warning);
+                                cb = options;
+                                options = topic;
+                                topic = n;
+                                n = 0;
                             }
 
-                            res.on('readable', function ()
+                            if (typeof options === 'function')
                             {
-                                var r = this.read();
-                                if (r !== null)
-                                {
-                                    msg += r.toString();
-                                }
-                            });
-                        }
-
-                        const path = pub_pathname +
-                                     querystring.stringify(Object.assign(
-                                         {}, options, { topic: topic, n: n }));
-
-                        if (config.test_config.client2)
-                        {
-                            const req = config.test_config.client2.request(
-                            {
-                                [HTTP2_HEADER_PATH]: path,
-                                [HTTP2_HEADER_METHOD]: 'POST',
-                                [HTTP2_HEADER_AUTHORIZATION]: 'Basic ' + Buffer.from(userpass).toString('base64')
-                            });
-
-                            req.on('response', headers =>
-                            {
-                                req.statusCode = headers[HTTP2_HEADER_STATUS];
-                                on_response(req);
-                            });
-
-                            return req;
-                        }
-
-                        return require(mod).request(Object.assign(
-                        {
-                            port: port,
-                            auth: userpass,
-                            method: 'POST',
-                            path: path
-                        }, client_config), on_response);
-                    };
-
-                    var nsubs = [];
-
-                    function destroy_responses(n, topic, handlers)
-                    {
-                        for (var handler of handlers)
-                        {
-                            if (handler.centro_test_responses &&
-                                handler.centro_test_responses[n])
-                            {
-                                var res = handler.centro_test_responses[n].get(topic);
-                                if (res)
-                                {
-                                    res.destroy();
-                                }
-                            }
-                        }
-                    }
-
-                    this.subscribe = function (n, topic, handler, cb)
-                    {
-                        if (typeof n === 'string')
-                        {
-                            cb = handler;
-                            handler = topic;
-                            topic = n;
-                            n = 0;
-                        }
-
-                        cb = cb || function () {};
-
-                        var subs;
-
-                        if (typeof topic === 'string')
-                        {
-                            subs = nsubs[n];
-                            if (!subs)
-                            {
-                                subs = nsubs[n] = new Map();
+                                cb = options;
+                                options = undefined;
                             }
 
-                            var handlers = subs.get(topic);
-                            if (!handlers)
-                            {
-                                handlers = new Set();
-                                subs.set(topic, handlers);
-                            } else if (handlers.has(handler))
-                            {
-                                return cb();
-                            }
-                            handlers.add(handler);
-                        }
-                        else
-                        {
-                            subs = new Map();
-                            for (var t of topic)
-                            {
-                                subs.set(t, new Set([handler]));
-                            }
-                        }
-
-                        function on_response(res)
-                        {
-                            if (res.statusCode !== 200)
+                            function on_response(res)
                             {
                                 var msg = '';
 
                                 res.on('end', function ()
                                 {
-                                    var err = new Error(JSON.parse(msg).error);
+                                    var err = null;
+
+                                    if (res.statusCode === 200)
+                                    {
+                                        expect(msg).to.equal('');
+                                    }
+                                    else
+                                    {
+                                        err = new Error(JSON.parse(msg).error);
+                                    }
+
                                     if (cb)
                                     {
                                         cb(err);
                                     }
-                                    else
+                                    else if (err)
                                     {
                                         mqclient._warning(err);
                                     }
@@ -290,7 +142,7 @@ function connect(config, server, cb)
                                     res.on('error', mqclient._warning);
                                 }
 
-                                return res.on('readable', function ()
+                                res.on('readable', function ()
                                 {
                                     var r = this.read();
                                     if (r !== null)
@@ -300,187 +152,343 @@ function connect(config, server, cb)
                                 });
                             }
 
-                            if (!handler.centro_test_responses)
+                            const path = pub_pathname +
+                                         querystring.stringify(Object.assign(
+                                             {}, options, { topic: topic, n: n }));
+
+                            if (config.test_config.client2)
                             {
-                                handler.centro_test_responses = [];
+                                const req = config.test_config.client2.request(
+                                {
+                                    [HTTP2_HEADER_PATH]: path,
+                                    [HTTP2_HEADER_METHOD]: 'POST',
+                                    [HTTP2_HEADER_AUTHORIZATION]: 'Basic ' + Buffer.from(userpass).toString('base64')
+                                });
+
+                                req.on('response', headers =>
+                                {
+                                    req.statusCode = headers[HTTP2_HEADER_STATUS];
+                                    on_response(req);
+                                });
+
+                                return req;
                             }
-                            if (!handler.centro_test_responses[n])
+
+                            return require(mod).request(Object.assign(
                             {
-                                handler.centro_test_responses[n] = new Map();
-                            }
-                            handler.centro_test_responses[n].set(topic, res);
+                                port: port,
+                                auth: userpass,
+                                method: 'POST',
+                                path: path
+                            }, client_config), on_response);
+                        };
 
-                            var rl = readline.createInterface(
+                        var nsubs = [];
+
+                        function destroy_responses(n, topic, handlers)
+                        {
+                            for (var handler of handlers)
                             {
-                                input: res
-                            }), ev = '', passthrus = new Map();
-
-                            rl.on('line', function (line)
-                            {
-                                var pthru;
-
-                                if (line === ':ok')
+                                if (handler.centro_test_responses &&
+                                    handler.centro_test_responses[n])
                                 {
-                                    cb(null);
-                                }
-                                else if (line === 'event: start')
-                                {
-                                    ev = 'start';
-                                }
-                                else if (line === 'event: data')
-                                {
-                                    ev = 'data';
-                                }
-                                else if (line === 'event: end')
-                                {
-                                    ev = 'end';
-                                }
-                                else if (line === 'event: peer_error')
-                                {
-                                    ev = 'peer_error';
-                                }
-                                else if (line.lastIndexOf('data:') === 0)
-                                {
-                                    var info = JSON.parse(line.substr(6));
-
-                                    if (ev === 'start')
+                                    var res = handler.centro_test_responses[n].get(topic);
+                                    if (res)
                                     {
-                                        var handlers = subs.get(typeof topic === 'string' ? topic : info.topic);
-                                        if (handlers && handlers.has(handler))
+                                        res.destroy();
+                                    }
+                                }
+                            }
+                        }
+
+                        this.subscribe = function (n, topic, handler, cb)
+                        {
+                            if (typeof n === 'string')
+                            {
+                                cb = handler;
+                                handler = topic;
+                                topic = n;
+                                n = 0;
+                            }
+
+                            cb = cb || function () {};
+
+                            var subs;
+
+                            if (typeof topic === 'string')
+                            {
+                                subs = nsubs[n];
+                                if (!subs)
+                                {
+                                    subs = nsubs[n] = new Map();
+                                }
+
+                                var handlers = subs.get(topic);
+                                if (!handlers)
+                                {
+                                    handlers = new Set();
+                                    subs.set(topic, handlers);
+                                } else if (handlers.has(handler))
+                                {
+                                    return cb();
+                                }
+                                handlers.add(handler);
+                            }
+                            else
+                            {
+                                subs = new Map();
+                                for (var t of topic)
+                                {
+                                    subs.set(t, new Set([handler]));
+                                }
+                            }
+
+                            function on_response(res)
+                            {
+                                if (res.statusCode !== 200)
+                                {
+                                    var msg = '';
+
+                                    res.on('end', function ()
+                                    {
+                                        var err = new Error(JSON.parse(msg).error);
+                                        if (cb)
                                         {
-                                            pthru = new PassThrough();
-                                            passthrus.set(info.id, pthru);
-                                            handler.call(mqclient, pthru, info, function (err)
+                                            cb(err);
+                                        }
+                                        else
+                                        {
+                                            mqclient._warning(err);
+                                        }
+                                    });
+
+                                    if (cb)
+                                    {
+                                        res.on('error', cb);
+                                    }
+                                    else
+                                    {
+                                        res.on('error', mqclient._warning);
+                                    }
+
+                                    return res.on('readable', function ()
+                                    {
+                                        var r = this.read();
+                                        if (r !== null)
+                                        {
+                                            msg += r.toString();
+                                        }
+                                    });
+                                }
+
+                                if (!handler.centro_test_responses)
+                                {
+                                    handler.centro_test_responses = [];
+                                }
+                                if (!handler.centro_test_responses[n])
+                                {
+                                    handler.centro_test_responses[n] = new Map();
+                                }
+                                handler.centro_test_responses[n].set(topic, res);
+
+                                var rl = readline.createInterface(
+                                {
+                                    input: res
+                                }), ev = '', passthrus = new Map();
+
+                                rl.on('line', function (line)
+                                {
+                                    var pthru;
+
+                                    if (line === ':ok')
+                                    {
+                                        cb(null);
+                                    }
+                                    else if (line === 'event: start')
+                                    {
+                                        ev = 'start';
+                                    }
+                                    else if (line === 'event: data')
+                                    {
+                                        ev = 'data';
+                                    }
+                                    else if (line === 'event: end')
+                                    {
+                                        ev = 'end';
+                                    }
+                                    else if (line === 'event: peer_error')
+                                    {
+                                        ev = 'peer_error';
+                                    }
+                                    else if (line.lastIndexOf('data:') === 0)
+                                    {
+                                        var info = JSON.parse(line.substr(6));
+
+                                        if (ev === 'start')
+                                        {
+                                            var handlers = subs.get(typeof topic === 'string' ? topic : info.topic);
+                                            if (handlers && handlers.has(handler))
                                             {
-                                                if (err)
+                                                pthru = new PassThrough();
+                                                passthrus.set(info.id, pthru);
+                                                handler.call(mqclient, pthru, info, function (err)
                                                 {
-                                                    mqclient._warning(err);
-                                                }
-                                            });
+                                                    if (err)
+                                                    {
+                                                        mqclient._warning(err);
+                                                    }
+                                                });
+                                            }
                                         }
-                                    }
-                                    else if (ev === 'data')
-                                    {
-                                        pthru = passthrus.get(info.id);
-                                        if (pthru && !pthru.write(Buffer.from(info.data, 'binary')))
+                                        else if (ev === 'data')
                                         {
-                                            pthru.once('drain', function ()
+                                            pthru = passthrus.get(info.id);
+                                            if (pthru && !pthru.write(Buffer.from(info.data, 'binary')))
                                             {
-                                                rl.resume();
-                                            });
-                                            rl.pause();
+                                                pthru.once('drain', function ()
+                                                {
+                                                    rl.resume();
+                                                });
+                                                rl.pause();
+                                            }
                                         }
-                                    }
-                                    else if (ev === 'end')
-                                    {
-                                        pthru = passthrus.get(info.id);
-                                        if (pthru)
+                                        else if (ev === 'end')
                                         {
-                                            passthrus.get(info.id).end();
-                                            passthrus.delete(info.id);
+                                            pthru = passthrus.get(info.id);
+                                            if (pthru)
+                                            {
+                                                passthrus.get(info.id).end();
+                                                passthrus.delete(info.id);
+                                            }
                                         }
-                                    }
-                                    else if (ev === 'peer_error')
-                                    {
-                                        pthru = passthrus.get(info.id);
-                                        var err = new Error('peer error');
-                                        mqclient.emit('error', err, pthru);
-                                        if (pthru && (pthru.listenerCount('error') > 0))
+                                        else if (ev === 'peer_error')
                                         {
-                                            pthru.emit('error', err);
+                                            pthru = passthrus.get(info.id);
+                                            var err = new Error('peer error');
+                                            mqclient.emit('error', err, pthru);
+                                            if (pthru && (pthru.listenerCount('error') > 0))
+                                            {
+                                                pthru.emit('error', err);
+                                            }
                                         }
                                     }
-                                }
-                            });
-                        }
-
-                        const path = sub_pathname + querystring.stringify(
-                                        { topic: topic, n: n });
-
-                        if (config.test_config.client2)
-                        {
-                            const req = config.test_config.client2.request(
-                            {
-                                [HTTP2_HEADER_PATH]: path,
-                                [HTTP2_HEADER_AUTHORIZATION]: 'Basic ' + Buffer.from(userpass).toString('base64')
-                            });
-
-                            return req.on('response', headers =>
-                            {
-                                req.statusCode = headers[HTTP2_HEADER_STATUS];
-                                on_response(req);
-                            });
-                        }
-
-                        require(mod).request(Object.assign(
-                        {
-                            port: port,
-                            auth: userpass,
-                            method: 'GET',
-                            path: path
-                        }, client_config), on_response).end();
-                    };
-
-                    this.unsubscribe = function (n, topic, handler, cb)
-                    {
-						if (typeof n !== 'number')
-						{
-							cb = handler;
-							handler = topic;
-							topic = n;
-							n = 0;
-						}
-
-						if (typeof topic === 'function')
-						{
-							cb = topic;
-							topic = undefined;
-							handler = undefined;
-						}
-
-                        cb = cb || function () {};
-
-                        var subs = nsubs[n];
-                        if (!subs)
-                        {
-                            subs = nsubs[n] = new Map();
-                        }
-
-                        if (topic === undefined)
-                        {
-                            for (var topic_handlers of subs)
-                            {
-                                destroy_responses(n, topic_handlers[0], topic_handlers[1]);
+                                });
                             }
-                            subs.clear();
-                        }
-                        else
-                        {
-                            var handlers = subs.get(topic);
-                            if (handlers)
+
+                            const path = sub_pathname + querystring.stringify(
+                                            { topic: topic, n: n });
+
+                            if (config.test_config.client2)
                             {
-                                if (handler === undefined)
+                                const req = config.test_config.client2.request(
                                 {
-                                    destroy_responses(n, topic, handlers);
-                                    handlers.clear();
+                                    [HTTP2_HEADER_PATH]: path,
+                                    [HTTP2_HEADER_AUTHORIZATION]: 'Basic ' + Buffer.from(userpass).toString('base64')
+                                });
+
+                                return req.on('response', headers =>
+                                {
+                                    req.statusCode = headers[HTTP2_HEADER_STATUS];
+                                    on_response(req);
+                                });
+                            }
+
+                            require(mod).request(Object.assign(
+                            {
+                                port: port,
+                                auth: userpass,
+                                method: 'GET',
+                                path: path
+                            }, client_config), on_response).end();
+                        };
+
+                        this.unsubscribe = function (n, topic, handler, cb)
+                        {
+                            if (typeof n !== 'number')
+                            {
+                                cb = handler;
+                                handler = topic;
+                                topic = n;
+                                n = 0;
+                            }
+
+                            if (typeof topic === 'function')
+                            {
+                                cb = topic;
+                                topic = undefined;
+                                handler = undefined;
+                            }
+
+                            cb = cb || function () {};
+
+                            var subs = nsubs[n];
+                            if (!subs)
+                            {
+                                subs = nsubs[n] = new Map();
+                            }
+
+                            if (topic === undefined)
+                            {
+                                for (var topic_handlers of subs)
+                                {
+                                    destroy_responses(n, topic_handlers[0], topic_handlers[1]);
                                 }
-                                else
+                                subs.clear();
+                            }
+                            else
+                            {
+                                var handlers = subs.get(topic);
+                                if (handlers)
                                 {
-                                    destroy_responses(n, topic, [handler]);
-                                    handlers.delete(handler);
+                                    if (handler === undefined)
+                                    {
+                                        destroy_responses(n, topic, handlers);
+                                        handlers.clear();
+                                    }
+                                    else
+                                    {
+                                        destroy_responses(n, topic, [handler]);
+                                        handlers.delete(handler);
+                                    }
                                 }
                             }
-                        }
 
-                        // give time for server to close
-                        setTimeout(cb, 500);
-                    };
-                });
-            }
+                            // give time for server to close
+                            setTimeout(cb, 500);
+                        };
+                    });
+                }
 
-            cb(null, mqclient);
+                cb(null, mqclient);
+            });
         });
-    });
+    }
+
+    if ((mod === 'http2') && !config.test_config.client2)
+    {
+        config.test_config.make_client2 = function (on_connect)
+        {
+            var scheme = client_config.ca ? 'https' : 'http',
+                r = require(mod).connect(scheme + '://localhost:' + port, client_config, on_connect);
+
+            r.on('error', function (err)
+            {
+                if (mqclient)
+                {
+                    return mqclient.emit('warning', err);
+                }
+
+                throw err;
+            });
+
+            return r;
+        };
+        config.test_config.client2 = config.test_config.make_client2(auth);
+    }
+    else
+    {
+        auth();
+    }
 }
 
 function extra(get_info, on_before)
