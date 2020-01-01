@@ -63,7 +63,7 @@ var config = {
         server: 'http2-duplex',
         config: {
             port: 8804,
-            key: fs.readFileSync(path.join(__dirname, 'server.key')), <2>
+            key: fs.readFileSync(path.join(__dirname, 'server.key')), // <2>
             cert: fs.readFileSync(path.join(__dirname, 'server.pem'))
         }
     }, {
