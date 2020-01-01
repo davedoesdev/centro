@@ -138,7 +138,7 @@ authorize_jwt(
 <1> Unique identifier for the keypair.
 <2> Generate the keypair. You could also https://github.com/juliangruber/keypair[keypair] or `openssl` on the command line, for example.
 <3> Get the public key in PEM form.
-<4> You can use `couchdb` but you'll have to set up your own http://couchdb.apache.org/[CouchDB] server.
+<4> Alternatively, you can use `couchdb` (you'll have to set up your own http://couchdb.apache.org/[CouchDB] server), `sqlite` or `pg` (you'll have to set up your own https://www.postgresql.org/[PostgreSQL] server).
 <5> We're going to update the keystore.
 <6> We're not interested in changes to the keystore -- we're just going to update the public key and exit.
 <7> Associate the public key with `\http://davedoesdev.com`.
