@@ -8,7 +8,7 @@ defmodule Subscribe.Mixfile do
      config_path: "../../config/config.exs",
      deps_path: "../../deps",
      lockfile: "../../mix.lock",
-     elixir: "~> 1.4",
+     elixir: "~> 1.9",
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
      escript: [main_module: Subscribe],
@@ -34,8 +34,8 @@ defmodule Subscribe.Mixfile do
   # Type "mix help deps" for more examples and options
   defp deps do
     [
-      {:eventsource_ex, "~> 0.0.2"},
-      {:poison, "~> 3.1.0"}
+      {:eventsource_ex, github: "cwc/eventsource_ex"},
+      {:poison, "~> 4.0"}
     ]
   end
 end

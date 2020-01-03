@@ -4,6 +4,7 @@ defmodule Subscribe do
       "http://localhost:8802/centro/v2/subscribe?" <>
       URI.encode_query([{"authz_token", System.get_env("CENTRO_TOKEN")} |
                         (for topic <- topics, do: {"topic", topic})]),
+      headers: [],
       stream_to: self())
       loop()
   end

@@ -1,12 +1,14 @@
-extern crate reqwest;
-use std::io::{self, Read};
 use std::env;
-use reqwest::{Url, Client};
-#[macro_use] extern crate log;
-extern crate env_logger;
+use reqwest::{Url, Client, Body};
+use tokio::io::stdin;
+use tokio_util::codec::{FramedRead, BytesCodec};
+use futures_util::stream::TryStreamExt;
+use log::error;
+use env_logger;
 
-fn main() {
-    env_logger::init().expect("Failed to init logger");
+#[tokio::main]
+async fn main() {
+    env_logger::init();
     let url_str = "http://localhost:8802/centro/v2/publish";
     let token = env::var("CENTRO_TOKEN").expect("no token");
     let topic = env::args().nth(1).expect("no topic");
@@ -14,15 +16,16 @@ fn main() {
         ("authz_token", token),
         ("topic", topic)])
         .expect("Failed to parse url");
+    let st = FramedRead::new(stdin(), BytesCodec::new())
+        .map_ok(bytes::BytesMut::freeze);
     let response = Client::new()
         .post(url)
-        .body(reqwest::Body::new(io::stdin()))
+        .body(Body::wrap_stream(st))
         .send()
+        .await
         .expect("Failed to send request");
     if !response.status().is_success() {
         error!("HTTP request failed: {}", response.status());
-        let mut buffer = String::new();
-        response.take(10000).read_to_string(&mut buffer).expect("Failed to read response");
-        error!("{}", buffer);
+        error!("{}", response.text().await.expect("Failed to read response"));
     }
 }

@@ -1,9 +1,4 @@
-extern crate reqwest;
-extern crate eventsource;
-extern crate encoding;
-#[macro_use] extern crate serde_derive;
-extern crate serde;
-extern crate serde_json;
+use serde_derive::Deserialize;
 use std::io::{self, Write};
 use std::env;
 use reqwest::Url;
@@ -11,8 +6,8 @@ use eventsource::event::Event;
 use eventsource::reqwest::Client;
 use encoding::{Encoding, EncoderTrap};
 use encoding::all::ISO_8859_1;
-#[macro_use] extern crate log;
-extern crate env_logger;
+use log::error;
+use env_logger;
 
 #[derive(Deserialize)]
 struct Start {
@@ -52,7 +47,7 @@ fn encode(data: &str) -> Option<Vec<u8>> {
     }
 }
 
-fn handle<'a, T>(ev: &'a Event, f: &Fn(T) -> ())
+fn handle<'a, T>(ev: &'a Event, f: &dyn Fn(T) -> ())
 where T: serde::Deserialize<'a> {
     if let Some(v) = parse::<T>(&ev.data) {
         f(v);
@@ -60,7 +55,7 @@ where T: serde::Deserialize<'a> {
 }
 
 fn main() {
-    env_logger::init().expect("Failed to init logger");
+    env_logger::init();
     let url_str = "http://localhost:8802/centro/v2/subscribe";
     let token = env::var("CENTRO_TOKEN").expect("no token");
     let token_params = vec![("authz_token", token)];

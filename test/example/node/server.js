@@ -8,6 +8,7 @@ var path = require('path');
 
 var config = {
     allowed_algs: ['PS256'],
+    auth_method: 'Basic',
     transports: [{
         server: 'tcp',
         config: { port: 8800 }

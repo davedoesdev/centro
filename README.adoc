@@ -47,6 +47,7 @@ var path = require('path');
 
 var config = {
     allowed_algs: ['PS256'], // <1>
+    auth_method: 'Basic', // <2>
     transports: [{
         server: 'tcp',
         config: { port: 8800 }
@@ -63,29 +64,31 @@ var config = {
         server: 'http2-duplex',
         config: {
             port: 8804,
-            key: fs.readFileSync(path.join(__dirname, 'server.key')), // <2>
+            key: fs.readFileSync(path.join(__dirname, 'server.key')), // <3>
             cert: fs.readFileSync(path.join(__dirname, 'server.pem'))
         }
     }, {
         server: 'in-mem',
-        authorize_config: { ANONYMOUS_MODE: true } // <3>
+        authorize_config: { ANONYMOUS_MODE: true } // <4>
     }]
 };
 
 var server = new centro.CentroServer(config);
 
-server.on('ready', function () // <4>
+server.on('ready', function () // <5>
 {
     console.log('READY.');
 });
 ----
 <1> <<authz-tokens,Authorization tokens>> signed with these algorithms are accepted.
-<2> Browsers only support HTTP/2 over TLS.
-<3> In-memory transport doesn't require authorization tokens.
-<4> Connections may be refused until `ready` is emitted.
+<2> By default, if a client doesn't present a token, Centro asks it for Bearer authentication. Browsers don't respond to that, so ask for Basic authentication.
+<3> Browsers only support HTTP/2 over TLS.
+<4> In-memory transport doesn't require authorization tokens.
+<5> Connections may be refused until `ready` is emitted.
 
 This is just an example -- you only need to list transports to which your
-applications will connect.
+applications will connect. Before you run `server.js`, make sure you do
+`grunt keys` first.
 
 [[authz-tokens]]
 === Authorization tokens
@@ -1025,15 +1028,17 @@ type `cargo run` plus the message topic.
 [source,rust]
 .publish.rs
 ----
-extern crate reqwest;
-use std::io::{self, Read};
 use std::env;
-use reqwest::{Url, Client};
-#[macro_use] extern crate log;
-extern crate env_logger;
+use reqwest::{Url, Client, Body};
+use tokio::io::stdin;
+use tokio_util::codec::{FramedRead, BytesCodec};
+use futures_util::stream::TryStreamExt;
+use log::error;
+use env_logger;
 
-fn main() {
-    env_logger::init().expect("Failed to init logger");
+#[tokio::main]
+async fn main() {
+    env_logger::init();
     let url_str = "http://localhost:8802/centro/v2/publish";
     let token = env::var("CENTRO_TOKEN").expect("no token");
     let topic = env::args().nth(1).expect("no topic");
@@ -1041,16 +1046,17 @@ fn main() {
         ("authz_token", token),
         ("topic", topic)])
         .expect("Failed to parse url");
+    let st = FramedRead::new(stdin(), BytesCodec::new())
+        .map_ok(bytes::BytesMut::freeze);
     let response = Client::new()
         .post(url)
-        .body(reqwest::Body::new(io::stdin()))
+        .body(Body::wrap_stream(st))
         .send()
+        .await
         .expect("Failed to send request");
     if !response.status().is_success() {
         error!("HTTP request failed: {}", response.status());
-        let mut buffer = String::new();
-        response.take(10000).read_to_string(&mut buffer).expect("Failed to read response");
-        error!("{}", buffer);
+        error!("{}", response.text().await.expect("Failed to read response"));
     }
 }
 ----
@@ -1058,12 +1064,7 @@ fn main() {
 [source,rust]
 .subscribe.rs
 ----
-extern crate reqwest;
-extern crate eventsource;
-extern crate encoding;
-#[macro_use] extern crate serde_derive;
-extern crate serde;
-extern crate serde_json;
+use serde_derive::Deserialize;
 use std::io::{self, Write};
 use std::env;
 use reqwest::Url;
@@ -1071,8 +1072,8 @@ use eventsource::event::Event;
 use eventsource::reqwest::Client;
 use encoding::{Encoding, EncoderTrap};
 use encoding::all::ISO_8859_1;
-#[macro_use] extern crate log;
-extern crate env_logger;
+use log::error;
+use env_logger;
 
 #[derive(Deserialize)]
 struct Start {
@@ -1112,7 +1113,7 @@ fn encode(data: &str) -> Option<Vec<u8>> {
     }
 }
 
-fn handle<'a, T>(ev: &'a Event, f: &Fn(T) -> ())
+fn handle<'a, T>(ev: &'a Event, f: &dyn Fn(T) -> ())
 where T: serde::Deserialize<'a> {
     if let Some(v) = parse::<T>(&ev.data) {
         f(v);
@@ -1120,7 +1121,7 @@ where T: serde::Deserialize<'a> {
 }
 
 fn main() {
-    env_logger::init().expect("Failed to init logger");
+    env_logger::init();
     let url_str = "http://localhost:8802/centro/v2/subscribe";
     let token = env::var("CENTRO_TOKEN").expect("no token");
     let token_params = vec![("authz_token", token)];
@@ -1241,6 +1242,7 @@ defmodule Subscribe do
       "http://localhost:8802/centro/v2/subscribe?" <>
       URI.encode_query([{"authz_token", System.get_env("CENTRO_TOKEN")} |
                         (for topic <- topics, do: {"topic", topic})]),
+      headers: [],
       stream_to: self())
       loop()
   end
