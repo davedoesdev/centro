@@ -96,6 +96,9 @@ module.exports = function (config, connect, options)
     config.multi_ttl = 10 * 60 * 1000;
     config.max_topic_length = undefined;
     config.max_publications = undefined;
+    config.authorize_config = Object.assign({
+        silent: true
+    }, config.authorize_config);
 
     if (process.env.SPLIT_TOPIC_AT)
     {
@@ -243,7 +246,8 @@ module.exports = function (config, connect, options)
                         (err.message !== 'backoff') &&
                         (err.message !== 'This socket is closed.') &&
                         (err.message !== 'This socket is closed') &&
-                        (err.message !== 'Cannot call write after a stream was destroyed'))
+                        (err.message !== 'Cannot call write after a stream was destroyed') &&
+                        !err.message.startsWith('uri revision change'))
                     {
                         // eslint-disable-next-line no-console
                         console.warn(err.message);
