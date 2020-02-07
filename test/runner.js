@@ -2096,7 +2096,7 @@ module.exports = function (config, connect, options)
                 }
             });
 
-            it.only('should error if carrier ends before client connects', function (done)
+            it('should error if carrier ends before client connects', function (done)
             {
                 var is_done = false;
 
