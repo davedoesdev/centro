@@ -2655,7 +2655,8 @@ module.exports = function (config, connect, options)
                         expect(err.message).to.be.oneOf([
                             'carrier stream finished before duplex finished',
                             'carrier stream ended before end message received',
-                            'Stream prematurely closed'
+                            'Stream prematurely closed',
+                            'This socket has been ended by the other party'
                         ]);
                     });
                 });
@@ -6733,7 +6734,8 @@ module.exports = function (config, connect, options)
                                     'write EPIPE',
                                     'write ECONNABORTED',
                                     'Cannot call write after a stream was destroyed',
-                                    'Stream prematurely closed'
+                                    'Stream prematurely closed',
+                                    'This socket has been ended by the other party'
                                 ]);
                             }
                         });

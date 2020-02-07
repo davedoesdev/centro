@@ -15,7 +15,7 @@ module.exports = function (s, cb)
         }
     }
     s.on('end', end);
-    s.on('close', end);
+    //s.on('close', end);
 
     s.on('readable', function ()
     {
