@@ -3100,6 +3100,7 @@ module.exports = function (config, connect, options)
                             'write EPIPE',
                             'read ECONNRESET',
                             'write ECONNRESET',
+                            'This socket has been ended by the other party',
                             'Stream closed with error code NGHTTP2_REFUSED_STREAM',
                             'Request failed',
                             'Body already used' // fetch-h2 retries on GOAWAY
