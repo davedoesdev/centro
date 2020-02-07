@@ -2096,7 +2096,7 @@ module.exports = function (config, connect, options)
                 }
             });
 
-            it('should error if carrier ends before client connects', function (done)
+            it.only('should error if carrier ends before client connects', function (done)
             {
                 var is_done = false;
 
@@ -2111,18 +2111,11 @@ module.exports = function (config, connect, options)
 
                 function check_error(err)
                 {
-                    if (err.message === 'carrier stream finished before duplex finished')
-                    {
-                        if (is_transport('primus') || is_transport('node_http2_http'))
-                        {
-                            return done2();
-                        }
-                        return;
-                    }
-
                     expect(err.message).to.be.oneOf([
+                        'carrier stream finished before duplex finished',
                         'carrier stream ended before end message received',
-                        'read ECONNRESET'
+                        'read ECONNRESET',
+                        'This socket has been ended by the other party'
                     ]);
 
                     done2();
