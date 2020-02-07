@@ -97,7 +97,7 @@ module.exports = function (config, connect, options)
     config.max_topic_length = undefined;
     config.max_publications = undefined;
     config.authorize_config = Object.assign({
-        silent: true
+        verbose: false // change to true to track pub key changes
     }, config.authorize_config);
 
     if (process.env.SPLIT_TOPIC_AT)

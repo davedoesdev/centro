@@ -20,8 +20,7 @@ fs.readFile(path.join(__dirname, 'priv_key.pem'), function (err, priv_key)
     {
         db_type: 'pouchdb',
         deploy_name: 'token',
-        no_changes: true,
-        silent: true
+        no_changes: true
     }, function (err, authz)
     {
         assert.ifError(err);
