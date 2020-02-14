@@ -1,6 +1,9 @@
 /*eslint-env node */
 "use strict";
 
+// To run coverage locally, typically one would do:
+// NODE_OPTIONS=--max-http-header-size=32768 PGUSER=postgres ./node_modules/.bin/grunt coverage
+
 var path = require('path'),
     mod_path = path.join('.', 'node_modules'),
     bin_path = path.join(mod_path, '.bin'),

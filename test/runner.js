@@ -3103,7 +3103,8 @@ module.exports = function (config, connect, options)
                             'This socket has been ended by the other party',
                             'Stream closed with error code NGHTTP2_REFUSED_STREAM',
                             'Request failed',
-                            'Body already used' // fetch-h2 retries on GOAWAY
+                            'Body already used', // fetch-h2 retries on GOAWAY
+                            'The session has been destroyed', // fetch-h2 when we're detached
                         ]);
                     }
                 });

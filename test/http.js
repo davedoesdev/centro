@@ -539,7 +539,7 @@ function extra(get_info, on_before)
                 req.headers = {
                     'www-authenticate': headers[HTTP2_HEADER_WWW_AUTHENTICATE]
                 };
-                cb(req, req);
+                cb(req);
             });
 
             return req;
@@ -789,6 +789,15 @@ function extra(get_info, on_before)
             }, client_config), function (res)
             {
                 expect(res.statusCode).to.equal(503);
+                if (client2)
+                {
+                    // closing the server closes the session before the EOF
+                    // can get to the client
+                    res.on('close', function ()
+                    {
+                        this.emit('end');
+                    });
+                }
                 read_all(res, function (v)
                 {
                     expect(JSON.parse(v.toString()).error).to.equal('closed');

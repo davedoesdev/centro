@@ -14,14 +14,17 @@ const pathname = `/centro/v${centro.version}/http2-duplex`;
 const path = require('path');
 const fs = require('fs');
 const { EventEmitter } = require('events');
-require('fetch-h2/dist/lib/utils-http2').hasGotGoaway = function() {
-    return false;
-};
-const { fetch: fetch2 } = require('fetch-h2').context({
-    session: {
-        ca: fs.readFileSync(path.join(__dirname, 'ca.pem')) 
+let fetch2;
+function new_fetch2(config, cb) {
+    ({ fetch: fetch2 } = require('fetch-h2').context({
+        session: {
+            ca: fs.readFileSync(path.join(__dirname, 'ca.pem'))
+        }
+    }));
+    if (cb) {
+        cb();
     }
-});
+}
 const port = 8700;
 
 global.fetch = async function(url, options) {
@@ -45,6 +48,7 @@ global.fetch = async function(url, options) {
                         function cb2(err, r) {
                             readable.pause();
                             readable.removeListener('end', on_end);
+                            readable.removeListener('close', on_end);
                             readable.removeListener('error', on_error);
                             readable.removeListener('data', on_data);
                             cb(err, r);
@@ -63,6 +67,7 @@ global.fetch = async function(url, options) {
                         }
 
                         readable.on('end', on_end);
+                        readable.on('close', on_end);
                         readable.on('error', on_error);
                         readable.on('data', on_data);
                         readable.resume();
@@ -163,7 +168,8 @@ runner({
         name: `node_http2-duplex_${scheme}`
     }
 }, connect, {
-    extra: extra
+    extra: extra,
+    on_before: new_fetch2
 });
 
 runner({
@@ -176,6 +182,8 @@ runner({
     extra: extra,
 
     on_before: function (config, cb) {
+        new_fetch2();
+
         if (config.server) {
             return cb();
         }
@@ -194,18 +202,22 @@ runner({
                 { port });
         }
 
+        config.server.http2_server.on('session', function (session) {
+            if (this.listenerCount('session') === 1) {
+                // We've detached from the http2_server so destroy the new
+                // session, otherwise the client's request (and subsequent ones
+                // due to fetch-h2 re-using the same session) are never handled.
+                try {
+                    session.destroy();
+                } catch (ex) {} // eslint-disable-line no-empty
+            }
+        });
+
         cb();
     },
 
     on_after: function (config, cb) {
         config.server.detach();
-
-        config.server.http2_server.on('session', function (session) {
-            try {
-                session.destroy();
-            } catch (ex) {} // eslint-disable-line no-empty
-        });
-
         config.server.http2_server.close(cb);
     }
 });
