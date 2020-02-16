@@ -206,7 +206,7 @@ runner({
             if (this.listenerCount('session') === 1) {
                 // We've detached from the http2_server so destroy the new
                 // session, otherwise the client's request (and subsequent ones
-                // due to fetch-h2 re-using the same session) are never handled.
+                // due to fetch-h2 re-using the same session) is never handled.
                 try {
                     session.destroy();
                 } catch (ex) {} // eslint-disable-line no-empty

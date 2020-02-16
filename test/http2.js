@@ -213,6 +213,22 @@ runner(
                 http2.createServer();
         }
 
+        config.server.on('session', function (session)
+        {
+            if (this.listenerCount('session') === 1)
+            {
+                // We're not listening on this server so destroy the new
+                // session, otherwise the client's request is never handled.
+                try
+                {
+                    session.destroy();
+                }
+                catch (ex)
+                { // eslint-disable-line no-constant-condition
+                }
+            }
+        });
+
         config.server.listen(port, cb);
     },
 
@@ -220,17 +236,6 @@ runner(
 
     on_after: function (config, cb)
     {
-        config.server.on('session', function (session)
-        {
-            try
-            {
-                session.destroy();
-            }
-            catch (ex)
-            { // eslint-disable-line no-constant-condition
-            }
-        });
-
         config.server.close(cb);
     }
 });
