@@ -3978,7 +3978,8 @@ module.exports = function (config, connect, options)
                             ['write EPIPE',
                              'read ECONNRESET',
                              'write ECONNRESET',
-                             'write ECONNABORTED']);
+                             'write ECONNABORTED',
+                             'This socket has been ended by the other party']);
                     });
                 }
 
