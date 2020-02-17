@@ -37,14 +37,14 @@
     "qlobber-fsq"
   ],
   "dependencies": {
-    "mqlobber": "^9.0.3",
-    "mqlobber-access-control": "^8.0.2",
+    "mqlobber": "^9.0.4",
+    "mqlobber-access-control": "^8.0.3",
     "qlobber-fsq": "^12.0.2",
     "qlobber-pg": "^2.0.3",
     "authorize-jwt": "^6.0.1",
     "primus": "^7.3.4",
     "primus-backpressure": "^2.0.0",
-    "http2-duplex": "^4.4.3",
+    "http2-duplex": "^4.4.4",
     "frame-stream": "^2.0.0",
     "ajv": "^6.11.0",
     "async": "^3.1.1",
