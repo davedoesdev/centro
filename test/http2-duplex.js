@@ -93,36 +93,47 @@ function connect(config, server, cb) {
             return cb(err);
         }
 
-        let duplex;
-        try {
-            duplex = await make_client_http2_duplex(
-                `${scheme}://localhost:${port}${pathname}`, {
-                    headers: {
-                        'Authorization': 'Bearer ' + userpass.split(':')[1]
-                    }
-                });
-        } catch (ex) {
-            if (ex instanceof ResponseError) {
-                return read_all(await ex.response.readable(), function (buf) {
-                    const msg = buf.toString();
-                    const client = new class extends EventEmitter {}();
-                    client.mux = { carrier: this };
-                    process.nextTick(() => {
-                        client.emit('error', new Error(msg ? JSON.parse(msg).error : 'closed'));
+        async function really_connect() {
+            let duplex;
+            try {
+                duplex = await make_client_http2_duplex(
+                    `${scheme}://localhost:${port}${pathname}`, {
+                        headers: {
+                            'Authorization': 'Bearer ' + userpass.split(':')[1]
+                        }
                     });
-                    cb(null, client);
-                });
+            } catch (ex) {
+                if (ex instanceof ResponseError) {
+                    return read_all(await ex.response.readable(), function (buf) {
+                        const msg = buf.toString();
+                        const client = new class extends EventEmitter {}();
+                        client.mux = { carrier: this };
+                        process.nextTick(() => {
+                            client.emit('error', new Error(msg ? JSON.parse(msg).error : 'closed'));
+                        });
+                        cb(null, client);
+                    });
+                }
+                if (ex.message === 'Stream closed with error code NGHTTP2_ENHANCE_YOUR_CALM') {
+                    // On Windows, Node marks session with NGHTTP2_ENHANCE_YOUR_CALM quite readily.
+                    // Use a new session to work around this.
+                    console.error(ex);
+                    new_fetch2();
+                    return setImmediate(really_connect);
+                }
+                return cb(ex);
             }
-            return cb(ex);
+
+            duplex.on('error', async function (err) {
+                if (err.message === 'Stream closed with error code NGHTTP2_REFUSED_STREAM') {
+                    this.destroy();
+                }
+            });
+
+            cb(null, make_client(duplex));
         }
 
-        duplex.on('error', async function (err) {
-            if (err.message === 'Stream closed with error code NGHTTP2_REFUSED_STREAM') {
-                this.destroy();
-            }
-        });
-
-        cb(null, make_client(duplex));
+        really_connect();
     });
 }
 

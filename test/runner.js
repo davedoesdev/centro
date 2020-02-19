@@ -3105,6 +3105,7 @@ module.exports = function (config, connect, options)
                             'Request failed',
                             'Body already used', // fetch-h2 retries on GOAWAY
                             'The session has been destroyed', // fetch-h2 when we're detached
+                            '404', // fetch-h2 pending requests which get made on new server in the close tests
                         ]);
                     }
                 });
