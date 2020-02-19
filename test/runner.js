@@ -3836,7 +3836,7 @@ module.exports = function (config, connect, options)
             {
                 var timeout = require('../lib/server_extensions/timeout'),
                     tps = attach_extension(timeout.timeout_publish_streams,
-                                           { timeout: 3000 });
+                                           { timeout: 3500 });
 
                 var time_before_publish = process.hrtime();
 
