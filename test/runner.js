@@ -3069,7 +3069,7 @@ module.exports = function (config, connect, options)
             });
         }
 
-        describe('close', function ()
+        describe.only('close', function ()
         {
             setup(1,
             {
