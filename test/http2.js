@@ -88,7 +88,7 @@ console.log("ON_PRE_AFTER1");
 
     if (session && !session.destroyed)
     {
-        console.log("WAITING FOR DESTROY", session.closed);
+        console.log("WAITING FOR DESTROY", session);
         //session.once('close', cb);
         session.once('close', err => {
             console.log("ON_PRE_AFTER CLOSED", err);
