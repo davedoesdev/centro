@@ -151,6 +151,7 @@ module.exports = function (config, connect, options)
 
         function on_before(cb)
         {
+        console.log("ON_BEF1");
             if (this && this.timeout)
             {
                 this.timeout(60000);
@@ -163,6 +164,7 @@ module.exports = function (config, connect, options)
 
             function start2()
             {
+            console.log("START2")
                 server = new centro.CentroServer(config);
 
                 server.on('pre_connect', function (info)
@@ -194,6 +196,7 @@ module.exports = function (config, connect, options)
 
                 server.on('ready', function ()
                 {
+                console.log("READY");
                     if (options.anon)
                     {
                         if (ths && ths.test_should_skip)
@@ -263,6 +266,7 @@ module.exports = function (config, connect, options)
 
             function start()
             {
+            console.log("START");
                 if (config.fsq && !config.fsq.initialized)
                 {
                     config.fsq.on('start', start2);
@@ -3058,8 +3062,10 @@ module.exports = function (config, connect, options)
 
         function close_on_before(cb)
         {
+        console.log("COB1");
             on_pre_after(function (err)
             {
+            console.log("COB2");
                 if (err)
                 {
                     return cb(err);
@@ -3087,6 +3093,7 @@ module.exports = function (config, connect, options)
 
             function close(f)
             {
+            console.log("CLOSE1");
                 if (options.relay)
                 {
                     server.once('connect', f);
@@ -3124,6 +3131,7 @@ module.exports = function (config, connect, options)
 
                 if (!options.relay)
                 {
+                console.log("CLOSE2");
                     f();
                 }
             }

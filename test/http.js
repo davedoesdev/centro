@@ -1405,6 +1405,23 @@ runner(
                 require(mod).createServer();
         }
 
+        if (mod === 'http2')
+        {
+            config.server.on('session', function (session)
+            {
+                if (this.listenerCount('session') === 1)
+                {
+                    try
+                    {
+                        session.destroy();
+                    }
+                    catch (ex)
+                    { // eslint-disable-line no-constant-condition
+                    }
+                }
+            });
+        }
+
         config.server.listen(port, cb);
     },
 
