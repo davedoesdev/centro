@@ -82,15 +82,14 @@ function connect(config, server, cb)
 
 function on_pre_after(config, cb)
 {
-console.log("ON_PRE_AFTER1");
     const session = config.http2_client_session;
     delete config.http2_client_session;
 
     if (session && !session.destroyed)
     {
-        //session.once('close', cb);
-        console.log("DESTROYING");
-        session.destroy();
+        session.once('close', cb);
+        console.log("WAITING FOR DESTROY");
+        return session.destroy();
     }
 
     cb();
