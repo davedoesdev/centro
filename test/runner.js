@@ -2877,7 +2877,8 @@ module.exports = function (config, connect, options)
                                 'write EPIPE',
                                 'carrier stream ended before end message received',
                                 'carrier stream finished before duplex finished',
-                                'read ECONNRESET'
+                                'read ECONNRESET',
+                                'This socket has been ended by the other party'
                             ]);
                         }
                     }
