@@ -88,17 +88,9 @@ console.log("ON_PRE_AFTER1");
 
     if (session && !session.destroyed)
     {
-        console.log("WAITING FOR DESTROY", session);
         //session.once('close', cb);
-        var handle = setInterval(() => {
-            console.log("INTERVAL", session);
-        }, 1000);
-        session.once('close', err => {
-            clearInterval(handle);
-            console.log("ON_PRE_AFTER CLOSED", err);
-            cb(err);
-        });
-        return session.destroy();
+        console.log("DESTROYING");
+        session.destroy();
     }
 
     cb();
