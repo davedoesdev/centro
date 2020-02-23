@@ -87,9 +87,12 @@ function on_pre_after(config, cb)
 
     if (session && !session.destroyed)
     {
-        session.once('close', cb);
-        console.log("WAITING FOR DESTROY");
-        return session.destroy();
+        //On CircleCI we occasionally don't get 'close' event even though
+        //destroyed property goes to true afterwards. I suspect a bug in
+        //node_http2.cc where ondone isn't called in some circumstance.
+        //session.once('close', cb);
+        //return session.destroy();
+        session.destroy();
     }
 
     cb();
