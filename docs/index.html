@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset='utf-8'>
-  <title>centro-js 3.5.0 | Documentation</title>
+  <title>centro-js 4.0.0 | Documentation</title>
   <meta name='description' content='Pub-sub and work queue service on Primus or TCP. Supports wildcards, streams and back-pressure. Just Node and a filesystem required.'>
   <meta name='viewport' content='width=device-width,initial-scale=1'>
   <link href='assets/bass.css' rel='stylesheet'>
@@ -15,11 +15,14 @@
       <div id='split-left' class='overflow-auto fs0 height-viewport-100'>
         <div class='py1 px2'>
           <h3 class='mb0 no-anchor'>centro-js</h3>
-          <div class='mb1'><code>3.5.0</code></div>
+          <div class='mb1'><code>4.0.0</code></div>
           <input
             placeholder='Filter'
             id='filter-input'
             class='col12 block input'
+            spellcheck='false'
+            autocapitalize='off'
+            autocorrect='off'
             type='text' />
           <div id='toc'>
             <ul class='list-reset h5 py1-ul'>
@@ -729,6 +732,8 @@ multi-transport. Just Node and a filesystem required.</p>
   
 
   
+
+  
 </section>
 
           
@@ -772,6 +777,8 @@ multi-transport. Just Node and a filesystem required.</p>
   
   
   
+  
+
   
 
   
@@ -844,9 +851,7 @@ you supply.</p>
                 <tr>
   <td class='break-word'><span class='code bold'>config.token</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a> | <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array">Array</a>&#x3C;<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>>)?</code>
   </td>
-  <td class='break-word'><span>JSON Web Token(s) to present to the server. If the transport you're going to use is configured for 
-<code>ANONYMOUS_MODE</code>
- then you don't need this.
+  <td class='break-word'><span>JSON Web Token(s) to present to the server.
 </span></td>
 </tr>
 
@@ -893,6 +898,8 @@ you supply.</p>
         </div>
       
     </div>
+  
+
   
 
   
@@ -979,9 +986,7 @@ data as a stream header (currently all except Primus and HTTP).</p>
                 <tr>
   <td class='break-word'><span class='code bold'>config.token</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a> | <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array">Array</a>&#x3C;<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>>)?</code>
   </td>
-  <td class='break-word'><span>JSON Web Token(s) to present to the server. If the transport you're going to use is configured for 
-<code>ANONYMOUS_MODE</code>
- then you don't need this.
+  <td class='break-word'><span>JSON Web Token(s) to present to the server.
 </span></td>
 </tr>
 
@@ -1033,6 +1038,8 @@ data as a stream header (currently all except Primus and HTTP).</p>
 
       
     
+  
+
   
 
   
@@ -1136,6 +1143,8 @@ data as a stream header (currently all except Primus and HTTP).</p>
   
 
   
+
+  
 </section>
 
       </div>
@@ -1199,6 +1208,8 @@ data as a stream header (currently all except Primus and HTTP).</p>
 
       
     
+  
+
   
 
   
@@ -1295,6 +1306,8 @@ data as a stream header (currently all except Primus and HTTP).</p>
   
 
   
+
+  
 </section>
 
       </div>
@@ -1346,6 +1359,8 @@ data as a stream header (currently all except Primus and HTTP).</p>
   
   
   
+  
+
   
 
   
@@ -1697,6 +1712,8 @@ clients.</p>
   
 
   
+
+  
     <div class='py1 quiet mt1 prose-big'>Instance Members</div>
     <div class="clearfix">
   
@@ -1728,6 +1745,8 @@ clients.</p>
   
   
   
+  
+
   
 
   
@@ -1780,6 +1799,8 @@ clients.</p>
   
   
   
+  
+
   
 
   
@@ -1860,6 +1881,8 @@ clients.</p>
   
 
   
+
+  
 </section>
 
       </div>
@@ -1913,6 +1936,8 @@ clients.</p>
         </div>
       
     </div>
+  
+
   
 
   
@@ -2008,6 +2033,8 @@ clients.</p>
   
 
   
+
+  
 </section>
 
       </div>
@@ -2057,6 +2084,8 @@ clients.</p>
         </div>
       
     </div>
+  
+
   
 
   
@@ -2140,6 +2169,8 @@ clients.</p>
   
 
   
+
+  
 </section>
 
       </div>
@@ -2173,6 +2204,8 @@ clients.</p>
   
   
   
+  
+
   
 
   
@@ -2232,6 +2265,8 @@ clients.</p>
   
   
   
+  
+
   
 
   
@@ -2316,6 +2351,8 @@ and is ready to accept connections.</p>
         </div>
       
     </div>
+  
+
   
 
   
@@ -2426,6 +2463,8 @@ connects.</p>
   
 
   
+
+  
 </section>
 
       </div>
@@ -2513,6 +2552,8 @@ connects.</p>
         </div>
       
     </div>
+  
+
   
 
   
@@ -2678,6 +2719,8 @@ has been authorized but handshake data has not yet been received.</p>
   
 
   
+
+  
 </section>
 
       </div>
@@ -2739,6 +2782,8 @@ has been authorized but handshake data has not yet been received.</p>
   
 
   
+
+  
 </section>
 
       </div>
@@ -2783,6 +2828,8 @@ has been authorized but handshake data has not yet been received.</p>
         </div>
       
     </div>
+  
+
   
 
   
@@ -2862,6 +2909,8 @@ is connected. After the event is emitted, the connection is destroyed.</p>
   
 
   
+
+  
 </section>
 
       </div>
@@ -2910,6 +2959,8 @@ clients connected.</p>
   
 
   
+
+  
 </section>
 
       </div>
@@ -2938,6 +2989,8 @@ clients connected.</p>
   
   
   
+  
+
   
 
   
@@ -3027,6 +3080,8 @@ clients connected.</p>
   
 
   
+
+  
 </section>
 
       </div>
@@ -3081,6 +3136,8 @@ to <code>console.error</code>.</p>
         </div>
       
     </div>
+  
+
   
 
   
@@ -3244,6 +3301,8 @@ to <code>console.error</code>.</p>
   
 
   
+
+  
 </section>
 
           
@@ -3346,6 +3405,8 @@ to <code>console.error</code>.</p>
         </div>
       
     </div>
+  
+
   
 
   
@@ -3590,6 +3651,8 @@ ing the connection, if an error occurs which means the connection can't be re-us
   
 
   
+
+  
 </section>
 
           
@@ -3706,6 +3769,8 @@ transport with browsers.</p>
         </div>
       
     </div>
+  
+
   
 
   
@@ -3865,6 +3930,8 @@ any plans to do so. <code>http2-duplex</code> emulates it by using POST requests
   
 
   
+
+  
 </section>
 
           
@@ -3968,6 +4035,8 @@ overhead (the messages aren't copied).</p>
   
 
   
+
+  
     <div class='py1 quiet mt1 prose-big'>Static Members</div>
     <div class="clearfix">
   
@@ -4043,6 +4112,8 @@ overhead (the messages aren't copied).</p>
   
 
   
+
+  
 </section>
 
       </div>
@@ -4100,6 +4171,8 @@ overhead (the messages aren't copied).</p>
   
   
   
+  
+
   
 
   
@@ -4256,6 +4329,8 @@ overhead (the messages aren't copied).</p>
   
 
   
+
+  
 </section>
 
       </div>
@@ -4307,6 +4382,8 @@ overhead (the messages aren't copied).</p>
         </div>
       
     </div>
+  
+
   
 
   
@@ -4392,6 +4469,8 @@ overhead (the messages aren't copied).</p>
   
 
   
+
+  
 </section>
 
       </div>
@@ -4448,6 +4527,8 @@ overhead (the messages aren't copied).</p>
   
 
   
+
+  
     <div class='py1 quiet mt1 prose-big'>Static Members</div>
     <div class="clearfix">
   
@@ -4474,6 +4555,8 @@ overhead (the messages aren't copied).</p>
   
   
   
+  
+
   
 
   
@@ -4536,6 +4619,8 @@ overhead (the messages aren't copied).</p>
   
   
   
+  
+
   
 
   
@@ -4617,6 +4702,8 @@ to the message's recipients are under their high-water mark.</p>
         </div>
       
     </div>
+  
+
   
 
   
@@ -4727,6 +4814,8 @@ this extension last but before <a href="#centro-jslibserver_extensionsfilterdumm
   
 
   
+
+  
 </section>
 
       </div>
@@ -4761,6 +4850,8 @@ this extension last.</p>
   
   
   
+  
+
   
 
   
@@ -4831,6 +4922,8 @@ this extension last.</p>
         </div>
       
     </div>
+  
+
   
 
   
@@ -4945,6 +5038,8 @@ this extension last.</p>
   
 
   
+
+  
 </section>
 
       </div>
@@ -4988,6 +5083,8 @@ this extension last.</p>
   
   
   
+  
+
   
 
   
@@ -5131,6 +5228,8 @@ this extension last.</p>
   
 
   
+
+  
 </section>
 
       </div>
@@ -5182,6 +5281,8 @@ this extension last.</p>
         </div>
       
     </div>
+  
+
   
 
   
@@ -5267,6 +5368,8 @@ this extension last.</p>
   
 
   
+
+  
 </section>
 
       </div>
@@ -5311,6 +5414,8 @@ publications and connections.</p>
   
   
   
+  
+
   
 
   
@@ -5391,6 +5496,8 @@ publications and connections.</p>
         </div>
       
     </div>
+  
+
   
 
   
@@ -5494,6 +5601,8 @@ publications and connections.</p>
   
 
   
+
+  
 </section>
 
       </div>
@@ -5580,6 +5689,8 @@ publications and connections.</p>
   
 
   
+
+  
 </section>
 
       </div>
@@ -5624,6 +5735,8 @@ total number of messages published by a connected client.</p>
   
   
   
+  
+
   
 
   
@@ -5704,6 +5817,8 @@ total number of messages published by a connected client.</p>
         </div>
       
     </div>
+  
+
   
 
   
@@ -5807,6 +5922,8 @@ total number of messages published by a connected client.</p>
   
 
   
+
+  
 </section>
 
       </div>
@@ -5851,6 +5968,8 @@ transport supports.</p>
   
   
   
+  
+
   
 
   
@@ -5949,6 +6068,8 @@ the <a href="#centro-jslibserver_transportsin-mem">in-mem</a> transport.</p>
   
 
   
+
+  
 </section>
 
       </div>
@@ -5992,6 +6113,8 @@ the <a href="#centro-jslibserver_transportsin-mem">in-mem</a> transport.</p>
   
   
   
+  
+
   
 
   
@@ -6049,6 +6172,8 @@ the <a href="#centro-jslibserver_transportsin-mem">in-mem</a> transport.</p>
         </div>
       
     </div>
+  
+
   
 
   
@@ -6129,6 +6254,8 @@ the <a href="#centro-jslibserver_transportsin-mem">in-mem</a> transport.</p>
   
 
   
+
+  
 </section>
 
       </div>
@@ -6172,6 +6299,8 @@ the <a href="#centro-jslibserver_transportsin-mem">in-mem</a> transport.</p>
   
   
   
+  
+
   
 
   
@@ -6252,6 +6381,8 @@ the <a href="#centro-jslibserver_transportsin-mem">in-mem</a> transport.</p>
         </div>
       
     </div>
+  
+
   
 
   
@@ -6355,6 +6486,8 @@ the <a href="#centro-jslibserver_transportsin-mem">in-mem</a> transport.</p>
   
 
   
+
+  
 </section>
 
       </div>
@@ -6425,6 +6558,8 @@ message.</p>
         </div>
       
     </div>
+  
+
   
 
   

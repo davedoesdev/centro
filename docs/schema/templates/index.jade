@@ -11,10 +11,13 @@ html
 
         p
           | Centro clients must present to a Centro server a signed JSON Web
-          | Token conforming to the schema described below, unless it's
-          | connecting using a transport that's been configured for
-          | ANONYMOUS_MODE. Tokens must be signed using the private key from a
+          | Token conforming to the schema described below.
+          | Tokens must be signed using the private key from a
           | keypair added to the authorize-jwt keystore on the server.
+          | In-memory transports can use a shared secret to sign tokens,
+          | which also must be added to the keystore.
+          | The default keystore for in-memory transports is a memory-only
+          | keystore. The default keystore for other transports uses pouchdb.
 
       section
         h2 schema descriptions

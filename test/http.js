@@ -4,7 +4,7 @@
 var runner = require('./runner'),
     centro = require('..'),
     read_all = require('./read_all'),
-    jsjws = require('jsjws'),
+    { JWT } = require('jose'),
     querystring = require('querystring'),
     expect = require('chai').expect,
     pub_pathname = '/centro/v' + centro.version + '/publish?',
@@ -26,14 +26,7 @@ const {
 function make_token(get_info, topic)
 {
     topic = topic || 'foo';
-    var token_exp = new Date();
-    token_exp.setMinutes(token_exp.getMinutes() + 1);
-    return new jsjws.JWT().generateJWTByKey(
-    {
-        alg: 'PS256'
-    },
-    {
-        iss: get_info().issuer_id,
+    return JWT.sign({
         access_control: {
             publish: {
                 allow: [topic],
@@ -44,7 +37,11 @@ function make_token(get_info, topic)
                 disallow: []
             }
         }
-    }, token_exp, get_info().priv_key);
+    }, get_info().priv_key, {
+        algorithm: 'EdDSA',
+        issuer: get_info().issuer_id,
+        expiresIn: '1m'
+    });
 }
 
 function setup(mod, client_config, server_config)

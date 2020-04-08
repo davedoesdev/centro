@@ -17,9 +17,9 @@ centro.separate_auth({
     assert.ifError(err);
     http2.connect('http://localhost:8803', function () {
         this.request({
-            ':method': 'POST',
+            ':method': 'POST', // <1>
             ':path': `/centro/v${centro.version}/http2`,
-            Authorization: `Bearer ${userpass.split(':')[1]}`
+            Authorization: `Bearer ${userpass.split(':')[1]}` // <2>
         }).on('response', function (headers) {
             assert.equal(headers[':status'], 200);
             make_client(this).on('ready', function () {

@@ -2,13 +2,13 @@
 /*eslint-disable no-console */
 "use strict";
 
-var centro = require('../../..');
-var fs = require('fs');
-var path = require('path');
+const centro = require('../../..');
+const fs = require('fs');
+const path = require('path');
 
-var config = {
-    allowed_algs: ['PS256'],
-    auth_method: 'Basic',
+const config = {
+    allowed_algs: ['EdDSA'], // <1>
+    auth_method: 'Basic', // <2>
     transports: [{
         server: 'tcp',
         config: { port: 8800 }
@@ -25,34 +25,52 @@ var config = {
         server: 'http2-duplex',
         config: {
             port: 8804,
-            key: fs.readFileSync(path.join(__dirname, '..', '..', 'server.key')),
+            key: fs.readFileSync(path.join(__dirname, '..', '..', 'server.key')), // <3>
             cert: fs.readFileSync(path.join(__dirname, '..', '..', 'server.pem'))
         }
     }, {
         server: 'in-mem',
-        authorize_config: { ANONYMOUS_MODE: true }
+        config: {
+            allowed_algs: ['HS256'], // <4>
+            privileged: true // <5>
+        }
     }]
 };
 
-var server = new centro.CentroServer(config);
+const server = new centro.CentroServer(config); // <6>
 
-server.on('ready', function ()
-{
-    console.log('READY.');
-});
+server.on('ready', () => console.log('READY.'));
 //----
-var assert = require('assert');
+const assert = require('assert');
+const { JWK, JWT } = require('jose');
 
-server.on('ready', function ()
-{
-    this.transport_ops['in-mem'].connect(function (err, stream)
-    {
+server.on('ready', function () {
+    const ops = this.transport_ops['in-mem']; // <1>
+    const key = JWK.generateSync('oct'); // <2>
+    ops.authz.keystore.add_pub_key('test', key, function (err, issuer) { // <3>
         assert.ifError(err);
 
-        centro.stream_auth(stream).subscribe('#', function (s, info)
-        {
-            console.log('topic:', info.topic);
-            s.pipe(process.stdout);
-        }, assert.ifError);
+        const token = JWT.sign({ // <4>
+            access_control: { // <5>
+                subscribe: { allow: ['#'], disallow: [] },
+                publish: { allow: ['#'], disallow: [] }
+            }
+        }, key, {
+            algorithm: 'HS256',
+            issuer
+        });
+
+        ops.connect(function (err, stream) { // <6>
+            assert.ifError(err);
+
+            centro.stream_auth(stream, {
+                token
+            }).on('ready', function () {
+                this.subscribe('#', function (s, info) {
+                    console.log('topic:', info.topic);
+                    s.pipe(process.stdout);
+                }, assert.ifError);
+            });
+        });
     });
 });

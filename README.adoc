@@ -22,6 +22,8 @@ Extra options (via https://github.com/davedoesdev/qlobber-fsq[qlobber-fsq]) are
 available to use shared memory on a single server machine or a distributed file
 system for multiple server machines.
 
+Alternatively, you can use https://github.com/davedoesdev/qlobber-pg[qlobber-pg] to store messages in PostgreSQL.
+
 Clients can connect to the server using https://github.com/primus/primus[Primus]
 (Websockets), TCP, HTTP, HTTP/2 or in-memory streams.
 
@@ -41,12 +43,12 @@ Here's a server which listens on all transports.
 [source,javascript]
 .server.js
 ----
-var centro = require('centro-js');
-var fs = require('fs');
-var path = require('path');
+const centro = require('centro-js');
+const fs = require('fs');
+const path = require('path');
 
-var config = {
-    allowed_algs: ['PS256'], // <1>
+const config = {
+    allowed_algs: ['EdDSA'], // <1>
     auth_method: 'Basic', // <2>
     transports: [{
         server: 'tcp',
@@ -64,37 +66,37 @@ var config = {
         server: 'http2-duplex',
         config: {
             port: 8804,
-            key: fs.readFileSync(path.join(__dirname, 'server.key')), // <3>
-            cert: fs.readFileSync(path.join(__dirname, 'server.pem'))
+            key: fs.readFileSync(path.join(__dirname, '..', '..', 'server.key')), // <3>
+            cert: fs.readFileSync(path.join(__dirname, '..', '..', 'server.pem'))
         }
     }, {
         server: 'in-mem',
-        authorize_config: { ANONYMOUS_MODE: true } // <4>
+        config: {
+            allowed_algs: ['HS256'], // <4>
+            privileged: true // <5>
+        }
     }]
 };
 
-var server = new centro.CentroServer(config);
+const server = new centro.CentroServer(config); // <6>
 
-server.on('ready', function () // <5>
-{
-    console.log('READY.');
-});
+server.on('ready', () => console.log('READY.'));
 ----
 <1> <<authz-tokens,Authorization tokens>> signed with these algorithms are accepted.
 <2> By default, if a client doesn't present a token, Centro asks it for Bearer authentication. Browsers don't respond to that, so ask for Basic authentication.
 <3> Browsers only support HTTP/2 over TLS.
-<4> In-memory transport doesn't require authorization tokens.
-<5> Connections may be refused until `ready` is emitted.
+<4> In-memory transport can use a shared secret to sign authorization tokens. The secret will be stored only in memory by default.
+<5> Allow clients using this in-memory transport to see messages sent by _any_ client. Useful for monitoring but use the `privileged` option with care!
+<6> Connections may be refused until `ready` is emitted.
 
-This is just an example -- you only need to list transports to which your
-applications will connect. Before you run `server.js`, make sure you do
-`grunt keys` first.
+This is just an example -- you only need to list transports which your
+applications will use to connect. Before you run `node server.js`, make sure
+you run `grunt keys` first.
 
 [[authz-tokens]]
 === Authorization tokens
 
-Transports not configured for `ANONYMOUS_MODE` expect clients to present an
-authorization token when they connect.
+Transports expect clients to present an authorization token when they connect.
 
 Centro uses https://github.com/davedoesdev/authorize-jwt[authorize-jwt] to
 verify tokens. Your tokens must be http://self-issued.info/docs/draft-ietf-oauth-json-web-token.html[JSON Web Tokens]. The token format that Centro expects
@@ -104,42 +106,39 @@ You should generate a keypair, add the public key to ``authorize-jwt``'s
 keystore and sign your tokens with the private key.
 
 Here's a program which generates a keypair using
-https://github.com/davedoesdev/node-jsjws[jsjws], adds the public key to
+https://github.com/panva/jose[jose], adds the public key to
 Centro's keystore with the identifier `\http://davedoesdev.com`, and writes the
 private key to `priv_key.pem`:
 
 [source,javascript]
 .add_key.js
 ----
-var uri = 'http://davedoesdev.com', // <1>
-    authorize_jwt = require('centro-js').authorize_jwt,
-    assert = require('assert'),
-    path = require('path'),
-    fs = require('fs'),
-    jsjws = require('jsjws'),
-    priv_key = jsjws.generatePrivateKey(2048, 65537), // <2>
-    pub_key = priv_key.toPublicPem(); // <3>
+const uri = 'http://davedoesdev.com'; // <1>
+const authorize_jwt = require('authorize-jwt');
+const assert = require('assert');
+const path = require('path');
+const fs = require('fs');
+const { JWK } = require('jose');
+const priv_key = JWK.generateSync('OKP'); // <2>
+const pub_key = priv_key.toPEM(); // <3>
 
-authorize_jwt(
-{
+authorize_jwt({
     db_type: 'pouchdb', // <4>
     db_for_update: true, // <5>
     no_changes: true // <6>
-}, function (err, authz)
-{
+}, function (err, authz) {
     assert.ifError(err);
-    authz.keystore.add_pub_key(uri, pub_key, function (err) // <7>
-    {
+    authz.keystore.add_pub_key(uri, pub_key, function (err) { // <7>
         assert.ifError(err);
         authz.keystore.deploy(); // <8>
         fs.writeFile(path.join(__dirname, 'priv_key.pem'), // <9>
-                     priv_key.toPrivatePem(),
+                     priv_key.toPEM(true),
                      assert.ifError);
     });
 });
 ----
 <1> Unique identifier for the keypair.
-<2> Generate the keypair. You could also https://github.com/juliangruber/keypair[keypair] or `openssl` on the command line, for example.
+<2> Generate the keypair. You could also use `crypto.generateKeyPairSync('ed25519')` or `openssl genpkey -algorithm Ed25519` on the command line, for example.
 <3> Get the public key in PEM form.
 <4> Alternatively, you can use `couchdb` (you'll have to set up your own http://couchdb.apache.org/[CouchDB] server), `sqlite` or `pg` (you'll have to set up your own https://www.postgresql.org/[PostgreSQL] server).
 <5> We're going to update the keystore.
@@ -162,26 +161,22 @@ AMQP format: `.` delimits words, `*` matches exactly one word and `#` matches
 zero or more words. See https://github.com/davedoesdev/mqlobber-access-control[mqlobber-access-control] for more details.
 
 You can use any JWT module to generate your tokens. Here's an example using
-https://github.com/davedoesdev/node-jsjws[jsjws]:
+https://github.com/panva/jose[jose]:
 
 [source,javascript]
 .make_token.js
 ----
-var uri = 'http://davedoesdev.com',
-    authorize_jwt = require('centro-js').authorize_jwt,
-    jsjws = require('jsjws'),
-    assert = require('assert'),
-    path = require('path'),
-    fs = require('fs');
+const uri = 'http://davedoesdev.com';
+const authorize_jwt = require('authorize-jwt');
+const { JWK, JWT } = require('jose');
+const assert = require('assert');
+const path = require('path');
+const fs = require('fs');
 
-fs.readFile(path.join(__dirname, 'priv_key.pem'), function (err, priv_key) // <1>
-{
+fs.readFile(path.join(__dirname, 'priv_key.pem'), function (err, priv_key) { // <1>
     assert.ifError(err);
 
-    var expiry = new Date();
-    expiry.setHours(expiry.getHours() + 24); // <2>
-
-    authorize_jwt( // <3>
+    authorize_jwt( // <2>
     {
         db_type: 'pouchdb',
         deploy_name: 'token',
@@ -189,32 +184,34 @@ fs.readFile(path.join(__dirname, 'priv_key.pem'), function (err, priv_key) // <1
     }, function (err, authz)
     {
         assert.ifError(err);
-        authz.keystore.get_pub_key_by_uri(uri, function (err, pub_key, issuer_id) // <4>
+        authz.keystore.get_pub_key_by_uri(uri, function (err, pub_key, issuer_id) // <3>
         {
             assert.ifError(err);
             assert(pub_key);
             assert(issuer_id);
-            console.log(new jsjws.JWT().generateJWTByKey({ alg: 'PS256' },
-            {
-                iss: issuer_id, // <5>
-                access_control: { // <6>
+            console.log(JWT.sign({
+                 access_control: { // <4>
                     subscribe: { allow: ['#'], disallow: [] },
                     publish: { allow: ['#'], disallow: [] }
-                }
-            }, expiry, jsjws.createPrivateKey(priv_key))); // <7>
+                 }
+            }, JWK.asKey(priv_key), { // <5>
+                algorithm: 'EdDSA',
+                issuer: issuer_id, // <6>
+                expiresIn: '1d' // <7>
+            }));
         });
     });
 });
 ----
 <1> Read the private key. This is just an example -- you should have a more secure way of storing private keys.
-<2> Set token expiry to 24 hours.
-<3> Open the keystore for reading.
-<4> Retrieve the issuer ID for `\http://davedoesdev.com`.
-<5> Use the issuer ID in the token.
-<6> Allow clients using this token to subscribe and publish to any topic.
-<7> Supply the expiry time and private key for signing.
+<2> Open the keystore for reading.
+<3> Retrieve the issuer ID for `\http://davedoesdev.com`.
+<4> Allow clients using this token to subscribe and publish to any topic.
+<5> Supply the private key for signing.
+<6> Use the issuer ID in the token.
+<7> Set token expiry to 1 day.
 
-The token is valid for 24 hours, allows clients which use it to publish and
+The token is valid for 1 day, allows clients which use it to publish and
 subscribe to any topic and is written to standard output. The client examples
 below expect it in an environment variable called `CENTRO_TOKEN` so you might
 do something like this to set it:
@@ -234,25 +231,20 @@ of each message received:
 [source,javascript]
 .subscribe_tcp.js
 ----
-var centro = require('centro-js'),
-    net = require('net'),
-    assert = require('assert');
+const centro = require('centro-js');
+const net = require('net');
+const assert = require('assert');
 
-function display_message(s, info)
-{
+function display_message(s, info) {
     console.log('topic:', info.topic); // <1>
     s.pipe(process.stdout); // <2>
 }
 
-net.createConnection(8800, function () // <3>
-{
-    centro.stream_auth(this, // <4>
-    {
+net.createConnection(8800, function () { // <3>
+    centro.stream_auth(this, { // <4>
         token: process.env.CENTRO_TOKEN // <5>
-    }).on('ready', function ()
-    {
-        for (var topic of process.argv.slice(2))
-        {
+    }).on('ready', function () {
+        for (const topic of process.argv.slice(2)) {
             this.subscribe(topic, display_message, assert.ifError); // <6>
         }
     });
@@ -271,23 +263,19 @@ standard input:
 [source,javascript]
 .publish_tcp.js
 ----
-var centro = require('centro-js'),
-    net = require('net'),
-    assert = require('assert');
+const centro = require('centro-js');
+const net = require('net');
+const assert = require('assert');
 
-net.createConnection(8800, function ()
-{
+net.createConnection(8800, function () {
     var conn = this;
 
-    centro.stream_auth(conn,
-    {
+    centro.stream_auth(conn, {
         token: process.env.CENTRO_TOKEN
-    }).on('ready', function ()
-    {
-        process.stdin.pipe(this.publish(process.argv[2], function (err) // <1><2>
-        {
+    }).on('ready', function () {
+        process.stdin.pipe(this.publish(process.argv[2], function (err) { // 1 2
             assert.ifError(err);
-            conn.end(); // <3>
+            conn.end(); // 3
         }));
     });
 });
@@ -321,36 +309,30 @@ Here are similar clients which use the Primus transport.
 [source,javascript]
 .subscribe_primus.js
 ----
-var centro = require('centro-js'),
-    assert = require('assert'),
-    Primus = require('primus'),
-    Socket = Primus.createSocket(
-    {
-        pathname: '/centro/v' + centro.version + '/primus' // <1>
-    }),
-    PrimusDuplex = require('primus-backpressure').PrimusDuplex; // <2>
+const centro = require('centro-js');
+const assert = require('assert');
+const Primus = require('primus');
+const Socket = Primus.createSocket({
+    pathname: '/centro/v' + centro.version + '/primus' // <1>
+});
+const PrimusDuplex = require('primus-backpressure').PrimusDuplex; // <2>
 
-function display_message(s, info)
-{
+function display_message(s, info) {
     console.log('topic:', info.topic);
     s.pipe(process.stdout);
 }
 
-centro.separate_auth( // <3>
-{
+centro.separate_auth( { // <3>
     token: process.env.CENTRO_TOKEN
-}, function (err, userpass, make_client)
-{
+}, function (err, userpass, make_client) {
     assert.ifError(err);
 
-    var socket = new Socket('http://' + userpass + '@localhost:8801', // <4>
-                            { strategy: false }), // <5>
-        duplex = new PrimusDuplex(socket);
+    const socket = new Socket('http://' + userpass + '@localhost:8801', // <4>
+                              { strategy: false }); // <5>
+    const duplex = new PrimusDuplex(socket);
 
-    make_client(duplex).on('ready', function () // <6>
-    {
-        for (var topic of process.argv.slice(2))
-        {
+    make_client(duplex).on('ready', function () { // <6>
+        for (const topic of process.argv.slice(2)) {
             this.subscribe(topic, display_message, assert.ifError);
         }
     });
@@ -366,30 +348,25 @@ centro.separate_auth( // <3>
 [source,javascript]
 .publish_primus.js
 ----
-var centro = require('centro-js'),
-    assert = require('assert'),
-    Primus = require('primus'),
-    Socket = Primus.createSocket(
-    {
-        pathname: '/centro/v' + centro.version + '/primus'
-    }),
-    PrimusDuplex = require('primus-backpressure').PrimusDuplex;
+const centro = require('centro-js');
+const assert = require('assert');
+const Primus = require('primus');
+const Socket = Primus.createSocket({
+    pathname: '/centro/v' + centro.version + '/primus'
+});
+const PrimusDuplex = require('primus-backpressure').PrimusDuplex;
 
-centro.separate_auth(
-{
+centro.separate_auth({
     token: process.env.CENTRO_TOKEN
-}, function (err, userpass, make_client)
-{
+}, function (err, userpass, make_client) {
     assert.ifError(err);
 
-    var socket = new Socket('http://' + userpass + '@localhost:8801',
-                            { strategy: false }),
-        duplex = new PrimusDuplex(socket);
+    const socket = new Socket('http://' + userpass + '@localhost:8801',
+                              { strategy: false });
+    const duplex = new PrimusDuplex(socket);
 
-    make_client(duplex).on('ready', function ()
-    {
-        process.stdin.pipe(this.publish(process.argv[2], function (err)
-        {
+    make_client(duplex).on('ready', function () {
+        process.stdin.pipe(this.publish(process.argv[2], function (err) {
             assert.ifError(err);
             duplex.end();
         }));
@@ -546,49 +523,43 @@ subscribes to and publishes messages:
 [source,javascript]
 .example_primus.js
 ----
-var publish = function (event) { event.preventDefault(); }; // <1>
+let publish = function (event) { // <1>
+    event.preventDefault();
+};
 
-function connect()
-{
-    var topic = document.getElementById('topic'),
-        message = document.getElementById('message'),
-        messages = document.getElementById('messages'),
-        params = new URLSearchParams(window.location.search);
+function connect() {
+    const topic = document.getElementById('topic');
+    const message = document.getElementById('message');
+    const messages = document.getElementById('messages');
+    const params = new URLSearchParams(window.location.search);
 
-    function tag_text(cls, text)
-    {
-        var div = document.createElement('div');
+    function tag_text(cls, text) {
+        const div = document.createElement('div');
         div.className = cls;
         div.appendChild(document.createTextNode(text));
         return div;
     }
 
-    function add_message(div) // <2>
-    {
+    function add_message(div) { // <2>
         messages.appendChild(div);
         messages.scrollTop = messages.scrollHeight;
     }
 
-    centro.separate_auth(
-    {
+    centro.separate_auth({
         token: params.get('token')
-    }, function (err, userpass, make_client)
-    {
+    }, function (err, userpass, make_client) {
         if (err) { throw(err); }
 
-        var primus = new Primus('http://' + userpass + '@localhost:8801',
-                                { strategy: false }),
-            duplex = new centro.PrimusDuplex(primus),
-            client = make_client(duplex);
+        const primus = new Primus('http://' + userpass + '@localhost:8801',
+                                  { strategy: false });
+        const duplex = new centro.PrimusDuplex(primus);
+        const client = make_client(duplex);
 
-        client.on('ready', function ()
-        {
+        client.on('ready', function () {
             add_message(tag_text('status', 'open')); // <3>
-            this.subscribe(params.get('subscribe'), function (s, info)
-            {
-                centro.read_all(s, function (v)
-                {
-                    var msg = document.createElement('div');
+            this.subscribe(params.get('subscribe'), function (s, info) {
+                centro.read_all(s, function (v) {
+                    const msg = document.createElement('div');
                     msg.className = 'message';
                     msg.appendChild(tag_text('topic', info.topic));
                     msg.appendChild(tag_text('data', v.toString()));
@@ -596,15 +567,13 @@ function connect()
                 });
             });
 
-            publish = function (event)
-            {
+            publish = function (event) {
                 event.preventDefault();
                 client.publish(topic.value).end(message.value); // <5>
             };
         });
 
-        primus.on('close', function ()
-        {
+        primus.on('close', function () {
             add_message(tag_text('status', 'closed')); // <6>
         });
     });
@@ -663,81 +632,71 @@ https://www.w3.org/TR/XMLHttpRequest/[`XMLHttpRequest`]) to publish messages:
 [source,javascript]
 .example_sse.js
 ----
-var publish = function (event) { event.preventDefault(); };
+let publish = function (event) {
+    event.preventDefault();
+};
 
-function connect()
-{
-    var topic = document.getElementById('topic'),
-        message = document.getElementById('message'),
-        messages = document.getElementById('messages'),
-        params = new URLSearchParams(window.location.search);
+function connect() {
+    const topic = document.getElementById('topic');
+    const message = document.getElementById('message');
+    const messages = document.getElementById('messages');
+    const params = new URLSearchParams(window.location.search);
 
-    function tag_text(cls, text)
-    {
-        var div = document.createElement('div');
+    function tag_text(cls, text) {
+        const div = document.createElement('div');
         div.className = cls;
         div.appendChild(document.createTextNode(text));
         return div;
     }
 
-    function add_message(div)
-    {
+    function add_message(div) {
         messages.appendChild(div);
         messages.scrollTop = messages.scrollHeight;
     }
 
-    var base_url = 'http://localhost:8802/centro/v2/',
-        source = new EventSource(base_url + // <1>
-                                 'subscribe?authz_token=' + params.get('token') +
-                                 '&topic=' + encodeURIComponent(params.get('subscribe')));
+    const base_url = 'http://localhost:8802/centro/v2/';
+    const source = new EventSource(base_url + // <1>
+        'subscribe?authz_token=' + params.get('token') +
+        '&topic=' + encodeURIComponent(params.get('subscribe')));
 
-    source.onopen = function ()
-    {
-        publish = function (event)
-        {
+    source.onopen = function () {
+        publish = function (event) {
             event.preventDefault();
             var r = new XMLHttpRequest();
             r.open('POST', base_url + // <2>
-                           'publish?authz_token=' + params.get('token') +
-                           '&topic=' + encodeURIComponent(topic.value));
+                'publish?authz_token=' + params.get('token') +
+                '&topic=' + encodeURIComponent(topic.value));
             r.send(message.value); // <3>
         };
 
         add_message(tag_text('status', 'open'));
     };
 
-    source.onerror = function (e)
-    {
-        if (e.target.readyState === EventSource.CONNECTING)
-        {
+    source.onerror = function (e) {
+        if (e.target.readyState === EventSource.CONNECTING) {
             add_message(tag_text('status', 'connecting'));
-        }
-        else if (e.target.readyState === EventSource.CLOSED)
-        {
+        } else if (e.target.readyState === EventSource.CLOSED) {
             add_message(tag_text('status', 'closed'));
         }
     };
 
-    var msgs = new Map();
+    const msgs = new Map();
 
-    source.addEventListener('start', function (e)
-    {
-        var info = JSON.parse(e.data); // <4>
+    source.addEventListener('start', function (e) {
+        const info = JSON.parse(e.data); // <4>
         info.data = ''; // <5>
         msgs.set(info.id, info); // <6>
     });
 
-    source.addEventListener('data', function (e)
-    {
-        var info = JSON.parse(e.data);
+    source.addEventListener('data', function (e) {
+        const info = JSON.parse(e.data);
         msgs.get(info.id).data += info.data; // <7>
     });
 
-    source.addEventListener('end', function (e)
-    {
-        var info = msgs.get(JSON.parse(e.data).id); // <8>
+    source.addEventListener('end', function (e) {
+        const info = msgs.get(JSON.parse(e.data).id); // <8>
 
-        var msg = document.createElement('div');
+        const msg = document.createElement('div');
         msg.className = 'message';
         msg.appendChild(tag_text('topic', info.topic));
         msg.appendChild(tag_text('data', info.data));
@@ -746,8 +705,7 @@ function connect()
         msgs.delete(info.id);
     });
 
-    source.addEventListener('peer_error', function ()
-    {
+    source.addEventListener('peer_error', function () {
         add_message(tag_text('status', 'error'));
     });
 }
@@ -772,7 +730,7 @@ available http://rawgit.davedoesdev.com/davedoesdev/centro/master/docs/index.htm
 [[http2-duplex]]
 ==== HTTP/2-duplex
 
-The `http2-duplex` transport uses the https://github.com/davedoesdev/browser-http2-duplex[http2-duplex] module to emulate a full-duplex connection with browsers. Browser-to-server HTTP/2 streaming isn't implemented by any browser, nor are there any plans to do so. `http2-duplex` emulates it by using POST requests.
+The `http2-duplex` transport uses the https://github.com/davedoesdev/browser-http2-duplex[http2-duplex] module to emulate a full-duplex connection with browsers. Full-duplex HTTP/2 streaming isn't implemented by any browser, https://bugs.chromium.org/p/chromium/issues/detail?id=884568#c3[nor are there any plans to do so]. `http2-duplex` emulates it by using POST requests.
 
 The HTML for this example is the same as <<primus-html,Primus HTML>> except
 that we don't need the Primus client:
@@ -805,55 +763,49 @@ that we don't need the Primus client:
 
 The script is also similar to the <<primus-js,Primus script>>:
 
-[source,html]
+[source,javascript]
 .example_http2.js
 ----
-var publish = function (event) { event.preventDefault(); };
+let publish = function (event) {
+    event.preventDefault();
+};
 
-function connect()
-{
-    var topic = document.getElementById('topic'),
-        message = document.getElementById('message'),
-        messages = document.getElementById('messages'),
-        params = new URLSearchParams(window.location.search);
+function connect() {
+    const topic = document.getElementById('topic');
+    const message = document.getElementById('message');
+    const messages = document.getElementById('messages');
+    const params = new URLSearchParams(window.location.search);
 
-    function tag_text(cls, text)
-    {
-        var div = document.createElement('div');
+    function tag_text(cls, text) {
+        const div = document.createElement('div');
         div.className = cls;
         div.appendChild(document.createTextNode(text));
         return div;
     }
 
-    function add_message(div)
-    {
+    function add_message(div) {
         messages.appendChild(div);
         messages.scrollTop = messages.scrollHeight;
     } 
 
-    centro.separate_auth(
-    {
+    centro.separate_auth({
         token: params.get('token')
-    }, async function (err, userpass, make_client)
-    {
+    }, async function (err, userpass, make_client) {
         if (err) { throw(err); }
 
-        var duplex = await centro.make_client_http2_duplex( // <1>
+        const duplex = await centro.make_client_http2_duplex( // <1>
             'https://localhost:8804/centro/v2/http2-duplex', {
                 headers: {
                     Authorization: 'Bearer ' + userpass.split(':')[1] // <2>
                 }
-            }),
-            client = make_client(duplex);
+            });
+        const client = make_client(duplex);
 
-        client.on('ready', function ()
-        {
+        client.on('ready', function () {
             add_message(tag_text('status', 'open'));
-            this.subscribe(params.get('subscribe'), function (s, info)
-            {
-                centro.read_all(s, function (v)
-                {
-                    var msg = document.createElement('div');
+            this.subscribe(params.get('subscribe'), function (s, info) {
+                centro.read_all(s, function (v) {
+                    const msg = document.createElement('div');
                     msg.className = 'message';
                     msg.appendChild(tag_text('topic', info.topic));
                     msg.appendChild(tag_text('data', v.toString()));
@@ -861,20 +813,17 @@ function connect()
                 });
             });
 
-            publish = function (event)
-            {
+            publish = function (event) {
                 event.preventDefault();
                 client.publish(topic.value).end(message.value);
             };
         });
 
-        duplex.on('end', function ()
-        {
+        duplex.on('end', function () {
             add_message(tag_text('status', 'closed'));
         });
 
-        client.on('error', function (err)
-        {
+        client.on('error', function (err) {
             console.error(err);
             duplex.destroy();
         });
@@ -895,22 +844,46 @@ published on every transport you could add the following to `server.js`:
 [source,javascript]
 .server.js
 ----
-var assert = require('assert');
+const assert = require('assert');
+const { JWK, JWT } = require('jose');
 
-server.on('ready', function ()
-{
-    this.transport_ops['in-mem'].connect(function (err, stream)
-    {
+server.on('ready', function () {
+    const ops = this.transport_ops['in-mem']; // <1>
+    const key = JWK.generateSync('oct'); // <2>
+    ops.authz.keystore.add_pub_key('test', key, function (err, issuer) { // <3>
         assert.ifError(err);
 
-        centro.stream_auth(stream).subscribe('#', function (s, info)
-        {
-            console.log('topic:', info.topic);
-            s.pipe(process.stdout);
-        }, assert.ifError);
+        const token = JWT.sign({ // <4>
+            access_control: { // <5>
+                subscribe: { allow: ['#'], disallow: [] },
+                publish: { allow: ['#'], disallow: [] }
+            }
+        }, key, {
+            algorithm: 'HS256',
+            issuer
+        });
+
+        ops.connect(function (err, stream) { // <6>
+            assert.ifError(err);
+
+            centro.stream_auth(stream, {
+                token
+            }).on('ready', function () {
+                this.subscribe('#', function (s, info) {
+                    console.log('topic:', info.topic);
+                    s.pipe(process.stdout);
+                }, assert.ifError);
+            });
+        });
     });
 });
 ----
+<1> You can get to transport-specific operations on the server via the `transport_ops` property.
+<2> Use https://github.com/panva/jose[jose] to generate a secret key.
+<3> Add the secret key to the transport's key store. Note that by default, the key store used by an `in-mem` transport stores keys only in memory.
+<4> Use https://github.com/panva/jose[jose] to sign an authorization token.
+<5> Allow clients on this transport to subscribe and publish to any message topic. Remember when we created the <<server,server>>, we also gave this transport `privileged` status so clients using it will be able to see messages sent by any other client.
+<6> The `in-mem` transport exposes a function, `connect`, which allows us to connect to the server from within the same process.
 
 === Other clients (server-sent events)
 
@@ -980,13 +953,11 @@ or TCP.
 [source,javascript]
 .publish_http.js
 ----
-process.stdin.pipe(require('http').request( // <1>
-{
+process.stdin.pipe(require('http').request({ // <1>
     method: 'POST',
     hostname: 'localhost',
     port: 8802,
-    path: '/centro/v2/publish?' + require('querystring').stringify(
-    {
+    path: '/centro/v2/publish?' + require('querystring').stringify({
         authz_token: process.env.CENTRO_TOKEN,
         topic: process.argv[2]
     })
@@ -997,22 +968,19 @@ process.stdin.pipe(require('http').request( // <1>
 [source,javascript]
 .subscribe_http.js
 ----
-var EventSource = require('eventsource'), // <1>
-    es = new EventSource('http://localhost:8802/centro/v2/subscribe?' +
-                         require('querystring').stringify(
-                         {
-                             authz_token: process.env.CENTRO_TOKEN,
-                             topic: process.argv.slice(2)
-                         }));
+const EventSource = require('eventsource'); // <1>
+const es = new EventSource('http://localhost:8802/centro/v2/subscribe?' +
+                           require('querystring').stringify({
+                               authz_token: process.env.CENTRO_TOKEN,
+                               topic: process.argv.slice(2)
+                           }));
 
-es.addEventListener('start', function (e)
-{
-    var data = JSON.parse(e.data);
+es.addEventListener('start', function (e) {
+    const data = JSON.parse(e.data);
     console.log('id:', data.id, 'topic:', data.topic);
 });
 
-es.addEventListener('data', function (e)
-{
+es.addEventListener('data', function (e) {
     process.stdout.write(JSON.parse(e.data).data, 'binary');
 });
 ----

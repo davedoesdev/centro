@@ -1,23 +1,19 @@
 /*eslint-env node */
 "use strict";
 
-var centro = require('../../..'),
-    net = require('net'),
-    assert = require('assert');
+const centro = require('../../..');
+const net = require('net');
+const assert = require('assert');
 
-net.createConnection(8800, function ()
-{
+net.createConnection(8800, function () {
     var conn = this;
 
-    centro.stream_auth(conn,
-    {
+    centro.stream_auth(conn, {
         token: process.env.CENTRO_TOKEN
-    }).on('ready', function ()
-    {
-        process.stdin.pipe(this.publish(process.argv[2], function (err)
-        {
+    }).on('ready', function () {
+        process.stdin.pipe(this.publish(process.argv[2], function (err) { // 1 2
             assert.ifError(err);
-            conn.end();
+            conn.end(); // 3
         }));
     });
 });

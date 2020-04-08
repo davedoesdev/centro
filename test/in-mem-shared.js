@@ -1,4 +1,4 @@
-/*eslint-env node*/
+/*eslint-env node */
 "use strict";
 
 var runner = require('./runner'),
@@ -8,9 +8,8 @@ runner(
 {
     transport: {
         server: 'in-mem',
-        authorize_config: {},
-        name: 'embedded-authz'
-    },
+        name: 'in-mem-shared'
+    }
 }, function (config, server, cb)
 {
     server.transport_ops[0].connect(function (err, stream)
@@ -22,4 +21,7 @@ runner(
 
         cb(null, centro.stream_auth(stream, config));
     });
+},
+{
+    shared: true
 });

@@ -1,4 +1,4 @@
-/*eslint-env node */
+/*eslint-env node*/
 "use strict";
 
 var runner = require('./runner'),
@@ -8,9 +8,9 @@ runner(
 {
     transport: {
         server: 'in-mem',
-        name: 'in-mem-anon'
+        authorize_config: {},
+        name: 'in-mem-authz'
     },
-    ANONYMOUS_MODE: true
 }, function (config, server, cb)
 {
     server.transport_ops[0].connect(function (err, stream)
@@ -22,7 +22,4 @@ runner(
 
         cb(null, centro.stream_auth(stream, config));
     });
-},
-{
-    anon: true
 });
