@@ -8,10 +8,9 @@ describe('separate auth', function ()
 {
     it('should handle no config', function (done)
     {
-        centro.separate_auth(function (err, userpass)
+        centro.separate_auth(function (err)
         {
-            if (err) { return done(err); }
-            expect(userpass).to.equal('centro:X');
+            expect(err.message).to.equal("Cannot read property 'join' of undefined");
             done();
         });
     });

@@ -114,6 +114,8 @@ module.exports = function (config, connect, options)
         config.split_topic_at = parseInt(process.env.SPLIT_TOPIC_AT);
     }
 
+    var is_privileged = config.transport.config && config.transport.config.privileged;
+
     function is_transport(n)
     {
         if (n === 'tcp')
@@ -415,7 +417,7 @@ module.exports = function (config, connect, options)
                 {
                     token_exp = `${opts.ttl}s`;
                 }
-                else
+                else if (!opts.no_expiry)
                 {
                     token_exp = '1m';
                 }
@@ -480,6 +482,7 @@ module.exports = function (config, connect, options)
                                opts.too_many_tokens ? [token, token2, token] :
                                opts.long_token ? new Array(config.max_token_length + 2).join('A') :
                                opts.duplicate_tokens ? [token, token] :
+                               opts.both_tokens ? [token, token2] :
                                i % 2 === 0 ? token :
                                opts.separate_tokens ? token2 : [token, token2],
                         handshake_data: Buffer.from([i]),
@@ -942,7 +945,10 @@ module.exports = function (config, connect, options)
                         {
                             expected_warnings.push('server error');
                         }
-                        expected_warnings.push('unexpected data');
+                        else
+                        {
+                            expected_warnings.push('unexpected data');
+                        }
                         expect(warnings).to.eql(expected_warnings);
                         expect(blocked).to.eql(['publish ' + topic]);
                         done();
@@ -1030,7 +1036,10 @@ module.exports = function (config, connect, options)
                         {
                             expected_warnings.push('server error');
                         }
-                        expected_warnings.push('unexpected data');
+                        else
+                        {
+                            expected_warnings.push('unexpected data');
+                        }
                         expect(warnings).to.eql(expected_warnings);
                         expect(blocked).to.eql(['publish ' + topic]);
                         ack();
@@ -1284,50 +1293,53 @@ module.exports = function (config, connect, options)
                 });
             });
 
-            it('should not send ack message if prefix not recognised', function (done)
+            if (!is_privileged)
             {
-                clients[0].on('warning', function (err)
+                it('should not send ack message if prefix not recognised', function (done)
                 {
-                    expect(err.message).to.equal('carrier stream ended before end message received');
-                });
-
-                server.once('warning', function (err)
-                {
-                    expect(err.message).to.equal('unknown prefix on ack topic: foo');
-                    done();
-                });
-
-                clients[0].subscribe(options.relay ? 'ack.*.all.*.foo' :
-                                                     'ack.*.all.${self}.foo',
-                function ()
-                {
-                    done(new Error('should not be called'));
-                }, function (err)
-                {
-                    if (err) return done(err);
-
-                    var mqserver = connections.values().next().value.mqserver;
-
-                    mqserver.subscribe('foo', function (err)
+                    clients[0].on('warning', function (err)
                     {
-                        if (err) { return done(err); }
+                        expect(err.message).to.equal('carrier stream ended before end message received');
+                    });
 
-                        clients[0]._matcher.add('foo', function (s, info, done)
+                    server.once('warning', function (err)
+                    {
+                        expect(err.message).to.equal('unknown prefix on ack topic: foo');
+                        done();
+                    });
+
+                    clients[0].subscribe(options.relay ? 'ack.*.all.*.foo' :
+                                                         'ack.*.all.${self}.foo',
+                    function ()
+                    {
+                        done(new Error('should not be called'));
+                    }, function (err)
+                    {
+                        if (err) return done(err);
+
+                        var mqserver = connections.values().next().value.mqserver;
+
+                        mqserver.subscribe('foo', function (err)
                         {
-                            read_all(s, function ()
+                            if (err) { return done(err); }
+
+                            clients[0]._matcher.add('foo', function (s, info, done)
                             {
-                                done();
+                                read_all(s, function ()
+                                {
+                                    done();
+                                });
                             });
-                        });
 
-                        mqserver.fsq.publish('foo',
-                        {
-                            single: true,
-                            ttl: 2000
-                        }).end();
+                            mqserver.fsq.publish('foo',
+                            {
+                                single: true,
+                                ttl: 2000
+                            }).end();
+                        });
                     });
                 });
-            });
+            }
         });
 
         function pdone(done)
@@ -1423,7 +1435,8 @@ module.exports = function (config, connect, options)
                     }
                 },
                 series: true,
-                client_ready: client_ready(false)
+                client_ready: client_ready(false),
+                separate_tokens: is_privileged
             });
 
             it('should support presence', function (done)
@@ -1592,7 +1605,8 @@ module.exports = function (config, connect, options)
                     }
                 },
                 series: true,
-                client_ready: client_ready(false, 2)
+                client_ready: client_ready(false, 2),
+                separate_tokens: is_privileged
             });
 
             it('should send presence messages with ttl', function (done)
@@ -1717,7 +1731,8 @@ module.exports = function (config, connect, options)
                     }
                 },
                 series: true,
-                client_ready: client_ready(true, 5)
+                client_ready: client_ready(true, 5),
+                separate_tokens: is_privileged
             });
 
             it('should send presence message with single', function (done)
@@ -1830,7 +1845,8 @@ module.exports = function (config, connect, options)
                     }
                 },
                 series: true,
-                client_ready: client_ready(false, 0, '')
+                client_ready: client_ready(false, 0, ''),
+                separate_tokens: is_privileged
             });
 
             it('should send leave message with no data', function (done)
@@ -2080,7 +2096,7 @@ module.exports = function (config, connect, options)
             {
                 server.once('pre_connect', function (info)
                 {
-                    info.destroy();
+                    info.destroy(true);
                 });
             });
 
@@ -2127,7 +2143,8 @@ module.exports = function (config, connect, options)
                         'carrier stream ended before end message received',
                         'read ECONNRESET',
                         'This socket has been ended by the other party',
-                        'write after end'
+                        'write after end',
+                        'Cannot call write after a stream was destroyed'
                     ]);
 
                     done2();
@@ -2253,7 +2270,7 @@ module.exports = function (config, connect, options)
 
         describe('multiple tokens', function ()
         {
-            setup(2,
+            setup(is_privileged ? 1 : 2,
             {
                 access_control: [{
                     publish: {
@@ -2273,94 +2290,43 @@ module.exports = function (config, connect, options)
                         allow: ['bar', 'red', 'test'],
                         disallow: []
                     }
-                }]
+                }],
+                skip_ready: is_privileged,
+                client_function: is_privileged ? client_function : null,
+                both_tokens: is_privileged
             });
 
-            it('should be able to select token to use for operation', function (done)
+            if (is_privileged)
             {
-                var sub_tests = [
-                    [0, 0, 'foo', true],
-                    [0, 0, 'bar', false],
-                    [0, 1, 'foo', false],
-                    [0, 1, 'bar', false]
-                ];
-
-                sub_tests.push(
-                    [1, 0, 'foo', true],
-                    [1, 0, 'bar', false],
-                    [1, 1, 'foo', false],
-                    [1, 1, 'bar', true]);
-
-                var pub_tests = [
-                    [0, 0, 'blue', true],
-                    [0, 0, 'red', false],
-                    [0, 1, 'blue', false],
-                    [0, 1, 'red', false]
-                ];
-
-                pub_tests.push(
-                    [1, 0, 'blue', true],
-                    [1, 0, 'red', false],
-                    [1, 1, 'blue', false],
-                    [1, 1, 'red', true]);
-
-                async.eachSeries(sub_tests, function (t, next)
+                it('should error if more than one token on privileged transport', expect_error('too many privileged tokens'));
+            }
+            else
+            {
+                it('should be able to select token to use for operation', function (done)
                 {
-                    function regblock(info)
-                    {
-                        var warning;
+                    var sub_tests = [
+                        [0, 0, 'foo', true],
+                        [0, 0, 'bar', false],
+                        [0, 1, 'foo', false],
+                        [0, 1, 'bar', false],
+                        [1, 0, 'foo', true],
+                        [1, 0, 'bar', false],
+                        [1, 1, 'foo', false],
+                        [1, 1, 'bar', true]
+                    ];
 
-                        server.once('warning', function (err)
-                        {
-                            warning = err.message;
-                        });
+                    var pub_tests = [
+                        [0, 0, 'blue', true],
+                        [0, 0, 'red', false],
+                        [0, 1, 'blue', false],
+                        [0, 1, 'red', false],
+                        [1, 0, 'blue', true],
+                        [1, 0, 'red', false],
+                        [1, 1, 'blue', false],
+                        [1, 1, 'red', true]
+                    ];
 
-                        info.access_control.once('subscribe_blocked',
-                        function (topic, mqserver)
-                        {
-                            expect(mqserver).to.equal(info.mqserver);
-                            expect(topic).to.equal(info.prefixes[t[1]] + t[2]);
-                            expect(warning).to.equal('blocked subscribe to topic: ' + topic);
-                            next();
-                        });
-                    }
-
-                    if (!t[3])
-                    {
-                        for (var info of connections.values())
-                        {
-                            if (info.hsdata[0] === t[0])
-                            {
-                                regblock(info);
-                            }
-                        }
-
-                        if (options.relay)
-                        {
-                            server.once('pre_connect', regblock);
-                        }
-                    }
-     
-                    clients[t[0]].subscribe(t[1], t[2], function (unused_s, unused_info, unused_cb)
-                    {
-                        done(new Error('should not be called'));
-                    }, function (err)
-                    {
-                        if (t[3])
-                        {
-                            expect(err).to.equal(null);
-                            next();
-                        }
-                        else
-                        {
-                            expect(err.message).to.equal('server error');
-                        }
-                    });
-                }, function (err)
-                {
-                    if (err) { return done(err); }
-
-                    async.eachSeries(pub_tests, function (t, next)
+                    async.eachSeries(sub_tests, function (t, next)
                     {
                         function regblock(info)
                         {
@@ -2371,157 +2337,258 @@ module.exports = function (config, connect, options)
                                 warning = err.message;
                             });
 
-                            info.access_control.once('publish_blocked',
+                            info.access_control.once('subscribe_blocked',
                             function (topic, mqserver)
                             {
                                 expect(mqserver).to.equal(info.mqserver);
                                 expect(topic).to.equal(info.prefixes[t[1]] + t[2]);
-                                expect(warning).to.equal('blocked publish to topic: ' + topic);
+                                expect(warning).to.equal('blocked subscribe to topic: ' + topic);
                                 next();
                             });
                         }
 
-                        function publish(err)
+                        if (!t[3])
                         {
-                            if (err) { return done(err); }
-
-                            var s = clients[t[0]].publish(t[1], t[2], function (err)
+                            for (var info of connections.values())
                             {
-                                if (t[3])
+                                if (info.hsdata[0] === t[0])
                                 {
-                                    expect(err).to.equal(null);
+                                    regblock(info);
                                 }
-                                else
-                                {
-                                    expect(err.message).to.equal('server error');
-                                }
-                            });
-                            
-                            if (t[3])
-                            {
-                                s.end('test');
                             }
-                            else
-                            {
-                                s.end();
-                            }
-                        }
 
-                        if (t[3])
-                        {
-                            clients[t[0]].subscribe(t[1], t[2], function sub(s, info, unused_cb)
-                            {
-                                expect(info.topic).to.equal(t[2]);
-
-                                var ths = this;
-
-                                read_all(s, function (v)
-                                {
-                                    expect(v.toString()).to.equal('test');
-                                    ths.unsubscribe(t[1], t[2], sub, next);
-                                });
-                            }, publish);
-                        }
-                        else
-                        {
                             if (options.relay)
                             {
                                 server.once('pre_connect', regblock);
                             }
+                        }
+         
+                        clients[t[0]].subscribe(t[1], t[2], function (unused_s, unused_info, unused_cb)
+                        {
+                            done(new Error('should not be called'));
+                        }, function (err)
+                        {
+                            if (t[3])
+                            {
+                                expect(err).to.equal(null);
+                                next();
+                            }
+                            else if ((t[0] === 0) && (t[1] === 1))
+                            {
+                                expect(err.message).to.equal(options.relay ? 'server error' : 'token out of range');
+                                next();
+                            }
                             else
                             {
-                                for (var info of connections.values())
+                                expect(err.message).to.equal('server error');
+                            }
+                        });
+                    }, function (err)
+                    {
+                        if (err) { return done(err); }
+
+                        async.eachSeries(pub_tests, function (t, next)
+                        {
+                            function regblock(info)
+                            {
+                                var warning;
+
+                                server.once('warning', function (err)
                                 {
-                                    if (info.hsdata[0] === t[0])
+                                    warning = err.message;
+                                });
+
+                                info.access_control.once('publish_blocked',
+                                function (topic, mqserver)
+                                {
+                                    expect(mqserver).to.equal(info.mqserver);
+                                    expect(topic).to.equal(info.prefixes[t[1]] + t[2]);
+                                    expect(warning).to.equal('blocked publish to topic: ' + topic);
+                                    next();
+                                });
+                            }
+
+                            function publish(err)
+                            {
+                                if (err) { return done(err); }
+
+                                var s = clients[t[0]].publish(t[1], t[2], function (err)
+                                {
+                                    if (t[3])
                                     {
-                                        regblock(info);
+                                        expect(err).to.equal(null);
                                     }
+                                    else if ((t[0] === 0) && (t[1] === 1))
+                                    {
+                                        if (options.relay)
+                                        {
+                                            expect(err.message).to.equal('server error');
+                                            next();
+                                        }
+                                        else
+                                        {
+                                            expect(err.message).to.equal('token out of range');
+                                        }
+                                    }
+                                    else
+                                    {
+                                        expect(err.message).to.equal('server error');
+                                    }
+                                });
+                                
+                                if (t[3])
+                                {
+                                    s.end('test');
+                                }
+                                else if ((t[0] === 0) && (t[1] === 1))
+                                {
+                                    if (options.relay)
+                                    {
+                                        s.end();
+                                    }
+                                    else
+                                    {
+                                        next();
+                                    }
+                                }
+                                else
+                                {
+                                    s.end();
                                 }
                             }
 
-                            publish();
-                        }
-                    }, done);
-                });
-            });
-
-            it('should unsubscribe all handlers', function (done)
-            {
-                var called = false;
-
-                function handler(s, info)
-                {
-                    expect(called).to.equal(false);
-                    called = true;
-
-                    expect(info.single).to.equal(false);
-
-                    read_all(s, function (v)
-                    {
-                        expect(v.toString()).to.equal('bar');
-                        setTimeout(done, 1000);
-                    });
-                }
-
-                clients[1].subscribe('test', handler, function (err)
-                {
-                    if (err) { return done(err); }
-                    clients[1].subscribe(1, 'test', handler, function (err)
-                    {
-                        if (err) { return done(err); }
-                        clients[1].unsubscribe(function (err)
-                        {
-                            if (err) { return done(err); }
-                            clients[1].publish('test', function (err)
+                            if (t[3])
                             {
-                                if (err) { return done(err); }
-                                clients[1].publish(1, 'test', function (err)
+                                clients[t[0]].subscribe(t[1], t[2], function sub(s, info, unused_cb)
                                 {
-                                    if (err) { return done(err); }
-                                }).end('bar');
-                            }).end('bar');
-                        });
+                                    expect(info.topic).to.equal(t[2]);
+
+                                    var ths = this;
+
+                                    read_all(s, function (v)
+                                    {
+                                        expect(v.toString()).to.equal('test');
+                                        ths.unsubscribe(t[1], t[2], sub, next);
+                                    });
+                                }, publish);
+                            }
+                            else
+                            {
+                                if (options.relay)
+                                {
+                                    server.once('pre_connect', regblock);
+                                }
+                                else
+                                {
+                                    for (var info of connections.values())
+                                    {
+                                        if (info.hsdata[0] === t[0])
+                                        {
+                                            regblock(info);
+                                        }
+                                    }
+                                }
+
+                                publish();
+                            }
+                        }, done);
                     });
                 });
-            });
 
-            it('should unsubscribe twice without error', function (done)
-            {
-                function handler()
+                it('should unsubscribe all handlers', function (done)
                 {
-                    done(new Error('should not be called'));
-                }
+                    var called = false;
 
-                clients[0].subscribe('test', handler, function (err)
-                {
-                    if (err) { return done(err); }
+                    function handler(s, info)
+                    {
+                        expect(called).to.equal(false);
+                        called = true;
+
+                        expect(info.single).to.equal(false);
+
+                        read_all(s, function (v)
+                        {
+                            expect(v.toString()).to.equal('bar');
+                            setTimeout(done, 1000);
+                        });
+                    }
+
                     clients[1].subscribe('test', handler, function (err)
                     {
                         if (err) { return done(err); }
-                        clients[0].unsubscribe('test', handler, function (err)
+                        clients[1].subscribe(1, 'test', handler, function (err)
+                        {
+                            if (err) { return done(err); }
+                            clients[1].unsubscribe(function (err)
+                            {
+                                if (err) { return done(err); }
+                                clients[1].publish('test', function (err)
+                                {
+                                    if (err) { return done(err); }
+                                    clients[1].publish(1, 'test', function (err)
+                                    {
+                                        if (err) { return done(err); }
+                                    }).end('bar');
+                                }).end('bar');
+                            });
+                        });
+                    });
+                });
+
+                it('should error if unsubscribe without token', function (done)
+                {
+                    clients[0].unsubscribe(1, function (err)
+                    {
+                        if (options.relay)
+                        {
+                            expect(err).not.to.exist;
+                        }
+                        else
+                        {
+                            expect(err.message).to.equal('token out of range');
+                        }
+                        done();
+                    });
+                });
+
+                it('should unsubscribe twice without error', function (done)
+                {
+                    function handler()
+                    {
+                        done(new Error('should not be called'));
+                    }
+
+                    clients[0].subscribe('test', handler, function (err)
+                    {
+                        if (err) { return done(err); }
+                        clients[1].subscribe('test', handler, function (err)
                         {
                             if (err) { return done(err); }
                             clients[0].unsubscribe('test', handler, function (err)
                             {
                                 if (err) { return done(err); }
-                                clients[1].unsubscribe('foo', handler, function (err)
+                                clients[0].unsubscribe('test', handler, function (err)
                                 {
                                     if (err) { return done(err); }
-                                    clients[1].unsubscribe('test', handler, function (err)
+                                    clients[1].unsubscribe('foo', handler, function (err)
                                     {
                                         if (err) { return done(err); }
-                                        clients[0].publish('test', function (err)
+                                        clients[1].unsubscribe('test', handler, function (err)
                                         {
                                             if (err) { return done(err); }
-                                            setTimeout(done, 1000);
-                                        }).end('bar');
+                                            clients[0].publish('test', function (err)
+                                            {
+                                                if (err) { return done(err); }
+                                                setTimeout(done, 1000);
+                                            }).end('bar');
+                                        });
                                     });
                                 });
                             });
                         });
                     });
                 });
-            });
+            }
         });
 
         describe('token expiry', function ()
@@ -2543,6 +2610,15 @@ module.exports = function (config, connect, options)
 
             it('should close connection when token expires', function (done)
             {
+                for (const [curi, conns] of server._connections)
+                {
+                    expect(curi).to.equal(uri);
+                    for (const c of conns)
+                    {
+                        expect(c.timeout).to.exist;
+                    }
+                }
+
                 var empty = false,
                     ended = false,
                     expired = false;
@@ -2652,6 +2728,36 @@ module.exports = function (config, connect, options)
                         'This socket has been ended by the other party'
                     ]);
                 });
+            });
+        });
+
+        describe('token no expiry', function ()
+        {
+            setup(1,
+            {
+                access_control: {
+                    publish: {
+                        allow: ['foo'],
+                        disallow: []
+                    },
+                    subscribe: {
+                        allow: ['foo'],
+                        disallow: []
+                    }
+                },
+                no_expiry: true
+            });
+
+            it('should have no timeout', function ()
+            {
+                for (const [curi, conns] of server._connections)
+                {
+                    expect(curi).to.equal(uri);
+                    for (const c of conns)
+                    {
+                        expect(c.timeout).not.to.exist;
+                    }
+                }
             });
         });
 
@@ -3001,7 +3107,7 @@ module.exports = function (config, connect, options)
                 client_function: client_function
             });
 
-            it('should fail to authorize', expect_error('duplicate URI: ' + uri));
+            it('should fail to authorize', expect_error(is_privileged ? 'too many privileged tokens' : 'duplicate URI: ' + uri));
         });
 
         describe('invalid payload', function ()
@@ -3347,9 +3453,9 @@ module.exports = function (config, connect, options)
 
                         function ex(d)
                         {
-                            return function ()
+                            return function (now)
                             {
-                                d();
+                                d(now);
                                 throw new Error('dummy');
                             };
                         }
@@ -3399,7 +3505,7 @@ module.exports = function (config, connect, options)
                     server._connids.set = function (connid, dstroy)
                     {
                         server._connids.set = orig_set;
-                        dstroy();
+                        dstroy(true);
                         orig_set.call(this, connid, dstroy);
                     };
                 },
@@ -3432,7 +3538,7 @@ module.exports = function (config, connect, options)
                     {
                         server._connids.set = orig_set;
                         dstroy.stream.push(null);
-                        dstroy();
+                        dstroy(true);
                         orig_set.call(this, connid, dstroy);
 
                         var orig_eachSeries = async.eachSeries;
@@ -3476,7 +3582,8 @@ module.exports = function (config, connect, options)
             {
                 var cid,
                     server_done = 0,
-                    client_done = 0;
+                    client_done = 0,
+                    evname = is_transport('primus') || is_transport('node_http2-duplex') ? 'end' : 'close';
 
                 for (var info of connections.values())
                 {
@@ -3494,8 +3601,8 @@ module.exports = function (config, connect, options)
                         setTimeout(function ()
                         {
                             server.removeListener('disconnect', disconnect);
-                            clients[0].mux.carrier.removeListener('end', end);
-                            clients[1].mux.carrier.removeListener('end', end2);
+                            clients[0].mux.carrier.removeListener(evname, closed);
+                            clients[1].mux.carrier.removeListener(evname, closed);
                             done();
                         }, 1000);
                     }
@@ -3516,20 +3623,14 @@ module.exports = function (config, connect, options)
 
                 server.on('disconnect', disconnect);
 
-                function end()
+                function closed()
                 {
                     client_done += 1;
                     check();
                 }
 
-                function end2()
-                {
-                    client_done += 1;
-                    check();
-                }
-
-                clients[0].mux.carrier.on('end', end);
-                clients[1].mux.carrier.on('end', end2);
+                clients[0].mux.carrier.on(evname, closed);
+                clients[1].mux.carrier.on(evname, closed);
 
                 priv_key = JWK.generateSync(key_type);
                 server.transport_ops[0].authz.keystore.add_pub_key(uri, export_key(priv_key),
@@ -4189,7 +4290,8 @@ module.exports = function (config, connect, options)
                         allow: ['*'],
                         disallow: []
                     }
-                }
+                },
+                separate_tokens: is_privileged
             });
 
             it('should be able to limit total number of subscriptions across all connections', function (done)
@@ -4336,7 +4438,9 @@ module.exports = function (config, connect, options)
                             expect(server.last_warning.message).to.equal('unsupported version: 2');
                         }
 
-                        if (!(is_transport('primus') || is_transport('tls') || is_transport('node_http2')) ||
+                        if (!(is_transport('primus') ||
+                              is_transport('tls') ||
+                              is_transport('node_http2')) ||
                             ((clients[0].last_error.message !== 'carrier stream ended before end message received') &&
                              (clients[0].last_error.message !== 'carrier stream finished before duplex finished') &&
                              (clients[0].last_error.message !== 'read ECONNRESET')))
@@ -5230,7 +5334,9 @@ module.exports = function (config, connect, options)
                             server.conn_count -= 1;
                         });
                     });
-                }
+                },
+
+                separate_tokens: is_privileged
             });
 
             it('should be able to count active connections', function (done)
@@ -5675,7 +5781,9 @@ module.exports = function (config, connect, options)
                                 allow: ['foo', '#'],
                                 disallow: []
                             }
-                        }
+                        },
+
+                        separate_tokens: is_privileged
                     });
 
                     it('should support setting custom data on message info and stream', function (done)
@@ -6038,7 +6146,7 @@ module.exports = function (config, connect, options)
                                     'server error',
                                     'data.topics[0] should match pattern "^(?=[^\\u002e]*(\\u002e[^\\u002e]*){0,99}$)(?=([^\\u0023]|((?<!(^|\\u002e))\\u0023)|\\u0023(?!($|\\u002e)))*(((?<=(^|\\u002e))\\u0023(?=($|\\u002e)))([^\\u0023]|((?<!(^|\\u002e))\\u0023)|\\u0023(?!($|\\u002e)))*){0,3}$)(?=.{0,3}$)"'
                                 ]);
-                                expect(get_info().server.last_warning.message).to.equal(options.relay ? 'data.topics[0] should match pattern "^(?=[^\\u002e]*(\\u002e[^\\u002e]*){0,99}$)(?=([^\\u0023]|((?<!(^|\\u002e))\\u0023)|\\u0023(?!($|\\u002e)))*(((?<=(^|\\u002e))\\u0023(?=($|\\u002e)))([^\\u0023]|((?<!(^|\\u002e))\\u0023)|\\u0023(?!($|\\u002e)))*){0,3}$)(?=.{0,3}$)"' : ('subscribe topic longer than 68'));
+                                expect(get_info().server.last_warning.message).to.equal(options.relay ? 'data.topics[0] should match pattern "^(?=[^\\u002e]*(\\u002e[^\\u002e]*){0,99}$)(?=([^\\u0023]|((?<!(^|\\u002e))\\u0023)|\\u0023(?!($|\\u002e)))*(((?<=(^|\\u002e))\\u0023(?=($|\\u002e)))([^\\u0023]|((?<!(^|\\u002e))\\u0023)|\\u0023(?!($|\\u002e)))*){0,3}$)(?=.{0,3}$)"' : ('subscribe topic longer than ' + (is_privileged ? 3 : 68)));
                                 done();
                             });
                         });

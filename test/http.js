@@ -852,7 +852,7 @@ function extra(get_info, on_before)
             {
                 get_info().server._connids.set = orig_set;
                 dstroy.stream.push(null);
-                dstroy();
+                dstroy(true);
                 orig_set.call(this, connid, dstroy);
             };
             rqst(Object.assign(

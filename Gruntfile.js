@@ -36,7 +36,6 @@ module.exports = function (grunt)
 
         mochaTest: {
             src: [
-                'test/in-mem.js',
                 'test/tcp.js',
                 'test/primus.js',
                 'test/http.js',
@@ -47,6 +46,7 @@ module.exports = function (grunt)
                 'test/in-mem-pg.js',
                 'test/in-mem-shared.js',
                 'test/in-mem-authz.js',
+                'test/in-mem-privileged.js',
                 'test/server-extra.js',
                 'test/read_frame-error.js',
                 'test/connect-after-close.js',
