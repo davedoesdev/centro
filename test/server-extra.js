@@ -7,6 +7,8 @@ var centro = require('..'),
 
 describe('server errors', function ()
 {
+    this.timeout(60000);
+
     it('should pass back run transport errors', function (done)
     {
         var server = new CentroServer(
