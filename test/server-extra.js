@@ -11,7 +11,6 @@ describe('server errors', function ()
     {
         var server = new CentroServer(
         {
-            ANONYMOUS_MODE: true,
             transport: function (config, authorize, connected, ready, unused_error, unused_warning)
             {
                 ready(new Error('dummy'));
@@ -66,7 +65,6 @@ describe('server errors', function ()
     {
         var server = new CentroServer(
         {
-            ANONYMOUS_MODE: true,
             transport: {
                 authorize_config: {
                     authorize: function (config, cb)
@@ -84,11 +82,10 @@ describe('server errors', function ()
         });
     });
 
-    it('should pass back create transport authorizer errors', function (done)
+    it('should pass back create transport authorizer errors (with close)', function (done)
     {
         var server = new CentroServer(
         {
-            ANONYMOUS_MODE: true,
             transport: {
                 authorize_config: {
                     authorize: function (config, cb)
@@ -110,7 +107,6 @@ describe('server errors', function ()
     {
         var server = new CentroServer(
         {
-            ANONYMOUS_MODE: true,
             transport: {
                 authorize_config: {
                     authorize: function (config, cb)
@@ -135,7 +131,6 @@ describe('server errors', function ()
 
         var server = new CentroServer(
         {
-            ANONYMOUS_MODE: true,
             transport: function (config, authorize, connected, ready, unused_error, unused_warning)
             {
                 ready(null,
@@ -168,7 +163,6 @@ describe('server errors', function ()
 
         var server = new CentroServer(
         {
-            ANONYMOUS_MODE: true,
             transport: []
         });
 

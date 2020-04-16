@@ -11,7 +11,6 @@ describe('connect after close', function ()
     {
         var server = new CentroServer(
         {
-            ANONYMOUS_MODE: true,
             transport: function (config, authorize, connected, ready, unused_error, unused_warning)
             {
                 ready(null,
