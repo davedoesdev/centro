@@ -4044,7 +4044,8 @@ module.exports = function (config, connect, options)
                              'read ECONNRESET',
                              'write ECONNRESET',
                              'write ECONNABORTED',
-                             'This socket has been ended by the other party']);
+                             'This socket has been ended by the other party',
+                             'write after end']);
                     });
                 }
 
