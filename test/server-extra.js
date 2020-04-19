@@ -98,12 +98,9 @@ describe('server errors', function ()
             }
         });
 
-        console.log("registering error handler");
         server.on('error', function (err)
         {
-            console.log("got error", err);
             expect(err.message).to.equal('dummy');
-            console.log("closing");
             this.close(done);
         });
     });
