@@ -1,4 +1,4 @@
-/*eslint-env node */
+/*eslint-env node, mocha */
 "use strict";
 
 const runner = require('./runner');
@@ -52,7 +52,7 @@ runner({
     }
     require('net').connect(port, function () {
         this.removeListener('error', cb);
-        const conn_err = null;
+        let conn_err = null;
         this.on('error', err => conn_err = err);
         this.setNoDelay(true);
         const c = centro.stream_auth(this, config);
@@ -63,7 +63,7 @@ runner({
     }).on('error', cb);
 }, {
     shared: true,
-    only: (get_info, on_before) => {
+    only: get_info => {
         get_info().setup(2, {
             access_control: {
                 publish: {
