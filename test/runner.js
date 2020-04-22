@@ -56,7 +56,7 @@ module.exports = function (config, connect, options)
 {
     options = options || {};
 
-    var name;
+    var name, is_privileged;
 
     if (typeof config.transport === 'string' ||
         typeof config.transport[Symbol.iterator] !== 'function')
@@ -64,12 +64,18 @@ module.exports = function (config, connect, options)
         name = config.transport.name ||
                config.transport.server ||
                config.transport;
+
+        is_privileged = config.transport.config &&
+                        config.transport.config.privileged;
     }
     else
     {
         name = config.transport[0].name ||
                config.transport[0].server ||
                config.transport[0];
+
+        is_privileged = config.transport[0].config &&
+                        config.transport[0].config.privileged;
 
         for (var i = 0; i < config.transport.length; i += 1)
         {
@@ -89,9 +95,17 @@ module.exports = function (config, connect, options)
     const key_type = options.shared ? 'oct' : 'OKP';
     const algorithm = options.shared ? 'HS256' : 'EdDSA';
 
-    function export_key(key)
+    function export_key(key, force_export)
     {
-        return options.shared ? key : key.toPEM();
+        if (options.shared && !force_export)
+        {
+            return key;
+        }
+        if (key.type === 'secret')
+        {
+            return key.toJWK(true);
+        }
+        return key.toPEM();
     }
 
     config.allowed_algs = [algorithm];
@@ -113,8 +127,6 @@ module.exports = function (config, connect, options)
     {
         config.split_topic_at = parseInt(process.env.SPLIT_TOPIC_AT);
     }
-
-    var is_privileged = config.transport.config && config.transport.config.privileged;
 
     function is_transport(n)
     {
@@ -216,45 +228,39 @@ module.exports = function (config, connect, options)
                     }
 
                     priv_key = JWK.generateSync(key_type);
-                    server.transport_ops[0].authz.keystore.add_pub_key(uri, export_key(priv_key),
-                    function (err, the_issuer_id, the_rev)
-                    {
-                        if (err)
-                        {
+                    priv_key2 = JWK.generateSync(key_type);
+                    rsa_priv_key = JWK.generateSync('RSA');
+
+                    const to_add = [
+                        [0, uri, priv_key, (the_issuer_id, the_rev) => {
+                            issuer_id = the_issuer_id;
+                            rev = the_rev;
+                        }],
+                        [is_privileged && server.transport_ops.length > 1 ? 1 : 0, uri2, priv_key2, the_issuer_id => {
+                            issuer_id2 = the_issuer_id;
+                        }, true],
+                        [0, uri3, rsa_priv_key, () => {}]
+                    ];
+
+                    async.each(to_add, ([n, uri, priv_key, f, force_export], next) => {
+                        server.transport_ops[n].authz.keystore.add_pub_key(uri, export_key(priv_key, force_export), (err, the_issuer_id, the_rev) => {
+                            if (err) {
+                                return next(err);
+                            }
+                            f(the_issuer_id, the_rev);
+                            next();
+                        });
+                    }, err => {
+                        if (err) {
                             return cb(err);
                         }
-                        
-                        issuer_id = the_issuer_id;
-                        rev = the_rev;
 
-                        priv_key2 = JWK.generateSync(key_type);
-                        server.transport_ops[0].authz.keystore.add_pub_key(uri2, export_key(priv_key2),
-                        function (err, the_issuer_id, unused_the_rev)
+                        if (ths && ths.test_should_skip)
                         {
-                            if (err)
-                            {
-                                return cb(err);
-                            }
-                            
-                            issuer_id2 = the_issuer_id;
+                            return ths.skip();
+                        }
 
-                            rsa_priv_key = JWK.generateSync('RSA');
-                            server.transport_ops[0].authz.keystore.add_pub_key(uri3, export_key(rsa_priv_key),
-                            function (err, unused_the_issuer_id, unused_the_rev)
-                            {
-                                if (err)
-                                {
-                                    return cb(err);
-                                }
-
-                                if (ths && ths.test_should_skip)
-                                {
-                                    return ths.skip();
-                                }
-
-                                cb();
-                            });
-                        });
+                        cb();
                     });
                 });
 
@@ -5617,6 +5623,18 @@ module.exports = function (config, connect, options)
 
     describe(name, function ()
     {
+        if (options.only)
+        {
+            describe('main', function ()
+            {
+                run.call(this, Object.assign(
+                {
+                    only: options.only
+                }, config));
+            });
+            return;
+        }
+
         describe('main', function ()
         {
             run.call(this, config);
