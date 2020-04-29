@@ -148,7 +148,7 @@ module.exports = function (config, connect, options)
         var server, clients,
             priv_key, priv_key2, rsa_priv_key,
             issuer_id, issuer_id2,
-            rev,
+            rev, rev2,
             connections = new Map();
 
         function get_connid_from_mqserver(mqserver)
@@ -171,6 +171,12 @@ module.exports = function (config, connect, options)
 
             cb();
         }
+
+        before(function (cb)
+        {
+            var fsq_dir = path.join(path.dirname(require.resolve('qlobber-fsq')), 'fsq');
+            rimraf(fsq_dir, cb);
+        });
 
         function on_before(cb)
         {
@@ -236,8 +242,9 @@ module.exports = function (config, connect, options)
                             issuer_id = the_issuer_id;
                             rev = the_rev;
                         }],
-                        [is_privileged && server.transport_ops.length > 1 ? 1 : 0, uri2, priv_key2, the_issuer_id => {
+                        [(is_privileged || options.relay) && server.transport_ops.length > 1 ? 1 : 0, uri2, priv_key2, (the_issuer_id, the_rev) => {
                             issuer_id2 = the_issuer_id;
+                            rev2 = the_rev;
                         }, true],
                         [0, uri3, rsa_priv_key, () => {}]
                     ];
@@ -463,6 +470,7 @@ module.exports = function (config, connect, options)
                     access_control: access_control[0],
                     ack: opts.ack,
                     presence: opts.presence,
+                    subscribe: options.relay ? opts.subscribe : undefined
                 }, is_rsa ? rsa_priv_key : priv_key, {
                     algorithm: opts.alg || algorithm,
                     issuer: issuer_id,
@@ -491,12 +499,18 @@ module.exports = function (config, connect, options)
                                opts.both_tokens ? [token, token2] :
                                i % 2 === 0 ? token :
                                opts.separate_tokens ? token2 : [token, token2],
+                        token2: opts.no_token? '' :
+                                opts.too_many_tokens ? [token, token2, token] :
+                                opts.long_token ? new Array(config.max_token_length + 2).join('A') :
+                                opts.duplicate_tokens ? [token2, token2] :
+                                token2,
                         handshake_data: Buffer.from([i]),
                         max_topic_length: opts.max_topic_length,
                         max_words: opts.max_words,
                         max_wildcard_somes: opts.max_wildcard_somes,
                         max_open: opts.max_open,
-                        test_config: config
+                        test_config: config,
+                        test_connect_i: i
                     }, server, function (err, c)
                     {
                         if (err)
@@ -643,19 +657,21 @@ module.exports = function (config, connect, options)
         function get_info()
         {
             return {
-                config: config,
-                server: server,
-                priv_key: priv_key,
-                issuer_id: issuer_id,
-                clients: clients,
-                connections: connections,
-                setup: setup,
-                client_function: client_function,
-                expect_error: expect_error,
-                attach_extension: attach_extension,
-                detach_extension: detach_extension,
-                get_connid_from_mqserver: get_connid_from_mqserver,
-                on_pre_after: on_pre_after
+                config,
+                server,
+                priv_key,
+                priv_key2,
+                issuer_id,
+                issuer_id2,
+                clients,
+                connections,
+                setup,
+                client_function,
+                expect_error,
+                attach_extension,
+                detach_extension,
+                get_connid_from_mqserver,
+                on_pre_after
             };
         }
 
@@ -945,7 +961,14 @@ module.exports = function (config, connect, options)
                     {
                         expect(v.toString()).to.equal('bar');
                         server.removeListener('warning', warning);
-                        var topic = get_info().connections.values().next().value.prefixes[0] + 'foo',
+                        var values = get_info().connections.values();
+                        if (options.relay)
+                        {
+                            // First connection is our "dummy" in-mem one.
+                            // Subsequent requests create new in-mem ones.
+                            values.next();
+                        }
+                        var topic = values.next().value.prefixes[0] + 'foo',
                             expected_warnings = ['blocked publish (single) to topic: ' + topic];
                         if (options.relay)
                         {
@@ -1010,7 +1033,8 @@ module.exports = function (config, connect, options)
                 {
                     var msg = err.message;
                     if ((msg !== 'carrier stream finished before duplex finished') &&
-                        (msg !== 'carrier stream ended before end message received'))
+                        (msg !== 'carrier stream ended before end message received') &&
+                        !err.message.startsWith('uri revision change'))
                     {
                         warnings.push(msg);
                     }
@@ -1036,7 +1060,12 @@ module.exports = function (config, connect, options)
                     {
                         expect(v.toString()).to.equal('bar');
                         server.removeListener('warning', warning);
-                        var topic = get_info().connections.values().next().value.prefixes[0] + 'foo',
+                        var values = get_info().connections.values();
+                        if (options.relay)
+                        {
+                            values.next();
+                        }
+                        var topic = values.next().value.prefixes[0] + 'foo',
                             expected_warnings = ['blocked publish (multi) to topic: ' + topic];
                         if (options.relay)
                         {
@@ -1361,7 +1390,7 @@ module.exports = function (config, connect, options)
             };
         }
 
-        function client_ready(single, ttl, data)
+        function client_ready(single, ttl, data, sub1)
         {
             return function (i, next)
             {
@@ -1388,6 +1417,10 @@ module.exports = function (config, connect, options)
                         next(err, ths);
                     });
                 }
+                else if ((i === 1) && sub1 && options.relay)
+                {
+                    return this.subscribe(sub1, () => {}, err => next(err, this));
+                }
 
                 next(null, this);
             };
@@ -1395,7 +1428,25 @@ module.exports = function (config, connect, options)
 
         function check_join(cont)
         {
-            if (clients[0].joins.has('join.' + clients[1].self))
+            let client1_id;
+            if (options.relay)
+            {
+                let i = 0;
+                for (const id of connections.keys())
+                {
+                    if (++i === 4)
+                    {
+                        client1_id = id;
+                        break;
+                    }
+                }
+            }
+            else
+            {
+                client1_id = clients[1].self;
+            }
+
+            if (clients[0].joins.has('join.' + client1_id))
             {
                 return cont();
             }
@@ -1426,7 +1477,8 @@ module.exports = function (config, connect, options)
                                 'leave.*',
                                 'ready.direct.*.${self}',
                                 'ready.all.*',
-                                'foo'],
+                                'foo',
+                                'dummy'],
                         disallow: []
                     }
                 },
@@ -1441,7 +1493,7 @@ module.exports = function (config, connect, options)
                     }
                 },
                 series: true,
-                client_ready: client_ready(false),
+                client_ready: client_ready(false, null, null, 'dummy'),
                 separate_tokens: is_privileged
             });
 
@@ -1594,7 +1646,8 @@ module.exports = function (config, connect, options)
                     subscribe: {
                         allow: ['join.*',
                                 'leave.*',
-                                'ready.all.*'],
+                                'ready.all.*',
+                                'dummy'],
                         disallow: []
                     }
                 },
@@ -1611,7 +1664,7 @@ module.exports = function (config, connect, options)
                     }
                 },
                 series: true,
-                client_ready: client_ready(false, 2),
+                client_ready: client_ready(false, 2, null, 'dummy'),
                 separate_tokens: is_privileged
             });
 
@@ -1718,7 +1771,8 @@ module.exports = function (config, connect, options)
                     subscribe: {
                         allow: ['join.*',
                                 'leave.*',
-                                'ready.all.*'],
+                                'ready.all.*',
+                                'dummy'],
                         disallow: []
                     }
                 },
@@ -1737,7 +1791,7 @@ module.exports = function (config, connect, options)
                     }
                 },
                 series: true,
-                client_ready: client_ready(true, 5),
+                client_ready: client_ready(true, 5, null, 'dummy'),
                 separate_tokens: is_privileged
             });
 
@@ -1838,7 +1892,8 @@ module.exports = function (config, connect, options)
                     subscribe: {
                         allow: ['join.*',
                                 'leave.*',
-                                'ready.all.*'],
+                                'ready.all.*',
+                                'dummy'],
                         disallow: []
                     }
                 },
@@ -1851,7 +1906,7 @@ module.exports = function (config, connect, options)
                     }
                 },
                 series: true,
-                client_ready: client_ready(false, 0, ''),
+                client_ready: client_ready(false, 0, '', 'dummy'),
                 separate_tokens: is_privileged
             });
 
@@ -1986,7 +2041,7 @@ module.exports = function (config, connect, options)
 
             it('should emit publish stream error as warning', function (done)
             {
-                var warned = false;
+                var warned = false, info;
 
                 server.once('warning', function (err)
                 {
@@ -2003,12 +2058,13 @@ module.exports = function (config, connect, options)
 
                 function connect(connid)
                 {
+                    info = connections.get(connid);
                     connections.get(connid).mqserver.on('publish_requested', pubreq);
                 }
 
                 server.once('connect', connect);
 
-                for (var info of connections.values())
+                for (info of connections.values())
                 {
                     info.mqserver.on('publish_requested', pubreq);
                 }
@@ -2332,6 +2388,11 @@ module.exports = function (config, connect, options)
                         [1, 1, 'red', true]
                     ];
 
+                    // Note 1,1 will actually be false if options.relay
+                    // because the http tests' second in-mem transport uses
+                    // a different key store.
+                    // So we deal with that using checks in the code below.
+
                     async.eachSeries(sub_tests, function (t, next)
                     {
                         function regblock(info)
@@ -2374,7 +2435,12 @@ module.exports = function (config, connect, options)
                             done(new Error('should not be called'));
                         }, function (err)
                         {
-                            if (t[3])
+                            if ((t[0] === 1) && (t[1] === 1) && options.relay)
+                            {
+                                expect(err.message).to.equal('server error');
+                                next();
+                            }
+                            else if (t[3])
                             {
                                 expect(err).to.equal(null);
                                 next();
@@ -2420,7 +2486,12 @@ module.exports = function (config, connect, options)
 
                                 var s = clients[t[0]].publish(t[1], t[2], function (err)
                                 {
-                                    if (t[3])
+                                    if ((t[0] === 1) && (t[1] === 1) && options.relay)
+                                    {
+                                        expect(err.message).to.equal('server error');
+                                        next();
+                                    }
+                                    else if (t[3])
                                     {
                                         expect(err).to.equal(null);
                                     }
@@ -2442,7 +2513,7 @@ module.exports = function (config, connect, options)
                                     }
                                 });
                                 
-                                if (t[3])
+                                if (t[3] && !((t[0] === 1) && (t[1] === 1) && options.relay))
                                 {
                                     s.end('test');
                                 }
@@ -2463,7 +2534,7 @@ module.exports = function (config, connect, options)
                                 }
                             }
 
-                            if (t[3])
+                            if (t[3] && !((t[0] === 1) && (t[1] === 1) && options.relay))
                             {
                                 clients[t[0]].subscribe(t[1], t[2], function sub(s, info, unused_cb)
                                 {
@@ -2501,45 +2572,48 @@ module.exports = function (config, connect, options)
                     });
                 });
 
-                it('should unsubscribe all handlers', function (done)
+                if (!options.relay)
                 {
-                    var called = false;
-
-                    function handler(s, info)
+                    it('should unsubscribe all handlers', function (done)
                     {
-                        expect(called).to.equal(false);
-                        called = true;
+                        var called = false;
 
-                        expect(info.single).to.equal(false);
-
-                        read_all(s, function (v)
+                        function handler(s, info)
                         {
-                            expect(v.toString()).to.equal('bar');
-                            setTimeout(done, 1000);
-                        });
-                    }
+                            expect(called).to.equal(false);
+                            called = true;
 
-                    clients[1].subscribe('test', handler, function (err)
-                    {
-                        if (err) { return done(err); }
-                        clients[1].subscribe(1, 'test', handler, function (err)
+                            expect(info.single).to.equal(false);
+
+                            read_all(s, function (v)
+                            {
+                                expect(v.toString()).to.equal('bar');
+                                setTimeout(done, 1000);
+                            });
+                        }
+
+                        clients[1].subscribe('test', handler, function (err)
                         {
                             if (err) { return done(err); }
-                            clients[1].unsubscribe(function (err)
+                            clients[1].subscribe(1, 'test', handler, function (err)
                             {
                                 if (err) { return done(err); }
-                                clients[1].publish('test', function (err)
+                                clients[1].unsubscribe(function (err)
                                 {
                                     if (err) { return done(err); }
-                                    clients[1].publish(1, 'test', function (err)
+                                    clients[1].publish('test', function (err)
                                     {
                                         if (err) { return done(err); }
+                                        clients[1].publish(1, 'test', function (err)
+                                        {
+                                            if (err) { return done(err); }
+                                        }).end('bar');
                                     }).end('bar');
-                                }).end('bar');
+                                });
                             });
                         });
                     });
-                });
+                }
 
                 it('should error if unsubscribe without token', function (done)
                 {
@@ -2618,7 +2692,7 @@ module.exports = function (config, connect, options)
             {
                 for (const [curi, conns] of server._connections)
                 {
-                    expect(curi).to.equal(uri);
+                    expect(curi).to.equal(options.relay ? uri2 : uri);
                     for (const c of conns)
                     {
                         expect(c.timeout).to.exist;
@@ -2675,9 +2749,10 @@ module.exports = function (config, connect, options)
                 ttl: 2,
                 before_connect_function: function ()
                 {
-                    var orig_get_pub_key_by_uri = server.transport_ops[0].authz.keystore.get_pub_key_by_uri;
+                    const n = options.relay ? 1 : 0;
+                    var orig_get_pub_key_by_uri = server.transport_ops[n].authz.keystore.get_pub_key_by_uri;
 
-                    server.transport_ops[0].authz.keystore.get_pub_key_by_uri = function (unused_uri, unused_cb)
+                    server.transport_ops[n].authz.keystore.get_pub_key_by_uri = function (unused_uri, unused_cb)
                     {
                         this.get_pub_key_by_uri = orig_get_pub_key_by_uri;
                     };
@@ -2758,7 +2833,7 @@ module.exports = function (config, connect, options)
             {
                 for (const [curi, conns] of server._connections)
                 {
-                    expect(curi).to.equal(uri);
+                    expect(curi).to.equal(options.relay ? uri2 : uri);
                     for (const c of conns)
                     {
                         expect(c.timeout).not.to.exist;
@@ -2850,6 +2925,7 @@ module.exports = function (config, connect, options)
                         }
                         else
                         {
+                            expect(server.last_warning.message).to.equal(msg);
                             expect(server.last_warning.statusCode).to.equal(
                                 code === 401 ? code : undefined);
                             expect(server.last_warning.authenticate).to.equal(
@@ -3113,7 +3189,7 @@ module.exports = function (config, connect, options)
                 client_function: client_function
             });
 
-            it('should fail to authorize', expect_error(is_privileged ? 'too many privileged tokens' : 'duplicate URI: ' + uri));
+            it('should fail to authorize', expect_error(is_privileged ? 'too many privileged tokens' : 'duplicate URI: ' + (options.relay ? uri2 : uri)));
         });
 
         describe('invalid payload', function ()
@@ -3409,9 +3485,9 @@ module.exports = function (config, connect, options)
                 },
                 before_connect_function: function ()
                 {
-                    var orig_authorize = server.transport_ops[0].authz.authorize;
+                    var orig_authorize = server.transport_ops[options.relay ? 1 : 0].authz.authorize;
 
-                    server.transport_ops[0].authz.authorize = function ()
+                    server.transport_ops[options.relay ? 1 : 0].authz.authorize = function ()
                     {
                         var self = this,
                             args = Array.prototype.slice.call(arguments);
@@ -3450,9 +3526,9 @@ module.exports = function (config, connect, options)
                 },
                 before_connect_function: function ()
                 {
-                    var orig_authorize = server.transport_ops[0].authz.authorize;
+                    var orig_authorize = server.transport_ops[options.relay ? 1 : 0].authz.authorize;
 
-                    server.transport_ops[0].authz.authorize = function ()
+                    server.transport_ops[options.relay ? 1 : 0].authz.authorize = function ()
                     {
                         var self = this,
                             args = Array.prototype.slice.call(arguments);
@@ -3602,7 +3678,10 @@ module.exports = function (config, connect, options)
 
                 function check()
                 {
-                    if ((server_done === 1) && (client_done === 1))
+                    // http test always uses token2 (for in-mem second transport)
+                    const expected_client_dones = options.relay ? 2 : 1;
+
+                    if ((server_done === 1) && (client_done === expected_client_dones))
                     {
                         setTimeout(function ()
                         {
@@ -3612,7 +3691,7 @@ module.exports = function (config, connect, options)
                             done();
                         }, 1000);
                     }
-                    else if ((server_done > 1) || (client_done > 1))
+                    else if ((server_done > 1) || (client_done > expected_client_dones))
                     {
                         done(new Error('called too many times'));
                     }
@@ -3638,8 +3717,16 @@ module.exports = function (config, connect, options)
                 clients[0].mux.carrier.on(evname, closed);
                 clients[1].mux.carrier.on(evname, closed);
 
-                priv_key = JWK.generateSync(key_type);
-                server.transport_ops[0].authz.keystore.add_pub_key(uri, export_key(priv_key),
+                if (options.relay)
+                {
+                    priv_key2 = JWK.generateSync(key_type);
+                }
+                else
+                {
+                    priv_key = JWK.generateSync(key_type);
+                }
+
+                server.transport_ops[options.relay ? 1 : 0].authz.keystore.add_pub_key(options.relay ? uri2 : uri, export_key(options.relay ? priv_key2 : priv_key),
                 function (err, the_issuer_id, the_rev)
                 {
                     if (err)
@@ -3647,17 +3734,32 @@ module.exports = function (config, connect, options)
                         return done(err);
                     }
                     
-                    issuer_id = the_issuer_id;
-                    rev = the_rev;
+                    if (options.relay)
+                    {
+                        issuer_id2 = the_issuer_id;
+                        rev2 = the_rev;
+                    }
+                    else
+                    {
+                        issuer_id = the_issuer_id;
+                        rev = the_rev;
+                    }
                 });
             });
 
             it('should not close connection if revision matches', function (done)
             {
                 var called = false,
-                    old_rev = rev;
+                    old_rev = options.relay ? rev2 : rev;
 
-                priv_key = JWK.generateSync(key_type);
+                if (options.relay)
+                {
+                    priv_key2 = JWK.generateSync(key_type);
+                }
+                else
+                {
+                    priv_key = JWK.generateSync(key_type);
+                }
 
                 function snbc()
                 {
@@ -3677,20 +3779,25 @@ module.exports = function (config, connect, options)
                 clients[0].mux.carrier.on('end', snbc);
                 clients[1].mux.carrier.on('end', snbc);
 
-                var listeners = server.transport_ops[0].authz.keystore.listeners('change');
+                const n = options.relay ? 1 : 0;
+                var listeners = server.transport_ops[n].authz.keystore.listeners('change');
                 expect(listeners.length).to.equal(1);
-                server.transport_ops[0].authz.keystore.removeAllListeners('change');
-                server.transport_ops[0].authz.keystore.on('change', function change(uri, new_rev)
+                server.transport_ops[n].authz.keystore.removeAllListeners('change');
+                server.transport_ops[n].authz.keystore.on('change', function change(uri, new_rev)
                 {
                     called = true;
-                    var conn = server._connections.get(uri).values().next().value;
-                    expect(conn.rev).to.equal(old_rev);
-                    conn.rev = new_rev;
-                    server.transport_ops[0].authz.keystore.removeListener('change', change);
+
+                    for (const conn of server._connections.get(uri))
+                    {
+                        expect(conn.rev).to.equal(old_rev);
+                        conn.rev = new_rev;
+                    }
+                    
+                    server.transport_ops[n].authz.keystore.removeListener('change', change);
                     listeners[0].apply(this, arguments);
                 });
 
-                server.transport_ops[0].authz.keystore.add_pub_key(uri, export_key(priv_key),
+                server.transport_ops[n].authz.keystore.add_pub_key(options.relay ? uri2 : uri, export_key(options.relay ? priv_key2 : priv_key),
                 function (err, the_issuer_id, the_rev)
                 {
                     if (err)
@@ -3698,8 +3805,16 @@ module.exports = function (config, connect, options)
                         return done(err);
                     }
                     
-                    issuer_id = the_issuer_id;
-                    rev = the_rev;
+                    if (options.relay)
+                    {
+                        issuer_id2 = the_issuer_id;
+                        rev2 = the_rev;
+                    }
+                    else
+                    {
+                        issuer_id = the_issuer_id;
+                        rev = the_rev;
+                    }
                 });
             });
         });
@@ -3720,9 +3835,10 @@ module.exports = function (config, connect, options)
                 },
                 before_connect_function: function ()
                 {
-                    var orig_get_pub_key_by_uri = server.transport_ops[0].authz.keystore.get_pub_key_by_uri;
+                    const n = options.relay ? 1 : 0;
+                    var orig_get_pub_key_by_uri = server.transport_ops[n].authz.keystore.get_pub_key_by_uri;
 
-                    server.transport_ops[0].authz.keystore.get_pub_key_by_uri = function (uri, cb)
+                    server.transport_ops[n].authz.keystore.get_pub_key_by_uri = function (uri, cb)
                     {
                         this.get_pub_key_by_uri = orig_get_pub_key_by_uri;
                         cb(new Error('dummy'));
@@ -3751,9 +3867,10 @@ module.exports = function (config, connect, options)
                 },
                 before_connect_function: function ()
                 {
-                    var orig_get_pub_key_by_uri = server.transport_ops[0].authz.keystore.get_pub_key_by_uri;
+                    const n = options.relay ? 1 : 0;
+                    var orig_get_pub_key_by_uri = server.transport_ops[n].authz.keystore.get_pub_key_by_uri;
 
-                    server.transport_ops[0].authz.keystore.get_pub_key_by_uri = function (uri, cb)
+                    server.transport_ops[n].authz.keystore.get_pub_key_by_uri = function (uri, cb)
                     {
                         this.get_pub_key_by_uri = orig_get_pub_key_by_uri;
                         cb(null, null, 'foo');
@@ -3763,7 +3880,7 @@ module.exports = function (config, connect, options)
                 client_function: client_function
             });
 
-            it('should warn on destroy if old revision', expect_error('uri revision has changed: ' + uri, 0, 0));
+            it('should warn on destroy if old revision', expect_error('uri revision has changed: ' + (options.relay ? uri2 : uri), 0, 0));
         });
 
         describe('unknown uri on closed connection', function ()
@@ -3799,7 +3916,7 @@ module.exports = function (config, connect, options)
 
                 server.once('empty', function ()
                 {
-                    expect(msg).to.equal('unknown uri on closed connection: ' + uri);
+                    expect(msg).to.equal('unknown uri on closed connection: ' + (options.relay ? uri2 : uri));
                     done();
                 });
 
@@ -3811,7 +3928,7 @@ module.exports = function (config, connect, options)
                     ]);
                 });
 
-                server._connections.delete(uri);
+                server._connections.delete(options.relay ? uri2 : uri);
                 clients[0].mux.carrier.end();
             });
         });
@@ -4540,7 +4657,7 @@ module.exports = function (config, connect, options)
                     }
                 },
 
-                separate_tokens: true,
+                separate_tokens: !options.relay,
 
                 subscribe: {
                     foo: false
@@ -4599,9 +4716,9 @@ module.exports = function (config, connect, options)
 
                 subscribe: subscribe,
 
-                separate_tokens: true,
+                separate_tokens: !options.relay,
                 series: true,
-                same_issuer: true,
+                same_issuer: !options.relay,
 
                 client_ready: function (i, next)
                 {
@@ -4641,9 +4758,9 @@ module.exports = function (config, connect, options)
 
             it('should support subscribing to existing messages', function (done)
             {
-                expect(clients[0].subscriptions).to.equal(undefined);
                 var sub = {};
                 sub[topic] = true;
+                expect(clients[0].subscriptions).to.eql(options.relay ? [sub] : undefined);
                 expect(clients[1].subscriptions).to.eql([sub]);
 
                 expect(clients[1].info.single).to.equal(false);
@@ -4673,7 +4790,7 @@ module.exports = function (config, connect, options)
                     }
                 },
 
-                separate_tokens: true,
+                separate_tokens: !options.relay,
 
                 subscribe: {
                     foo: false
@@ -4717,17 +4834,16 @@ module.exports = function (config, connect, options)
                     }
                 },
 
-
                 subscribe: {
                     foo: false
                 },
 
                 max_topic_length: 2,
-                separate_tokens: true,
+                separate_tokens: !options.relay,
                 skip_ready: true,
                 client_function: function (c, i, onconnect)
                 {
-                    if (i === 0)
+                    if ((i === 0) && !options.relay)
                     {
                         c.on('ready', function ()
                         {
@@ -4762,6 +4878,22 @@ module.exports = function (config, connect, options)
                     }
 
                     clients[1].on('error', check_error);
+                }
+
+                if (options.relay)
+                {
+                    function check_error3(err)
+                    {
+                        expect(err.message).to.equal('data.subscriptions[0] should NOT have additional properties');
+                        check_error2();
+                    }
+
+                    if (clients[0].last_error)
+                    {
+                        return check_error3(clients[0].last_error);
+                    }
+
+                    return clients[0].on('error', check_error3);
                 }
 
                 // make sure clients[0] doesn't connect later
@@ -4795,11 +4927,11 @@ module.exports = function (config, connect, options)
                 },
 
                 max_words: 50,
-                separate_tokens: true,
+                separate_tokens: !options.relay,
                 skip_ready: true,
                 client_function: function (c, i, onconnect)
                 {
-                    if (i === 0)
+                    if ((i === 0) && !options.relay)
                     {
                         c.on('ready', function ()
                         {
@@ -4836,6 +4968,22 @@ module.exports = function (config, connect, options)
                     clients[1].on('error', check_error);
                 }
 
+                if (options.relay)
+                {
+                    function check_error3(err)
+                    {
+                        expect(err.message).to.equal('data.subscriptions[0] should NOT have additional properties');
+                        check_error2();
+                    }
+
+                    if (clients[0].last_error)
+                    {
+                        return check_error3(clients[0].last_error);
+                    }
+
+                    return clients[0].on('error', check_error3);
+                }
+
                 // make sure clients[0] doesn't connect later
 
                 if (clients[0].ready)
@@ -4866,13 +5014,13 @@ module.exports = function (config, connect, options)
                     [new Array(101).join('.')]: false
                 },
 
-                separate_tokens: true,
+                separate_tokens: !options.relay,
                 skip_ready: true,
                 client_function: get_info().client_function
             });
 
             it('should reject subscribe topics',
-               expect_error('data.subscribe should NOT have additional properties', false, 401, 1, function (done)
+               expect_error('data.subscribe should NOT have additional properties', false, 401, 1, options.relay ? null : function (done)
                {
                    // make sure clients[0] doesn't connect later
 
@@ -4942,11 +5090,11 @@ module.exports = function (config, connect, options)
                 },
 
                 max_wildcard_somes: 2,
-                separate_tokens: true,
+                separate_tokens: !options.relay,
                 skip_ready: true,
                 client_function: function (c, i, onconnect)
                 {
-                    if (i === 0)
+                    if ((i === 0) && !options.relay)
                     {
                         c.on('ready', function ()
                         {
@@ -4983,6 +5131,22 @@ module.exports = function (config, connect, options)
                     clients[1].on('error', check_error);
                 }
 
+                if (options.relay)
+                {
+                    function check_error3(err)
+                    {
+                        expect(err.message).to.equal('data.subscriptions[0] should NOT have additional properties');
+                        check_error2();
+                    }
+
+                    if (clients[0].last_error)
+                    {
+                        return check_error3(clients[0].last_error);
+                    }
+
+                    return clients[0].on('error', check_error3);
+                }
+
                 // make sure clients[0] doesn't connect later
 
                 if (clients[0].ready)
@@ -5013,13 +5177,13 @@ module.exports = function (config, connect, options)
                     [new Array(4).fill('#').join('.')]: false
                 },
 
-                separate_tokens: true,
+                separate_tokens: !options.relay,
                 skip_ready: true,
                 client_function: get_info().client_function
             });
 
             it('should reject subscribe topics',
-               expect_error('data.subscribe should NOT have additional properties', false, 401, 1, function (done)
+               expect_error('data.subscribe should NOT have additional properties', false, 401, 1, options.relay ? null : function (done)
                {
                    // make sure clients[0] doesn't connect later
 
@@ -5708,7 +5872,13 @@ module.exports = function (config, connect, options)
 
                                 on_delay = function (info)
                                 {
-                                    var prefix = get_info().connections.values().next().value.prefixes[0];
+
+                                    var values = get_info().connections.values();
+                                    if (options.relay)
+                                    {
+                                        values.next();
+                                    }
+                                    var prefix = values.next().value.prefixes[0];
                                     expect(info.topic).to.be.oneOf([
                                         prefix + 'foo.foo',
                                         prefix + 'foo.bar' // we don't read immediately so qlobber-fsq will try again (but find it locked)
@@ -6108,13 +6278,13 @@ module.exports = function (config, connect, options)
                             foobar: false
                         },
 
-                        separate_tokens: true,
+                        separate_tokens: !options.relay,
                         skip_ready: true,
                         client_function: get_info().client_function
                     });
 
                     it('should reject subscribe topics',
-                       get_info().expect_error('data.subscribe should NOT have additional properties', false, 401, 1, function (done)
+                       get_info().expect_error('data.subscribe should NOT have additional properties', false, 401, 1, options.relay ? null : function (done)
                        {
                            // make sure clients[0] doesn't connect later
 
@@ -6320,7 +6490,12 @@ module.exports = function (config, connect, options)
                             var s = get_info().clients[0].publish('foo', function (err)
                             {
                                 expect(err.message).to.equal('server error');
-                                var limit_errmsg = 'message data exceeded limit 1000: ' + get_info().connections.values().next().value.prefixes[0] + 'foo';
+                                var values = get_info().connections.values();
+                                if (options.relay)
+                                {
+                                    values.next();
+                                }
+                                var limit_errmsg = 'message data exceeded limit 1000: ' + values.next().value.prefixes[0] + 'foo';
                                 var last_errmsg = get_info().server.last_warning.message;
                                 if (options.relay)
                                 {

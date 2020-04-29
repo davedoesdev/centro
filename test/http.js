@@ -23,7 +23,7 @@ const {
     HTTP2_HEADER_WWW_AUTHENTICATE
 } = require('http2').constants;
 
-function make_token(get_info, topic)
+function make_token(get_info, topic, use_key2)
 {
     topic = topic || 'foo';
     return JWT.sign({
@@ -37,9 +37,9 @@ function make_token(get_info, topic)
                 disallow: []
             }
         }
-    }, get_info().priv_key, {
+    }, use_key2 ? get_info().priv_key2 : get_info().priv_key, {
         algorithm: 'EdDSA',
-        issuer: get_info().issuer_id,
+        issuer: use_key2 ? get_info().issuer_id2 : get_info().issuer_id,
         expiresIn: '1m'
     });
 }
@@ -67,7 +67,9 @@ function connect(config, server, cb)
 
     function auth()
     {
-        centro.separate_auth(config, function (err, userpass)
+        centro.separate_auth(Object.assign({}, config, {
+            token: Array.isArray(config.token) ? config.token[0] : config.token
+        }), function (err, userpass)
         {
             if (err)
             {
@@ -81,7 +83,9 @@ function connect(config, server, cb)
                     return cb(err);
                 }
 
-                mqclient = centro.stream_auth(stream, config);
+                mqclient = centro.stream_auth(stream, Object.assign({}, config, {
+                    token: config.token2
+                }));
 
                 if (mqclient)
                 {
@@ -896,7 +900,7 @@ function extra(get_info, on_before)
         {
             var foo = false, bar = false;
 
-            get_info().clients[1].subscribe([0, 1], ['foo', 'bar'], function (s, info)
+            get_info().clients[1].subscribe(0, ['foo', 'bar'], function (s, info)
             {
                 read_all(s, function (data)
                 {
@@ -921,7 +925,7 @@ function extra(get_info, on_before)
                 get_info().clients[0].publish('foo', function (err)
                 {
                     if (err) { return done(err); }
-                    get_info().clients[1].publish(1, 'bar', function (err)
+                    get_info().clients[1].publish('bar', function (err)
                     {
                         if (err) { return done(err); }
                     }).end('fooey');
@@ -1301,7 +1305,7 @@ runner(
 
                 var mqclient = centro.stream_auth(stream,
                 {
-                    token: make_token(get_info)
+                    token: make_token(get_info, null, true)
                 });
 
                 mqclient.on('ready', function ()

@@ -26,7 +26,6 @@ runner({
 });
 
 const port = 8700;
-let connects = 0;
 
 runner({
     transport: [{
@@ -42,7 +41,7 @@ runner({
         }
     }]
 }, (config, server, cb) => {
-    if (++connects === 1) {
+    if (config.test_connect_i === 0) {
         return server.transport_ops[0].connect((err, stream) => {
             if (err) {
                 return cb(err);
