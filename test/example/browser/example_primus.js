@@ -26,7 +26,7 @@ function connect() {
     }
 
     centro.separate_auth({
-        token: params.get('token')
+        token: params.get('token') // <3>
     }, function (err, userpass, make_client) {
         if (err) { throw(err); }
 
@@ -36,25 +36,25 @@ function connect() {
         const client = make_client(duplex);
 
         client.on('ready', function () {
-            add_message(tag_text('status', 'open')); // <3>
+            add_message(tag_text('status', 'open')); // <4>
             this.subscribe(params.get('subscribe'), function (s, info) {
                 centro.read_all(s, function (v) {
                     const msg = document.createElement('div');
                     msg.className = 'message';
                     msg.appendChild(tag_text('topic', info.topic));
                     msg.appendChild(tag_text('data', v.toString()));
-                    add_message(msg); // <4>
+                    add_message(msg); // <5>
                 });
             });
 
             publish = function (event) {
                 event.preventDefault();
-                client.publish(topic.value).end(message.value); // <5>
+                client.publish(topic.value).end(message.value); // <6>
             };
         });
 
         primus.on('close', function () {
-            add_message(tag_text('status', 'closed')); // <6>
+            add_message(tag_text('status', 'closed')); // <7>
         });
     });
 }

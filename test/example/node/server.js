@@ -40,6 +40,7 @@ const config = {
 const server = new centro.CentroServer(config); // <6>
 
 server.on('ready', () => console.log('READY.'));
+server.on('warning', err => console.error(err.message));
 //----
 const assert = require('assert');
 const { JWK, JWT } = require('jose');

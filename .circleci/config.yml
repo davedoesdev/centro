@@ -3,18 +3,18 @@ workflows:
   version: 2
   test:
     jobs:
-      - test-13
+      - test-14
       - test-12
 jobs:
-  test-13: &test-template
+  test-14: &test-template
     docker:
       - &node-template
-        image: circleci/node:13.13.0-buster
+        image: circleci/node:14.1.0-buster
         environment:
           NODE_OPTIONS: --max-http-header-size=32768
           NODE_CONFIG: '{"db":"postgresql://postgres@localhost/qlobber-pg"}'
       - &pg-template
-        image: circleci/postgres:12.1-alpine
+        image: circleci/postgres:12.2-alpine
         environment:
           POSTGRES_USER: postgres
           POSTGRES_DB: qlobber-pg
@@ -33,5 +33,5 @@ jobs:
     <<: *test-template
     docker:
       - <<: *node-template
-        image: circleci/node:12.16.2-buster
+        image: circleci/node:12.16.3-buster
       - *pg-template

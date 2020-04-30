@@ -147,7 +147,8 @@ authorize_jwt({
 <8> https://pouchdb.com/[PouchDB]-based keystores update a master database and then replicate changes to reader databases. Here we `deploy()` the master database to let any active reader databases know we're done updating. 
 <9> The private key is not stored in the keystore but needs to be available when you want to sign authorization tokens. Here we write it to disk but this is just an example -- you probably want a more secure way of storing it.
 
-Then you need to make a JWT, using the private key to sign it.
+After you've run `node add_key.js`, you need to make a JWT, using the private
+key to sign it.
 
 The `iss` claim in the token should be the unique issuer ID associated with
 `\http://davedoesdev.com` in Centro's keystore. You can use the
@@ -289,14 +290,14 @@ Here's a sample run:
 [cols="a,a",frame="none",grid="none"]
 |===
 
-|[source,bash]
+|[source,bash,options=nowrap]
 ----
 $ node subscribe_tcp.js 'foo.*'
 topic: foo
 hello
 ----
 
-|[source,bash]
+|[source,bash,options=nowrap]
 ----
 $ echo hello \| node publish_tcp.js foo.bar
 ----
@@ -546,7 +547,7 @@ function connect() {
     }
 
     centro.separate_auth({
-        token: params.get('token')
+        token: params.get('token') // <3>
     }, function (err, userpass, make_client) {
         if (err) { throw(err); }
 
@@ -556,37 +557,38 @@ function connect() {
         const client = make_client(duplex);
 
         client.on('ready', function () {
-            add_message(tag_text('status', 'open')); // <3>
+            add_message(tag_text('status', 'open')); // <4>
             this.subscribe(params.get('subscribe'), function (s, info) {
                 centro.read_all(s, function (v) {
                     const msg = document.createElement('div');
                     msg.className = 'message';
                     msg.appendChild(tag_text('topic', info.topic));
                     msg.appendChild(tag_text('data', v.toString()));
-                    add_message(msg); // <4>
+                    add_message(msg); // <5>
                 });
             });
 
             publish = function (event) {
                 event.preventDefault();
-                client.publish(topic.value).end(message.value); // <5>
+                client.publish(topic.value).end(message.value); // <6>
             };
         });
 
         primus.on('close', function () {
-            add_message(tag_text('status', 'closed')); // <6>
+            add_message(tag_text('status', 'closed')); // <7>
         });
     });
 }
 ----
 <1> While the page loads, clicking the publish button does nothing.
 <2> Function to display a message.
-<3> Display a message to say the connection stream to the server is open.
-<4> When we receive a message, display its topic and content.
-<5> When the user clicks the publish button, publish a message.
-<6> Display a message to say the connection stream to the server is closed.
+<3> Read the authorization token from the URL query parameters.
+<4> Display a message to say the connection stream to the server is open.
+<5> When we receive a message, display its topic and content.
+<6> When the user clicks the publish button, publish a message.
+<7> Display a message to say the connection stream to the server is closed.
 
-Load the example page using a URL like `file:///path/to/example_primus.html?subscribe=foo.*&token=XXX`
+Load the example page using a URL like `file:///path/to/example_primus.html?subscribe=foo.*&token=XXX` where `XXX` is the output from `node make_token.js`.
 
 ==== HTTP
 

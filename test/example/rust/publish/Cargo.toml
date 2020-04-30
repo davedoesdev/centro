@@ -1,6 +1,6 @@
 [package]
 name = "publish"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["David Halls <dave@davedoesdev.com>"]
 edition = "2018"
 
@@ -19,5 +19,5 @@ version = "0.2"
 features = ["macros", "io-std"]
 
 [dependencies.tokio-util]
-version = "0.2"
+version = "0.3"
 features = ["codec"]

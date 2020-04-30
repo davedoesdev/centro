@@ -4882,6 +4882,7 @@ module.exports = function (config, connect, options)
 
                 if (options.relay)
                 {
+                    // eslint-disable-next-line no-inner-declarations
                     function check_error3(err)
                     {
                         expect(err.message).to.equal('data.subscriptions[0] should NOT have additional properties');
@@ -4970,6 +4971,7 @@ module.exports = function (config, connect, options)
 
                 if (options.relay)
                 {
+                    // eslint-disable-next-line no-inner-declarations
                     function check_error3(err)
                     {
                         expect(err.message).to.equal('data.subscriptions[0] should NOT have additional properties');
@@ -5133,6 +5135,7 @@ module.exports = function (config, connect, options)
 
                 if (options.relay)
                 {
+                    // eslint-disable-next-line no-inner-declarations
                     function check_error3(err)
                     {
                         expect(err.message).to.equal('data.subscriptions[0] should NOT have additional properties');
