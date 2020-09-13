@@ -30,5 +30,6 @@
     (.open event-source)
     (println "READY.")
     (loop []
-      (Thread/sleep 1000)
-      (recur))))
+      (when (.isOpen event-source)
+        (Thread/sleep 1000)
+        (recur)))))

@@ -2,12 +2,9 @@
 "use strict";
 const runner = require('./runner');
 const centro = require('..');
-const { CentroHttp2DuplexServer } = centro.CentroServer.load_transport('http2-duplex');
+const http2_duplex = centro.CentroServer.load_transport('http2-duplex');
 const { promisify } = require('util');
 const http2 = require('http2');
-const http2_duplex_client = require('http2-duplex/client_cjs.js');
-const make_client_http2_duplex = http2_duplex_client.default;
-const ResponseError = http2_duplex_client.ResponseError;
 const { expect } = require('chai');
 const read_all = require('./read_all');
 const pathname = `/centro/v${centro.version}/http2-duplex`;
@@ -94,13 +91,15 @@ function connect(config, server, cb) {
         }
 
         async function really_connect() {
+            const { default: make_client_http2_duplex, ResponseError } = await import('http2-duplex/client.js');
             let duplex;
             try {
                 duplex = await make_client_http2_duplex(
                     `${scheme}://localhost:${port}${pathname}`, {
                         headers: {
                             'Authorization': 'Bearer ' + userpass.split(':')[1]
-                        }
+                        },
+                        disable_request_streaming: true
                     });
             } catch (ex) {
                 if (ex instanceof ResponseError) {
@@ -192,12 +191,14 @@ runner({
 }, connect, {
     extra: extra,
 
-    on_before: function (config, cb) {
+    on_before: function (config, cb) { (async () => {
         new_fetch2();
 
         if (config.server) {
             return cb();
         }
+
+        const CentroHttp2DuplexServer = await http2_duplex.init();
 
         if (server_config) {
             config.server = new CentroHttp2DuplexServer(
@@ -225,7 +226,7 @@ runner({
         });
 
         cb();
-    },
+    })() },
 
     on_after: function (config, cb) {
         config.server.detach();

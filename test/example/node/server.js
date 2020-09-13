@@ -1,6 +1,15 @@
 /*eslint-env node */
 /*eslint-disable no-console */
 "use strict";
+/*const orig_error = console.error;
+function new_error()
+{
+    console.error = orig_error;
+    orig_error.apply(this, arguments);
+    console.trace();
+    console.error = new_error;
+}
+console.error = new_error;*/
 
 const centro = require('../../..');
 const fs = require('fs');
@@ -39,8 +48,8 @@ const config = {
 
 const server = new centro.CentroServer(config); // <6>
 
-server.on('ready', () => console.log('READY.'));
 server.on('warning', err => console.error(err.message));
+server.on('ready', () => console.log('READY.'));
 //----
 const assert = require('assert');
 const { JWK, JWT } = require('jose');

@@ -566,6 +566,8 @@ module.exports = function (config, connect, options)
 
                     if (err)
                     {
+                        server.removeListener('connect', onconnect);
+
                         if (opts.on_connect_error)
                         {
                             opts.on_connect_error(err);
@@ -585,6 +587,7 @@ module.exports = function (config, connect, options)
 
                     if (opts.skip_connect || (connected === n))
                     {
+                        server.removeListener('connect', onconnect);
                         cb();
                     }
                 });
@@ -2029,7 +2032,10 @@ module.exports = function (config, connect, options)
                     }
                     else if (is_transport('in-mem'))
                     {
-                        expect(err.message).to.equal('dummy');
+                        expect(err.message).to.be.oneOf([
+                            'dummy',
+                            'carrier stream ended before end message received'
+                        ]);
                     }
                 });
 
@@ -3924,7 +3930,10 @@ module.exports = function (config, connect, options)
                 {
                     expect(err.message).to.be.oneOf([
                         'carrier stream finished before duplex finished',
-                        'write after end'
+                        'carrier stream ended before end message received',
+                        'write after end',
+                        // On Node 14 we get an empty TLS error!
+                        ...(is_transport('tls') ? [''] : [])
                     ]);
                 });
 
@@ -5684,6 +5693,7 @@ module.exports = function (config, connect, options)
                     clients[0].on('warning', function (err)
                     {
                         expect(err.message).to.be.oneOf([
+                            'server error',
                             'carrier stream ended before end message received',
                             'carrier stream finished before duplex finished'
                         ]);
@@ -5761,7 +5771,8 @@ module.exports = function (config, connect, options)
                             'write ECONNRESET',
                             'write EPIPE',
                             'write ECONNABORTED',
-                            'carrier stream finished before duplex finished'
+                            'carrier stream finished before duplex finished',
+                            'carrier stream ended before end message received'
                         ]);
                     });
                 }
@@ -6975,6 +6986,7 @@ module.exports = function (config, connect, options)
                             else
                             {
                                 expect(err.message).to.be.oneOf([
+                                    'server error',
                                     'write EPIPE',
                                     'write ECONNRESET',
                                     'write after end',

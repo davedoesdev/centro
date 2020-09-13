@@ -2,7 +2,7 @@
 "use strict";
 
 // To run coverage locally, typically one would do:
-// NODE_OPTIONS=--max-http-header-size=32768 PGUSER=postgres ./node_modules/.bin/grunt coverage
+// NODE_OPTIONS=--max-http-header-size=32768 ./node_modules/.bin/grunt coverage
 
 var path = require('path'),
     mod_path = path.join('.', 'node_modules'),
@@ -60,15 +60,15 @@ module.exports = function (grunt)
 
         exec: {
             cover: {
-                cmd: nyc_path + " -x Gruntfile.js -x \"" + path.join('test', '**') + "\" node " + grunt_path + " test"
+                cmd: `${nyc_path} -x Gruntfile.js -x "test/**" node ${grunt_path} test`
             },
 
             cover_report: {
-                cmd: nyc_path + ' report -r lcov'
+                cmd: `${nyc_path} report -r lcov`
             },
 
             cover_check: {
-                cmd: nyc_path + ' check-coverage --statements 100 --branches 100 --functions 100 --lines 100'
+                cmd: `${nyc_path} check-coverage --statements 100 --branches 100 --functions 100 --lines 100`
             },
 
             coveralls: {
@@ -87,10 +87,6 @@ module.exports = function (grunt)
                 cmd: keys_path
             },
 
-            prep_documentation: {
-                cmd: 'if [ ! -e node_modules/documentation/lib ]; then npm explore documentation -- npm install && npm explore documentation -- npm run build; fi'
-            },
-
             documentation: {
                 cmd: './node_modules/.bin/documentation build -c documentation.yml -f html -o docs index.js lib/server_transports/*.js lib/server_extensions/*.js'
             },
@@ -99,12 +95,8 @@ module.exports = function (grunt)
                 cmd: './node_modules/.bin/documentation serve -w -c documentation.yml index.js lib/server_transports/*.js lib/server_extensions/*.js'
             },
 
-            prep_matic: {
-                cmd: 'if [ ! -e node_modules/matic/node_modules/jade ]; then npm explore matic -- npm install; fi'
-            },
-
             default_schema: {
-                cmd: 'mkdir -p docs/schema/schemas && node -p \'JSON.stringify(require("./lib/server_config.js").default_authz_token_schema, null, 2)\' > docs/schema/schemas/default_authz_token.schema.json && cd docs/schema && ../../node_modules/.bin/matic'
+                cmd: 'mkdir -p docs/schema/schemas && node -p \'JSON.stringify(require("./lib/server_config.js").default_authz_token_schema, null, 2)\' > docs/schema/schemas/default_authz_token.schema.json && cd docs/schema && ../../node_modules/.bin/jsonschema2md -d schemas'
             }
         }
     });
@@ -118,12 +110,9 @@ module.exports = function (grunt)
     grunt.registerTask('dist', 'exec:webpack');
     grunt.registerTask('check_dist', 'exec:check_dist');
     grunt.registerTask('test', 'mochaTest');
-    grunt.registerTask('docs', ['exec:prep_documentation',
-                                'exec:documentation',
-                                'exec:prep_matic',
+    grunt.registerTask('docs', ['exec:documentation',
                                 'exec:default_schema']);
-    grunt.registerTask('serve_docs', ['exec:prep_documentation',
-                                      'exec:serve_documentation']);
+    grunt.registerTask('serve_docs', 'exec:serve_documentation');
     grunt.registerTask('coverage', ['exec:cover',
                                     'exec:cover_report',
                                     'exec:cover_check']);

@@ -128,12 +128,6 @@
                     <li class='h5'><span>Static members</span></li>
                     
                       <li><a
-                        href='#centro-jslibservercentroserver'
-                        class='regular pre-open'>
-                        .CentroServer
-                      </a></li>
-                    
-                      <li><a
                         href='#centro-jslibserverclosecallback'
                         class='regular pre-open'>
                         .closeCallback
@@ -338,6 +332,52 @@
                   Extensions
                   
                 </a>
+                
+                </li>
+              
+                
+                <li><a
+                  href='#centroserver'
+                  class=" toggle-sibling">
+                  CentroServer
+                  <span class='icon'>▸</span>
+                </a>
+                
+                <div class='toggle-target display-none'>
+                  
+                  
+                    <ul class='list-reset py1-ul pl1'>
+                      <li class='h5'><span>Instance members</span></li>
+                      
+                      <li><a
+                        href='#centroserverfsq'
+                        class='regular pre-open'>
+                        #fsq
+                      </a></li>
+                      
+                      <li><a
+                        href='#centroservertransport_ops'
+                        class='regular pre-open'>
+                        #transport_ops
+                      </a></li>
+                      
+                      <li><a
+                        href='#centroserverclose'
+                        class='regular pre-open'>
+                        #close
+                      </a></li>
+                      
+                      <li><a
+                        href='#centroserverattach_extension'
+                        class='regular pre-open'>
+                        #attach_extension
+                      </a></li>
+                      
+                    </ul>
+                  
+                  
+                  
+                </div>
                 
                 </li>
               
@@ -1377,601 +1417,6 @@ data as a stream header (currently all except Primus and HTTP).</p>
     <div class='py1 quiet mt1 prose-big'>Static Members</div>
     <div class="clearfix">
   
-    <div class='border-bottom' id='centro-jslibservercentroserver'>
-      <div class="clearfix small pointer toggle-sibling">
-        <div class="py1 contain">
-            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
-            <span class='code strong strong truncate'>new CentroServer(config)</span>
-        </div>
-      </div>
-      <div class="clearfix display-none toggle-target">
-        <section class='p2 mb2 clearfix bg-white minishadow'>
-
-  
-
-  <p>Create a server which publishes and subscribes to messages on behalf of
-clients.</p>
-
-    <div class='pre p1 fill-light mt0'>new CentroServer(config: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</div>
-  
-  
-    <p>
-      Extends
-      
-        <a href="https://nodejs.org/api/all.html#all_class_events_eventemitter">events.EventEmitter</a>
-      
-    </p>
-  
-
-  
-  
-  
-  
-  
-  
-
-  
-    <div class='py1 quiet mt1 prose-big'>Parameters</div>
-    <div class='prose'>
-      
-        <div class='space-bottom0'>
-          <div>
-            <span class='code bold'>config</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</code>
-	    Configuration options. This supports all the options supported by 
-<a href="https://github.com/davedoesdev/mqlobber#mqlobberserverfsq-stream-options">MQlobberServer</a>
- and 
-<a href="https://github.com/davedoesdev/mqlobber-access-control#accesscontroloptions">AccessControl</a>
- as well as the following:
-
-          </div>
-          
-          <table class='mt1 mb2 fixed-table h5 col-12'>
-            <colgroup>
-              <col width='30%' />
-              <col width='70%' />
-            </colgroup>
-            <thead>
-              <tr class='bold fill-light'>
-                <th>Name</th>
-                <th>Description</th>
-              </tr>
-            </thead>
-            <tbody class='mt1'>
-              
-                <tr>
-  <td class='break-word'><span class='code bold'>config.transport</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a> | <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)?</code>
-  </td>
-  <td class='break-word'><span>Specifies which transport to load into the server. This should be either the transport's name or its configuration, with its name in the 
-<code>server</code>
- property.
-</span></td>
-</tr>
-
-
-              
-                <tr>
-  <td class='break-word'><span class='code bold'>config.transports</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array">Array</a>&#x3C;(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a> | <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)>?</code>
-  </td>
-  <td class='break-word'><span>Specifies multiple transports to load into the server.
-</span></td>
-</tr>
-
-
-              
-                <tr>
-  <td class='break-word'><span class='code bold'>config.authorize</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Statements/function">Function</a>?</code>
-  </td>
-  <td class='break-word'><span>Function for creating an object which can authorize 
-<a href="http://self-issued.info/docs/draft-ietf-oauth-json-web-token.html">JSON Web Tokens</a>
- presented by clients. Defaults to 
-<a href="https://github.com/davedoesdev/authorize-jwt#moduleexportsconfig-cb">authorize-jwt</a>
-. If you supply your own, it must comply with authorize-jwt's API. 
-<code>authorize_config</code>
- or 
-<code>config</code>
- is passed as the first argument.
-</span></td>
-</tr>
-
-
-              
-                <tr>
-  <td class='break-word'><span class='code bold'>config.authorize_config</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>?</code>
-  </td>
-  <td class='break-word'><span>Configuration specific to 
-<code>config.authorize</code>
-.
-</span></td>
-</tr>
-
-
-              
-                <tr>
-  <td class='break-word'><span class='code bold'>config.allowed_algs</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array">Array</a>&#x3C;<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>></code>
-  </td>
-  <td class='break-word'><span>Which JWT algorithms are allowed. Clients which present tokens which aren't signed with one of these algorithms are rejected. You must supply this list.
-</span></td>
-</tr>
-
-
-              
-                <tr>
-  <td class='break-word'><span class='code bold'>config.fsq</span> <code class='quiet'>QlobberFSQ?</code>
-  </td>
-  <td class='break-word'><span><a href="https://github.com/davedoesdev/qlobber-fsq#qlobberfsqoptions">QlobberFSQ</a>
- instance for handling messages. Defaults to a new instance, passing 
-<code>fsq_config</code>
- or 
-<code>config</code>
- to the constructor.
-</span></td>
-</tr>
-
-
-              
-                <tr>
-  <td class='break-word'><span class='code bold'>config.fsq_config</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>?</code>
-  </td>
-  <td class='break-word'><span>Configuration specific to 
-<code>config.fsq</code>
-.
-</span></td>
-</tr>
-
-
-              
-                <tr>
-  <td class='break-word'><span class='code bold'>config.realm</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></code>
-  
-    (default <code>centro</code>)
-  </td>
-  <td class='break-word'><span>When authorization of a client fails, the transport is given information it can (optionally) use when rejecting the connection. This includes a HTTP authentication header specifying this realm.
-</span></td>
-</tr>
-
-
-              
-                <tr>
-  <td class='break-word'><span class='code bold'>config.auth_method</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></code>
-  
-    (default <code>Bearer</code>)
-  </td>
-  <td class='break-word'><span>When authorization of a client fails, the transport is given information it can (optionally) use when rejecting the connection. This includes a HTTP authentication header specifying this authentication method. Note that the client can opt to use Bearer or Basic authentication regardless of this setting.
-</span></td>
-</tr>
-
-
-              
-                <tr>
-  <td class='break-word'><span class='code bold'>config.max_tokens</span> <code class='quiet'>integer</code>
-  
-    (default <code>10</code>)
-  </td>
-  <td class='break-word'><span>Maximum number of authorization tokens each client is allowed to present.
-</span></td>
-</tr>
-
-
-              
-                <tr>
-  <td class='break-word'><span class='code bold'>config.max_token_length</span> <code class='quiet'>integer</code>
-  
-    (default <code>1MiB</code>)
-  </td>
-  <td class='break-word'><span>Maximum size of authorization token each client is allowed to present.
-</span></td>
-</tr>
-
-
-              
-                <tr>
-  <td class='break-word'><span class='code bold'>config.max_topic_length</span> <code class='quiet'>integer</code>
-  
-    (default <code>4KiB</code>)
-  </td>
-  <td class='break-word'><span>Maximum length of topics the client can specify, in subscription and publish requests and in the authorization token.
-</span></td>
-</tr>
-
-
-              
-                <tr>
-  <td class='break-word'><span class='code bold'>config.max_issuer_length</span> <code class='quiet'>integer</code>
-  
-    (default <code>128</code>)
-  </td>
-  <td class='break-word'><span>Maximum length of the 
-<code>iss</code>
- claim in authorization tokens.
-</span></td>
-</tr>
-
-
-              
-                <tr>
-  <td class='break-word'><span class='code bold'>config.max_subscribe_topics</span> <code class='quiet'>integer</code>
-  
-    (default <code>1000</code>)
-  </td>
-  <td class='break-word'><span>Maximum number of topics that 
-<code>subscribe</code>
- claims in authorization tokens can contain. These claims specify to which topics client which present them are pre-subscribed.
-</span></td>
-</tr>
-
-
-              
-                <tr>
-  <td class='break-word'><span class='code bold'>config.max_allow_publish_topics</span> <code class='quiet'>integer</code>
-  
-    (default <code>1000</code>)
-  </td>
-  <td class='break-word'><span>Maximum number of topics that 
-<code>access_control.publish.allow</code>
- claims in authorization tokens can contain. These claims are passed to 
-<a href="https://github.com/davedoesdev/mqlobber-access-control#accesscontroloptions">AccessControl</a>
- and specify to which topics clients which present them can publish messages.
-</span></td>
-</tr>
-
-
-              
-                <tr>
-  <td class='break-word'><span class='code bold'>config.max_disallow_publish_topics</span> <code class='quiet'>integer</code>
-  
-    (default <code>1000</code>)
-  </td>
-  <td class='break-word'><span>Maximum number of topics that 
-<code>access_control.publish.disallow</code>
- claims in authorization tokens can contain. These claims are passed to 
-<a href="https://github.com/davedoesdev/mqlobber-access-control#accesscontroloptions">AccessControl</a>
- and specify to which topics clients which present them cannot publish messages.
-</span></td>
-</tr>
-
-
-              
-                <tr>
-  <td class='break-word'><span class='code bold'>config.max_allow_subscribe_topics</span> <code class='quiet'>integer</code>
-  
-    (default <code>1000</code>)
-  </td>
-  <td class='break-word'><span>Maximum number of topics that 
-<code>access_control.subscribe.allow</code>
- claims in authorization tokens can contain. These claims are passed to 
-<a href="https://github.com/davedoesdev/mqlobber-access-control#accesscontroloptions">AccessControl</a>
- and specify to which topics clients which present them cannot subscribe.
-</span></td>
-</tr>
-
-
-              
-                <tr>
-  <td class='break-word'><span class='code bold'>config.max_disallow_subscribe_topics</span> <code class='quiet'>integer</code>
-  
-    (default <code>1000</code>)
-  </td>
-  <td class='break-word'><span>Maximum number of topics that 
-<code>access_control.subscribe.disallow</code>
- claims in authorization tokens can contain. These claims are passed to 
-<a href="https://github.com/davedoesdev/mqlobber-access-control#accesscontroloptions">AccessControl</a>
- and specify to which topics clients which present them cannot subscribe.
-</span></td>
-</tr>
-
-
-              
-                <tr>
-  <td class='break-word'><span class='code bold'>config.max_block_topics</span> <code class='quiet'>integer</code>
-  
-    (default <code>1000</code>)
-  </td>
-  <td class='break-word'><span>Maximum number of topics that 
-<code>access_control.block</code>
- claims in authorization tokens can contain. These claims are passed to 
-<a href="https://github.com/davedoesdev/mqlobber-access-control#accesscontroloptions">AccessControl</a>
- and specify which messages aren't delivered to clients which present them.
-</span></td>
-</tr>
-
-
-              
-                <tr>
-  <td class='break-word'><span class='code bold'>config.max_presence_data_length</span> <code class='quiet'>integer</code>
-  
-    (default <code>1MiB</code>)
-  </td>
-  <td class='break-word'><span>Maximum length of 
-<code>presence.connect.data</code>
- and 
-<code>presence.disconnect.data</code>
- claims in authorization tokens can contain. The 
-<code>presence</code>
- claims specify messages to send when clients which present them connect and disconnect.
-</span></td>
-</tr>
-
-
-              
-            </tbody>
-          </table>
-          
-        </div>
-      
-    </div>
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-    <div class='py1 quiet mt1 prose-big'>Instance Members</div>
-    <div class="clearfix">
-  
-    <div class='border-bottom' id='centro-jslibservercentroserverfsq'>
-      <div class="clearfix small pointer toggle-sibling">
-        <div class="py1 contain">
-            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
-            <span class='code strong strong truncate'>fsq</span>
-        </div>
-      </div>
-      <div class="clearfix display-none toggle-target">
-        <section class='p2 mb2 clearfix bg-white minishadow'>
-
-  
-
-  <p><a href="https://github.com/davedoesdev/qlobber-fsq#qlobberfsqoptions">QlobberFSQ</a> instance being used to handle messages.</p>
-
-    <div class='pre p1 fill-light mt0'>fsq</div>
-  
-    <p>
-      Type:
-      QlobberFSQ
-    </p>
-  
-  
-
-  
-  
-  
-  
-  
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-</section>
-
-      </div>
-    </div>
-  
-    <div class='border-bottom' id='centro-jslibservercentroservertransport_ops'>
-      <div class="clearfix small pointer toggle-sibling">
-        <div class="py1 contain">
-            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
-            <span class='code strong strong truncate'>transport_ops</span>
-        </div>
-      </div>
-      <div class="clearfix display-none toggle-target">
-        <section class='p2 mb2 clearfix bg-white minishadow'>
-
-  
-
-  <p>Operations you can perform on transports you specified when constructing <a href="#centro-jslibservercentroserver">CentroServer</a>. Transports can define their own operations in addition to <code>close</code>. Indexable by position or transport name.</p>
-
-    <div class='pre p1 fill-light mt0'>transport_ops</div>
-  
-    <p>
-      Type:
-      <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array">Array</a>&#x3C;{close: centro-js/lib/server.closeCallback}>
-    </p>
-  
-  
-
-  
-  
-  
-  
-  
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-</section>
-
-      </div>
-    </div>
-  
-    <div class='border-bottom' id='centro-jslibservercentroserverclose'>
-      <div class="clearfix small pointer toggle-sibling">
-        <div class="py1 contain">
-            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
-            <span class='code strong strong truncate'>close(cb)</span>
-        </div>
-      </div>
-      <div class="clearfix display-none toggle-target">
-        <section class='p2 mb2 clearfix bg-white minishadow'>
-
-  
-
-  <p>Close the server.</p>
-
-    <div class='pre p1 fill-light mt0'>close(cb: centro-js/lib/server.closeCallback)</div>
-  
-  
-
-  
-  
-  
-  
-  
-  
-
-  
-    <div class='py1 quiet mt1 prose-big'>Parameters</div>
-    <div class='prose'>
-      
-        <div class='space-bottom0'>
-          <div>
-            <span class='code bold'>cb</span> <code class='quiet'>(centro-js/lib/server.closeCallback)</code>
-	    Called when the server has been closed.
-
-          </div>
-          
-        </div>
-      
-    </div>
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-</section>
-
-      </div>
-    </div>
-  
-    <div class='border-bottom' id='centro-jslibservercentroserverattach_extension'>
-      <div class="clearfix small pointer toggle-sibling">
-        <div class="py1 contain">
-            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
-            <span class='code strong strong truncate'>attach_extension(ext, config?)</span>
-        </div>
-      </div>
-      <div class="clearfix display-none toggle-target">
-        <section class='p2 mb2 clearfix bg-white minishadow'>
-
-  
-
-  <p>Attach an extension to the server.</p>
-
-    <div class='pre p1 fill-light mt0'>attach_extension(ext: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>, config: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>?)</div>
-  
-  
-
-  
-  
-  
-  
-  
-  
-
-  
-    <div class='py1 quiet mt1 prose-big'>Parameters</div>
-    <div class='prose'>
-      
-        <div class='space-bottom0'>
-          <div>
-            <span class='code bold'>ext</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</code>
-	    Extension to attach.
-
-          </div>
-          
-        </div>
-      
-        <div class='space-bottom0'>
-          <div>
-            <span class='code bold'>config</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>?)</code>
-	    Configuration to pass to the extension.
-
-          </div>
-          
-        </div>
-      
-    </div>
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-</section>
-
-      </div>
-    </div>
-  
-</div>
-
-  
-
-  
-
-  
-</section>
-
-      </div>
-    </div>
-  
     <div class='border-bottom' id='centro-jslibserverclosecallback'>
       <div class="clearfix small pointer toggle-sibling">
         <div class="py1 contain">
@@ -2325,7 +1770,7 @@ and is ready to accept connections.</p>
           <div>
             <span class='code bold'>config</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</code>
 	    Configuration you gave to the transport when constructing 
-<a href="#centro-jslibservercentroserver">CentroServer</a>
+<a href="centro-js/lib/server.CentroServer">CentroServer</a>
 .
 
           </div>
@@ -2438,7 +1883,7 @@ connects.</p>
           <div>
             <span class='code bold'>config</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</code>
 	    Configuration you gave to the transport when constructing 
-<a href="#centro-jslibservercentroserver">CentroServer</a>
+<a href="centro-js/lib/server.CentroServer">CentroServer</a>
 .
 
           </div>
@@ -2544,7 +1989,7 @@ connects.</p>
           <div>
             <span class='code bold'>config</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>?)</code>
 	    Configuration you gave to the transport when constructing 
-<a href="#centro-jslibservercentroserver">CentroServer</a>
+<a href="centro-js/lib/server.CentroServer">CentroServer</a>
 .
 
           </div>
@@ -2978,7 +2423,7 @@ clients connected.</p>
 
   
 
-  <p>Close event. Emitted when the server has been closed (see <a href="#centro-jslibservercentroserverclose">close</a>).</p>
+  <p>Close event. Emitted when the server has been closed (see <a href="centro-js/lib/server.CentroServer#close">close</a>).</p>
 
     <div class='pre p1 fill-light mt0'>CentroServer#close</div>
   
@@ -3953,7 +3398,7 @@ any plans to do so. <code>http2-duplex</code> emulates it by using POST requests
   <p>In-memory transport. This allows messages to be sent over an in-memory stream
 to a server running in the same process. The in-memory stream has minimal
 overhead (the messages aren't copied).</p>
-<p>An extra <a href="#centro-jslibservercentroservertransport_ops">transport operation</a> for this transport is added to the <a href="#centro-jslibservercentroserver">server object</a>:</p>
+<p>An extra <a href="centro-js/lib/server.CentroServer#transport_ops">transport operation</a> for this transport is added to the <a href="centro-js/lib/server.CentroServer">server object</a>:</p>
 <div class="prose transport_ops mb2 h5">
 <style>.transport_ops table { width: 100%}</style>
 <table>
@@ -4144,6 +3589,619 @@ overhead (the messages aren't copied).</p>
 
   
 </section></div>
+          
+        
+          
+          <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+  <div class='clearfix'>
+    
+    <h3 class='fl m0' id='centroserver'>
+      CentroServer
+    </h3>
+    
+    
+  </div>
+  
+
+  <p>Create a server which publishes and subscribes to messages on behalf of
+clients.</p>
+
+    <div class='pre p1 fill-light mt0'>new CentroServer(config: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</div>
+  
+  
+    <p>
+      Extends
+      
+        <a href="https://nodejs.org/api/all.html#all_class_events_eventemitter">events.EventEmitter</a>
+      
+    </p>
+  
+
+  
+  
+  
+  
+  
+  
+
+  
+    <div class='py1 quiet mt1 prose-big'>Parameters</div>
+    <div class='prose'>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>config</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</code>
+	    Configuration options. This supports all the options supported by 
+<a href="https://github.com/davedoesdev/mqlobber#mqlobberserverfsq-stream-options">MQlobberServer</a>
+ and 
+<a href="https://github.com/davedoesdev/mqlobber-access-control#accesscontroloptions">AccessControl</a>
+ as well as the following:
+
+          </div>
+          
+          <table class='mt1 mb2 fixed-table h5 col-12'>
+            <colgroup>
+              <col width='30%' />
+              <col width='70%' />
+            </colgroup>
+            <thead>
+              <tr class='bold fill-light'>
+                <th>Name</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody class='mt1'>
+              
+                <tr>
+  <td class='break-word'><span class='code bold'>config.transport</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a> | <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)?</code>
+  </td>
+  <td class='break-word'><span>Specifies which transport to load into the server. This should be either the transport's name or its configuration, with its name in the 
+<code>server</code>
+ property.
+</span></td>
+</tr>
+
+
+              
+                <tr>
+  <td class='break-word'><span class='code bold'>config.transports</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array">Array</a>&#x3C;(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a> | <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)>?</code>
+  </td>
+  <td class='break-word'><span>Specifies multiple transports to load into the server.
+</span></td>
+</tr>
+
+
+              
+                <tr>
+  <td class='break-word'><span class='code bold'>config.authorize</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Statements/function">Function</a>?</code>
+  </td>
+  <td class='break-word'><span>Function for creating an object which can authorize 
+<a href="http://self-issued.info/docs/draft-ietf-oauth-json-web-token.html">JSON Web Tokens</a>
+ presented by clients. Defaults to 
+<a href="https://github.com/davedoesdev/authorize-jwt#moduleexportsconfig-cb">authorize-jwt</a>
+. If you supply your own, it must comply with authorize-jwt's API. 
+<code>authorize_config</code>
+ or 
+<code>config</code>
+ is passed as the first argument.
+</span></td>
+</tr>
+
+
+              
+                <tr>
+  <td class='break-word'><span class='code bold'>config.authorize_config</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>?</code>
+  </td>
+  <td class='break-word'><span>Configuration specific to 
+<code>config.authorize</code>
+.
+</span></td>
+</tr>
+
+
+              
+                <tr>
+  <td class='break-word'><span class='code bold'>config.allowed_algs</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array">Array</a>&#x3C;<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a>></code>
+  </td>
+  <td class='break-word'><span>Which JWT algorithms are allowed. Clients which present tokens which aren't signed with one of these algorithms are rejected. You must supply this list.
+</span></td>
+</tr>
+
+
+              
+                <tr>
+  <td class='break-word'><span class='code bold'>config.privileged</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean">boolean</a></code>
+  
+    (default <code>false</code>)
+  </td>
+  <td class='break-word'><span>If true, clients can see messages from all token issuers. If false (the default), a client can only see messages sent by another client if they were both authorized using a token with the same issuer. You can make clients on individual transports privileged by setting this property in their transport-specific config (
+<code>config.transports[X].config.privileged</code>
+).
+</span></td>
+</tr>
+
+
+              
+                <tr>
+  <td class='break-word'><span class='code bold'>config.fsq</span> <code class='quiet'>(QlobberFSQ | QlobberPG)?</code>
+  </td>
+  <td class='break-word'><span><a href="https://github.com/davedoesdev/qlobber-fsq#qlobberfsqoptions">QlobberFSQ</a>
+ or 
+<a href="https://rawgit-now.davedoesdev.now.sh/davedoesdev/qlobber-pg/master/docs/index.html#qlobberpg">QlobberPG</a>
+ instance for handling messages. Defaults to a new instance of 
+<code>QlobberFSQ</code>
+, passing 
+<code>fsq_config</code>
+ or 
+<code>config</code>
+ to the constructor.
+</span></td>
+</tr>
+
+
+              
+                <tr>
+  <td class='break-word'><span class='code bold'>config.fsq_config</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>?</code>
+  </td>
+  <td class='break-word'><span>Configuration specific to 
+<code>config.fsq</code>
+.
+</span></td>
+</tr>
+
+
+              
+                <tr>
+  <td class='break-word'><span class='code bold'>config.realm</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></code>
+  
+    (default <code>centro</code>)
+  </td>
+  <td class='break-word'><span>When authorization of a client fails, the transport is given information it can (optionally) use when rejecting the connection. This includes a HTTP authentication header specifying this realm.
+</span></td>
+</tr>
+
+
+              
+                <tr>
+  <td class='break-word'><span class='code bold'>config.auth_method</span> <code class='quiet'><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></code>
+  
+    (default <code>Bearer</code>)
+  </td>
+  <td class='break-word'><span>When authorization of a client fails, the transport is given information it can (optionally) use when rejecting the connection. This includes a HTTP authentication header specifying this authentication method. Note that the client can opt to use Bearer or Basic authentication regardless of this setting.
+</span></td>
+</tr>
+
+
+              
+                <tr>
+  <td class='break-word'><span class='code bold'>config.max_tokens</span> <code class='quiet'>integer</code>
+  
+    (default <code>10</code>)
+  </td>
+  <td class='break-word'><span>Maximum number of authorization tokens each client is allowed to present.
+</span></td>
+</tr>
+
+
+              
+                <tr>
+  <td class='break-word'><span class='code bold'>config.max_token_length</span> <code class='quiet'>integer</code>
+  
+    (default <code>1MiB</code>)
+  </td>
+  <td class='break-word'><span>Maximum size of authorization token each client is allowed to present.
+</span></td>
+</tr>
+
+
+              
+                <tr>
+  <td class='break-word'><span class='code bold'>config.max_topic_length</span> <code class='quiet'>integer</code>
+  
+    (default <code>4KiB</code>)
+  </td>
+  <td class='break-word'><span>Maximum length of topics the client can specify, in subscription and publish requests and in the authorization token.
+</span></td>
+</tr>
+
+
+              
+                <tr>
+  <td class='break-word'><span class='code bold'>config.max_issuer_length</span> <code class='quiet'>integer</code>
+  
+    (default <code>128</code>)
+  </td>
+  <td class='break-word'><span>Maximum length of the 
+<code>iss</code>
+ claim in authorization tokens.
+</span></td>
+</tr>
+
+
+              
+                <tr>
+  <td class='break-word'><span class='code bold'>config.max_subscribe_topics</span> <code class='quiet'>integer</code>
+  
+    (default <code>1000</code>)
+  </td>
+  <td class='break-word'><span>Maximum number of topics that 
+<code>subscribe</code>
+ claims in authorization tokens can contain. These claims specify to which topics client which present them are pre-subscribed.
+</span></td>
+</tr>
+
+
+              
+                <tr>
+  <td class='break-word'><span class='code bold'>config.max_allow_publish_topics</span> <code class='quiet'>integer</code>
+  
+    (default <code>1000</code>)
+  </td>
+  <td class='break-word'><span>Maximum number of topics that 
+<code>access_control.publish.allow</code>
+ claims in authorization tokens can contain. These claims are passed to 
+<a href="https://github.com/davedoesdev/mqlobber-access-control#accesscontroloptions">AccessControl</a>
+ and specify to which topics clients which present them can publish messages.
+</span></td>
+</tr>
+
+
+              
+                <tr>
+  <td class='break-word'><span class='code bold'>config.max_disallow_publish_topics</span> <code class='quiet'>integer</code>
+  
+    (default <code>1000</code>)
+  </td>
+  <td class='break-word'><span>Maximum number of topics that 
+<code>access_control.publish.disallow</code>
+ claims in authorization tokens can contain. These claims are passed to 
+<a href="https://github.com/davedoesdev/mqlobber-access-control#accesscontroloptions">AccessControl</a>
+ and specify to which topics clients which present them cannot publish messages.
+</span></td>
+</tr>
+
+
+              
+                <tr>
+  <td class='break-word'><span class='code bold'>config.max_allow_subscribe_topics</span> <code class='quiet'>integer</code>
+  
+    (default <code>1000</code>)
+  </td>
+  <td class='break-word'><span>Maximum number of topics that 
+<code>access_control.subscribe.allow</code>
+ claims in authorization tokens can contain. These claims are passed to 
+<a href="https://github.com/davedoesdev/mqlobber-access-control#accesscontroloptions">AccessControl</a>
+ and specify to which topics clients which present them cannot subscribe.
+</span></td>
+</tr>
+
+
+              
+                <tr>
+  <td class='break-word'><span class='code bold'>config.max_disallow_subscribe_topics</span> <code class='quiet'>integer</code>
+  
+    (default <code>1000</code>)
+  </td>
+  <td class='break-word'><span>Maximum number of topics that 
+<code>access_control.subscribe.disallow</code>
+ claims in authorization tokens can contain. These claims are passed to 
+<a href="https://github.com/davedoesdev/mqlobber-access-control#accesscontroloptions">AccessControl</a>
+ and specify to which topics clients which present them cannot subscribe.
+</span></td>
+</tr>
+
+
+              
+                <tr>
+  <td class='break-word'><span class='code bold'>config.max_block_topics</span> <code class='quiet'>integer</code>
+  
+    (default <code>1000</code>)
+  </td>
+  <td class='break-word'><span>Maximum number of topics that 
+<code>access_control.block</code>
+ claims in authorization tokens can contain. These claims are passed to 
+<a href="https://github.com/davedoesdev/mqlobber-access-control#accesscontroloptions">AccessControl</a>
+ and specify which messages aren't delivered to clients which present them.
+</span></td>
+</tr>
+
+
+              
+                <tr>
+  <td class='break-word'><span class='code bold'>config.max_presence_data_length</span> <code class='quiet'>integer</code>
+  
+    (default <code>1MiB</code>)
+  </td>
+  <td class='break-word'><span>Maximum length of 
+<code>presence.connect.data</code>
+ and 
+<code>presence.disconnect.data</code>
+ claims in authorization tokens can contain. The 
+<code>presence</code>
+ claims specify messages to send when clients which present them connect and disconnect.
+</span></td>
+</tr>
+
+
+              
+            </tbody>
+          </table>
+          
+        </div>
+      
+    </div>
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    <div class='py1 quiet mt1 prose-big'>Instance Members</div>
+    <div class="clearfix">
+  
+    <div class='border-bottom' id='centroserverfsq'>
+      <div class="clearfix small pointer toggle-sibling">
+        <div class="py1 contain">
+            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
+            <span class='code strong strong truncate'>fsq</span>
+        </div>
+      </div>
+      <div class="clearfix display-none toggle-target">
+        <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+
+  <p><a href="https://github.com/davedoesdev/qlobber-fsq#qlobberfsqoptions">QlobberFSQ</a> or <a href="https://rawgit-now.davedoesdev.now.sh/davedoesdev/qlobber-pg/master/docs/index.html#qlobberpg">QlobberPG</a> instance being used to handle messages.</p>
+
+    <div class='pre p1 fill-light mt0'>fsq</div>
+  
+    <p>
+      Type:
+      (QlobberFSQ | QlobberPG)
+    </p>
+  
+  
+
+  
+  
+  
+  
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</section>
+
+      </div>
+    </div>
+  
+    <div class='border-bottom' id='centroservertransport_ops'>
+      <div class="clearfix small pointer toggle-sibling">
+        <div class="py1 contain">
+            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
+            <span class='code strong strong truncate'>transport_ops</span>
+        </div>
+      </div>
+      <div class="clearfix display-none toggle-target">
+        <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+
+  <p>Operations you can perform on transports you specified when constructing <a href="centro-js/lib/server.CentroServer">CentroServer</a>. Transports can define their own operations in addition to <code>close</code>. Indexable by position or transport name.</p>
+
+    <div class='pre p1 fill-light mt0'>transport_ops</div>
+  
+    <p>
+      Type:
+      <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array">Array</a>&#x3C;{close: centro-js/lib/server.closeCallback}>
+    </p>
+  
+  
+
+  
+  
+  
+  
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</section>
+
+      </div>
+    </div>
+  
+    <div class='border-bottom' id='centroserverclose'>
+      <div class="clearfix small pointer toggle-sibling">
+        <div class="py1 contain">
+            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
+            <span class='code strong strong truncate'>close(cb)</span>
+        </div>
+      </div>
+      <div class="clearfix display-none toggle-target">
+        <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+
+  <p>Close the server.</p>
+
+    <div class='pre p1 fill-light mt0'>close(cb: centro-js/lib/server.closeCallback)</div>
+  
+  
+
+  
+  
+  
+  
+  
+  
+
+  
+    <div class='py1 quiet mt1 prose-big'>Parameters</div>
+    <div class='prose'>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>cb</span> <code class='quiet'>(centro-js/lib/server.closeCallback)</code>
+	    Called when the server has been closed.
+
+          </div>
+          
+        </div>
+      
+    </div>
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</section>
+
+      </div>
+    </div>
+  
+    <div class='border-bottom' id='centroserverattach_extension'>
+      <div class="clearfix small pointer toggle-sibling">
+        <div class="py1 contain">
+            <a class='icon pin-right py1 dark-link caret-right'>▸</a>
+            <span class='code strong strong truncate'>attach_extension(ext, config?)</span>
+        </div>
+      </div>
+      <div class="clearfix display-none toggle-target">
+        <section class='p2 mb2 clearfix bg-white minishadow'>
+
+  
+
+  <p>Attach an extension to the server.</p>
+
+    <div class='pre p1 fill-light mt0'>attach_extension(ext: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>, config: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>?)</div>
+  
+  
+
+  
+  
+  
+  
+  
+  
+
+  
+    <div class='py1 quiet mt1 prose-big'>Parameters</div>
+    <div class='prose'>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>ext</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>)</code>
+	    Extension to attach.
+
+          </div>
+          
+        </div>
+      
+        <div class='space-bottom0'>
+          <div>
+            <span class='code bold'>config</span> <code class='quiet'>(<a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>?)</code>
+	    Configuration to pass to the extension.
+
+          </div>
+          
+        </div>
+      
+    </div>
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</section>
+
+      </div>
+    </div>
+  
+</div>
+
+  
+
+  
+
+  
+</section>
+
           
         
           
@@ -4740,7 +4798,7 @@ to the message's recipients are under their high-water mark.</p>
 
   <p>Send messages at the rate that the fastest client connection can handle.
 Normally, messages are sent at the rate of the slowest client.</p>
-<p>You should <a href="#centro-jslibservercentroserverattach_extension">attach</a>
+<p>You should <a href="centro-js/lib/server.CentroServer#attach_extension">attach</a>
 this extension last but before <a href="#centro-jslibserver_extensionsfilterdummy_data_event">dummy_data_event</a>.</p>
 
     <div class='pre p1 fill-light mt0'>fastest_writable(config: <a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a>?)</div>
@@ -4838,7 +4896,7 @@ connection. This enables the message stream immediately to determine when a
 connection is at full capacity. Otherwise, the message stream must read
 initial message data and write it to the connection in order to make this
 determination.</p>
-<p>You should <a href="#centro-jslibservercentroserverattach_extension">attach</a>
+<p>You should <a href="centro-js/lib/server.CentroServer#attach_extension">attach</a>
 this extension last.</p>
 
     <div class='pre p1 fill-light mt0'>dummy_data_event()</div>

@@ -5,9 +5,8 @@ set -e
 set -x
 
 node_ver=$(node -p 'process.versions.node.split(".")[0]')
-check_ver=13
 
-if [ $node_ver = $check_ver ]; then
+if [ $node_ver = $CHECK_VER ]; then
   ./node_modules/.bin/grunt check_dist
 fi
 
@@ -23,6 +22,6 @@ npm explore qlobber-pg -- npm run migrate up
 #tail -n 100 "$CIRCLE_ARTIFACTS/test.log"
 npm run coverage
 
-if [ $node_ver = $check_ver ]; then
+if [ $node_ver = $CHECK_VER ]; then
   ./node_modules/.bin/grunt coveralls
 fi

@@ -9,7 +9,7 @@ jobs:
   test-14: &test-template
     docker:
       - &node-template
-        image: circleci/node:14.1.0-buster
+        image: circleci/node:14.10.1-buster
         environment:
           NODE_OPTIONS: --max-http-header-size=32768
           NODE_CONFIG: '{"db":"postgresql://postgres@localhost/qlobber-pg"}'
@@ -29,9 +29,11 @@ jobs:
       - run:
           name: test
           command: ./test/ci-test.sh
+          environment:
+            CHECK_VER: 14
   test-12:
     <<: *test-template
     docker:
       - <<: *node-template
-        image: circleci/node:12.16.3-buster
+        image: circleci/node:12.18.3-buster
       - *pg-template
