@@ -14,7 +14,7 @@ jobs:
           NODE_OPTIONS: --max-http-header-size=32768
           NODE_CONFIG: '{"db":"postgresql://postgres@localhost/qlobber-pg"}'
       - &pg-template
-        image: circleci/postgres:12.2-alpine
+        image: circleci/postgres:12
         environment:
           POSTGRES_USER: postgres
           POSTGRES_DB: qlobber-pg
