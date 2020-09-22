@@ -5544,7 +5544,9 @@ module.exports = function (config, connect, options)
                         expect(err.message).to.be.oneOf([
                             'carrier stream finished before duplex finished',
                             'carrier stream ended before end message received',
-                            'write after end'
+                            'write after end',
+                            // On Node 14 we get an empty TLS error!
+                            ...(is_transport('tls') ? [''] : [])
                         ]);
                     });
                     clients[0].mux.carrier.end();
