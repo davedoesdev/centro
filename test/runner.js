@@ -5543,6 +5543,7 @@ module.exports = function (config, connect, options)
                     {
                         expect(err.message).to.be.oneOf([
                             'carrier stream finished before duplex finished',
+                            'carrier stream ended before end message received',
                             'write after end'
                         ]);
                     });
