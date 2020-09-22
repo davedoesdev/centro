@@ -6727,7 +6727,7 @@ module.exports = function (config, connect, options)
             /*jshint validthis: true */
             run.call(this, Object.assign(
             {
-                test_timeout: 60000,
+                test_timeout: 120000,
 
                 only: function (get_info)
                 {
