@@ -3262,12 +3262,13 @@ module.exports = function (config, connect, options)
                             'write EPIPE',
                             'read ECONNRESET',
                             'write ECONNRESET',
+                            'write ECONNABORTED',
                             'This socket has been ended by the other party',
                             'Stream closed with error code NGHTTP2_REFUSED_STREAM',
                             'Request failed',
                             'Body already used', // fetch-h2 retries on GOAWAY
                             'The session has been destroyed', // fetch-h2 when we're detached
-                            '404', // fetch-h2 pending requests which get made on new server in the close tests
+                            '404' // fetch-h2 pending requests which get made on new server in the close tests
                         ]);
                     }
                 });
