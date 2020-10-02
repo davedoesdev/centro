@@ -9,7 +9,7 @@ jobs:
   test-14: &test-template
     docker:
       - &node-template
-        image: cimg/node:14.12.0
+        image: cimg/node:14.13.0
         environment:
           NODE_OPTIONS: --max-http-header-size=32768
           NODE_CONFIG: '{"db":"postgresql://postgres@localhost/qlobber-pg"}'
