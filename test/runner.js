@@ -5805,6 +5805,11 @@ module.exports = function (config, connect, options)
 
     describe(name, function ()
     {
+        if (name.endsWith('_passed_in_server') && process.env.APPVEYOR)
+        {
+            return this.skip();
+        }
+
         if (options.only)
         {
             describe('main', function ()
