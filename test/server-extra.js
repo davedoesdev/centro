@@ -26,7 +26,7 @@ describe('server errors', function ()
         });
     });
 
-    it('should pass back run transport errors (auth config)', function (done)
+    it.only('should pass back run transport errors (auth config)', function (done)
     {
         var server = new CentroServer(
         {
