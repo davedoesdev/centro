@@ -5803,13 +5803,14 @@ module.exports = function (config, connect, options)
         }
     }
 
-    describe(name, function ()
+    var d = describe;
+    if (name.endsWith('_passed_in_server') && process.env.APPVEYOR)
     {
-        if (name.endsWith('_passed_in_server') && process.env.APPVEYOR)
-        {
-            return this.skip();
-        }
+        d = describe.skip;
+    }
 
+    d(name, function ()
+    {
         if (options.only)
         {
             describe('main', function ()
