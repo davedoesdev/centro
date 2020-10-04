@@ -284,7 +284,7 @@ module.exports = function (config, connect, options)
                         !err.message.startsWith('uri revision change'))
                     {
                         // eslint-disable-next-line no-console
-                        console.warn(err.message);
+                        console.warn("SERVER", err.message);
                         if (!this.warnings)
                         {
                             this.warnings = [];
@@ -619,6 +619,8 @@ module.exports = function (config, connect, options)
 
                     function cb2()
                     {
+                    console.log("CB2");
+                    console.trace();
                         if (!called)
                         {
                             if (c && is_transport('node_http2-duplex'))
@@ -630,6 +632,7 @@ module.exports = function (config, connect, options)
                         }
                     }
 
+console.log("AE0", c.mux.carrier._readableState, c.mux.carrier);
                     if (!c ||
                         c.mux.carrier._readableState.ended ||
                         c.mux.carrier.destroyed)
@@ -638,9 +641,11 @@ module.exports = function (config, connect, options)
                     }
                     c.mux.carrier.on('close', cb2);
                     c.mux.carrier.on('end', cb2);
+                    console.log("AEENDING");
                     c.mux.carrier.end();
                 }, function ()
                 {
+                console.log("AE1", server._connids);
                     if (server._connids.size === 0)
                     {
                         return empty();
@@ -2045,19 +2050,23 @@ module.exports = function (config, connect, options)
                 }
             });
 
-            it('should emit publish stream error as warning', function (done)
+            it.only('should emit publish stream error as warning', function (done)
             {
                 var warned = false, info;
 
-                server.once('warning', function (err)
+                server.on('warning', function (err)
                 {
-                    expect(err.message).to.equal('dummy2');
-                    warned = true;
+                console.log("GOT WARNING", err);
+                    if (err.message === 'dummy2')
+                    {
+                        warned = true;
+                    }
                 });
 
                 function pubreq(topic, stream, options, done)
                 {
                     expect(topic).to.equal(info.prefixes[0] + 'foo');
+                    console.log("EMITTING WARNING");
                     stream.emit('error', new Error('dummy2'));
                     done();
                 }
