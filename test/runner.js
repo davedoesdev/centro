@@ -284,7 +284,7 @@ module.exports = function (config, connect, options)
                         !err.message.startsWith('uri revision change'))
                     {
                         // eslint-disable-next-line no-console
-                        console.warn("SERVER", err.message);
+                        console.warn('server warning', err.message);
                         if (!this.warnings)
                         {
                             this.warnings = [];
@@ -549,7 +549,7 @@ module.exports = function (config, connect, options)
                             if (err.message !== c.last_err_message)
                             {
                                 // eslint-disable-next-line no-console
-                                console.warn(err.message);
+                                console.warn('client warning', err.message);
                             }
                             c.last_err_message = err.message;
                         });
@@ -619,8 +619,6 @@ module.exports = function (config, connect, options)
 
                     function cb2()
                     {
-                    console.log("CB2");
-                    console.trace();
                         if (!called)
                         {
                             if (c && is_transport('node_http2-duplex'))
@@ -632,7 +630,6 @@ module.exports = function (config, connect, options)
                         }
                     }
 
-console.log("AE0", c.mux.carrier._readableState, c.mux.carrier);
                     if (!c ||
                         c.mux.carrier._readableState.ended ||
                         c.mux.carrier.destroyed)
@@ -641,11 +638,9 @@ console.log("AE0", c.mux.carrier._readableState, c.mux.carrier);
                     }
                     c.mux.carrier.on('close', cb2);
                     c.mux.carrier.on('end', cb2);
-                    console.log("AEENDING");
                     c.mux.carrier.end();
                 }, function ()
                 {
-                console.log("AE1", server._connids);
                     if (server._connids.size === 0)
                     {
                         return empty();
@@ -2050,13 +2045,12 @@ console.log("AE0", c.mux.carrier._readableState, c.mux.carrier);
                 }
             });
 
-            it.only('should emit publish stream error as warning', function (done)
+            it('should emit publish stream error as warning', function (done)
             {
                 var warned = false, info;
 
                 server.on('warning', function (err)
                 {
-                console.log("GOT WARNING", err);
                     if (err.message === 'dummy2')
                     {
                         warned = true;
@@ -2066,7 +2060,6 @@ console.log("AE0", c.mux.carrier._readableState, c.mux.carrier);
                 function pubreq(topic, stream, options, done)
                 {
                     expect(topic).to.equal(info.prefixes[0] + 'foo');
-                    console.log("EMITTING WARNING");
                     stream.emit('error', new Error('dummy2'));
                     done();
                 }
