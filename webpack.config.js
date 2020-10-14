@@ -3,10 +3,7 @@
 
 var path = require('path');
 var webpack = require('webpack');
-
-var ignore = new webpack.IgnorePlugin({
-    resourceRegExp: /^bindings$/
-});
+var TerserPlugin = require('terser-webpack-plugin');
 
 module.exports = {
     context: __dirname,
@@ -17,5 +14,32 @@ module.exports = {
         library: 'centro'
     },
     performance: { hints: false },
-    plugins: [ ignore ]
+    optimization: {
+        minimize: true,
+        minimizer: [
+            new TerserPlugin({
+                terserOptions: {
+                    output: {
+                        comments: false
+                    }
+                },
+                extractComments: false
+            })
+        ]
+    },
+    module: {
+        rules: [{
+            test: /\.js$/,
+            enforce: 'pre',
+            use: ['source-map-loader']
+        }]
+    },
+    devtool: 'source-map',
+    resolve: {
+        fallback: {
+            crypto: 'crypto-browserify',
+            stream: 'stream-browserify',
+            util: 'util'
+        }
+    }
 };

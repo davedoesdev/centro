@@ -80,7 +80,8 @@ module.exports = function (grunt)
             },
 
             check_dist: {
-                cmd: 'rm -f ./node_modules/removeNPMAbsolutePaths/test/data/malformed/module/package.json && ./node_modules/.bin/removeNPMAbsolutePaths node_modules && ./node_modules/.bin/webpack --mode production --config webpack.check.config && diff -u dist/centro.js dist/check.js && rm -f dist/check.js'
+                cmd: 'rm -f ./node_modules/removeNPMAbsolutePaths/test/data/malformed/module/package.json && ./node_modules/.bin/removeNPMAbsolutePaths node_modules && ./node_modules/.bin/webpack --mode production --config webpack.check.config.js && diff -u <(head -n -1 dist/centro.js) <(head -n -1 dist/check.js) && rm -f dist/check.js*',
+                shell: '/bin/bash'
             },
 
             keys: {
