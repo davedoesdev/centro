@@ -26,7 +26,7 @@ jobs:
           name: install
           command: |
             sudo apt update
-            sudo apt -y install libboost-context-dev lcov
+            sudo apt -y install libboost-context-dev lcov python2
             npm install
       - run:
           name: test
