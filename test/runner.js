@@ -6172,7 +6172,14 @@ module.exports = function (config, connect, options)
                                 expect(ns._writableState.length).to.equal(100 * 1024);
                                 setTimeout(function ()
                                 {
-                                    expect(ns._writableState.length).to.be.above(100 * 1024);
+                                    if (ns.writableNeedDrain)
+                                    {
+                                        expect(ns._writableState.length).to.equal(100 * 1024);
+                                    }
+                                    else
+                                    {
+                                        expect(ns._writableState.length).to.be.above(100 * 1024);
+                                    }
                                     cb(null, done);
                                 }, 2000);
                                 return ns;
@@ -6736,7 +6743,7 @@ module.exports = function (config, connect, options)
             /*jshint validthis: true */
             run.call(this, Object.assign(
             {
-                test_timeout: 120000,
+                test_timeout: 240000,
 
                 only: function (get_info)
                 {

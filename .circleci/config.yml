@@ -3,13 +3,14 @@ workflows:
   version: 2
   test:
     jobs:
+      - test-15
       - test-14
       - test-12
 jobs:
-  test-14: &test-template
+  test-15: &test-template
     docker:
       - &node-template
-        image: cimg/node:14.13.0
+        image: cimg/node:15.2.0
         environment:
           NODE_OPTIONS: --max-http-header-size=32768
           NODE_CONFIG: '{"db":"postgresql://postgres@localhost/qlobber-pg"}'
@@ -31,10 +32,16 @@ jobs:
           name: test
           command: ./test/ci-test.sh
           environment:
-            CHECK_VER: 14
+            CHECK_VER: 15
+  test-14:
+    <<: *test-template
+    docker:
+      - <<: *node-template
+        image: cimg/node:14.15.0
+      - *pg-template
   test-12:
     <<: *test-template
     docker:
       - <<: *node-template
-        image: cimg/node:12.18.4
+        image: cimg/node:12.19.0
       - *pg-template

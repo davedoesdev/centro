@@ -24,7 +24,7 @@ function new_fetch2(config, cb) {
 }
 const port = 8700;
 
-global.fetch = async function(url, options) {
+async function fetch(fetch2, url, options) {
     if (options && options.body && (options.body instanceof Uint8Array)) {
         options = {
             ...options,
@@ -69,12 +69,20 @@ global.fetch = async function(url, options) {
                         readable.on('data', on_data);
                         readable.resume();
                     })();
+                },
+
+                async cancel() {
+                    if (readable) {
+                        readable.destroy();
+                    }
                 }
             };
         }
     };
     return response;
 };
+
+global.AbortController = require('fetch-h2').AbortController;
 
 function setup(scheme, server_config) {
 
@@ -92,26 +100,35 @@ function connect(config, server, cb) {
 
         async function really_connect() {
             const { default: make_client_http2_duplex, ResponseError } = await import('http2-duplex/client.js');
+            class ReadAllResponseError extends ResponseError {
+                async init() {
+                    this.readable = await this.response.readable();
+                    this.buf = await promisify(cb => {
+                        read_all(this.readable, buf => cb(null, buf));
+                    })();
+                }
+            }
             let duplex;
             try {
+                const f2 = fetch2;
                 duplex = await make_client_http2_duplex(
                     `${scheme}://localhost:${port}${pathname}`, {
                         headers: {
                             'Authorization': 'Bearer ' + userpass.split(':')[1]
                         },
-                        disable_request_streaming: true
+                        disable_request_streaming: true,
+                        ResponseError: ReadAllResponseError,
+                        fetch: (url, options) => fetch(f2, url, options)
                     });
             } catch (ex) {
                 if (ex instanceof ResponseError) {
-                    return read_all(await ex.response.readable(), function (buf) {
-                        const msg = buf.toString();
-                        const client = new class extends EventEmitter {}();
-                        client.mux = { carrier: this };
-                        process.nextTick(() => {
-                            client.emit('error', new Error(msg ? JSON.parse(msg).error : 'closed'));
-                        });
-                        cb(null, client);
+                    const msg = ex.buf.toString();
+                    const client = new class extends EventEmitter {}();
+                    client.mux = { carrier: ex.readable };
+                    process.nextTick(() => {
+                        client.emit('error', new Error(msg ? JSON.parse(msg).error : 'closed'));
                     });
+                    return cb(null, client);
                 }
                 if (ex.message === 'Stream closed with error code NGHTTP2_ENHANCE_YOUR_CALM') {
                     // On Windows, Node marks session with NGHTTP2_ENHANCE_YOUR_CALM quite readily.
@@ -145,7 +162,7 @@ function extra(unused_get_info) {
             }
             return orig_includes.apply(this, arguments);
         };
-        const response = await fetch(
+        const response = await fetch(fetch2,
             `${scheme}://localhost:${port}${pathname}`, {
                 method: 'POST',
                 headers: {
@@ -159,7 +176,7 @@ function extra(unused_get_info) {
     });
 
     it('should return 404 for unknown path', async function () {
-        const response = await fetch(
+        const response = await fetch(fetch2,
             `${scheme}://localhost:${port}/dummy`, {
                 method: 'POST'
             });

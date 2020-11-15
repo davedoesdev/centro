@@ -1,9 +1,8 @@
 /*eslint-env node */
 "use strict";
 
-var path = require('path');
-var webpack = require('webpack');
-var TerserPlugin = require('terser-webpack-plugin');
+const path = require('path');
+const webpack = require('webpack');
 
 module.exports = {
     context: __dirname,
@@ -14,19 +13,6 @@ module.exports = {
         library: 'centro'
     },
     performance: { hints: false },
-    optimization: {
-        minimize: true,
-        minimizer: [
-            new TerserPlugin({
-                terserOptions: {
-                    output: {
-                        comments: false
-                    }
-                },
-                extractComments: false
-            })
-        ]
-    },
     module: {
         rules: [{
             test: /\.js$/,
@@ -40,6 +26,16 @@ module.exports = {
             crypto: 'crypto-browserify',
             stream: 'stream-browserify',
             util: 'util'
+        },
+        alias: {
+            process: 'process/browser'
         }
-    }
+    },
+    plugins: [
+        new webpack.ProvidePlugin({
+            process: 'process',
+            Buffer: ['buffer', 'Buffer'],
+            setImmediate: ['timers-browserify', 'setImmediate']
+        })
+    ]
 };
