@@ -80,7 +80,7 @@ async function fetch(fetch2, url, options) {
         }
     };
     return response;
-};
+}
 
 global.AbortController = require('fetch-h2').AbortController;
 
