@@ -20,7 +20,11 @@ npm explore qlobber-pg -- npm run migrate up
 #  exit 1
 #fi
 #tail -n 100 "$CIRCLE_ARTIFACTS/test.log"
-npm run coverage
+if [ $node_ver = $CHECK_VER ]; then
+  npm run coverage
+else
+  npm test
+fi
 
 if [ $node_ver = $CHECK_VER ]; then
   ./node_modules/.bin/grunt coveralls
