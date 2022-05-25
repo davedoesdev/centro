@@ -61,7 +61,7 @@
     "crypto-browserify": "^3.12.0",
     "documentation": "^13.1.0",
     "eslint": "^7.13.0",
-    "eventsource": "^1.0.7",
+    "eventsource": "^2.0.2",
     "fastest-writable": "^2.2.1",
     "fetch-h2": "^2.5.1",
     "grunt": "^1.3.0",
